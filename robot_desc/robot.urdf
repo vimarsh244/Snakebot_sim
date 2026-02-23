@@ -1,285 +1,109 @@
-<?xml version="1.0" ?>
-<!-- Generated using onshape-to-robot -->
-<!-- Onshape https://cad.onshape.com/documents/1f9c2954b6c1e4433dc4fb70/w/a7d17b54b83acd5ebc54338d/e/ec1e780a5db60bb6dd30ef9b -->
-<robot name="my-robot">
-  <!-- Link fusioncomponent -->
-  <link name="fusioncomponent">
+<?xml version="1.0"?>
+<robot name="snakebot_5_module">
+  <!-- this urdf is a clean kinematic tree matching the new mjcf layout.
+       closed-loop rods are represented as fixed decorative links because
+       urdf tree structure does not natively support loop constraints. -->
+
+  <material name="plate_white">
+    <color rgba="0.9 0.9 0.9 1"/>
+  </material>
+  <material name="servo_dark">
+    <color rgba="0.15 0.15 0.2 1"/>
+  </material>
+  <material name="rod_white">
+    <color rgba="0.95 0.95 0.95 1"/>
+  </material>
+
+  <link name="plate_0">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="1e-09"/>
-      <inertia ixx="1e-09" ixy="0" ixz="0" iyy="1e-09" iyz="0" izz="1e-09"/>
+      <mass value="0.12"/>
+      <inertia ixx="0.0003" ixy="0" ixz="0" iyy="0.0003" iyz="0" izz="0.0003"/>
     </inertial>
-    <!-- Part servo_motor_35kg_motor_v1 -->
     <visual>
-      <origin xyz="0.00904239 0.014 -0.0174241" rpy="1.5708 -0 0"/>
-      <geometry>
-        <mesh filename="package://assets/servo_motor_35kg_motor_v1.stl"/>
-      </geometry>
-      <material name="servo_motor_35kg_motor_v1_material">
-        <color rgba="0.101961 0.101961 0.101961 1"/>
-      </material>
-    </visual>
-    <collision>
-      <origin xyz="0.00904239 0.014 -0.0174241" rpy="1.5708 -0 0"/>
-      <geometry>
-        <mesh filename="package://assets/servo_motor_35kg_motor_v1.stl"/>
-      </geometry>
-    </collision>
-    <!-- Part fusioncomponent -->
-    <visual>
-      <origin xyz="4.23865e-05 0.004 -0.000424131" rpy="-0 -0 0"/>
-      <geometry>
-        <mesh filename="package://assets/fusioncomponent.stl"/>
-      </geometry>
-      <material name="fusioncomponent_material">
-        <color rgba="0.627451 0.627451 0.627451 1"/>
-      </material>
-    </visual>
-    <collision>
-      <origin xyz="4.23865e-05 0.004 -0.000424131" rpy="-0 -0 0"/>
-      <geometry>
-        <mesh filename="package://assets/fusioncomponent.stl"/>
-      </geometry>
-    </collision>
-  </link>
-  <!-- Link fusioncomponent_2 -->
-  <link name="fusioncomponent_2">
-    <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="1e-09"/>
-      <inertia ixx="1e-09" ixy="0" ixz="0" iyy="1e-09" iyz="0" izz="1e-09"/>
-    </inertial>
-    <!-- Part fusioncomponent_2 -->
-    <visual>
-      <origin xyz="-0 0.01 -0.0525" rpy="3.14159 -0.785398 -0"/>
-      <geometry>
-        <mesh filename="package://assets/fusioncomponent__2.stl"/>
-      </geometry>
-      <material name="fusioncomponent_2_material">
-        <color rgba="0.627451 0.627451 0.627451 1"/>
-      </material>
+      <geometry><mesh filename="../stls/fusioncomponent.stl"/></geometry>
+      <material name="plate_white"/>
     </visual>
-    <collision>
-      <origin xyz="-0 0.01 -0.0525" rpy="3.14159 -0.785398 -0"/>
-      <geometry>
-        <mesh filename="package://assets/fusioncomponent__2.stl"/>
-      </geometry>
-    </collision>
-  </link>
-  <!-- Link danda_v4 -->
-  <link name="danda_v4">
-    <inertial>
+    <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="1e-09"/>
-      <inertia ixx="1e-09" ixy="0" ixz="0" iyy="1e-09" iyz="0" izz="1e-09"/>
-    </inertial>
-    <!-- Part danda_v4 -->
-    <visual>
-      <origin xyz="-0.0365 0.0075 -0.0075" rpy="-0 -0 0"/>
-      <geometry>
-        <mesh filename="package://assets/danda_v4.stl"/>
-      </geometry>
-      <material name="danda_v4_material">
-        <color rgba="0.627451 0.627451 0.627451 1"/>
-      </material>
+      <geometry><mesh filename="../stls/servo_motor_35kg_motor_v1.stl"/></geometry>
+      <material name="servo_dark"/>
     </visual>
     <collision>
-      <origin xyz="-0.0365 0.0075 -0.0075" rpy="-0 -0 0"/>
-      <geometry>
-        <mesh filename="package://assets/danda_v4.stl"/>
-      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.12 0.12 0.016"/></geometry>
     </collision>
   </link>
-  <!-- Joint from fusioncomponent_2 to danda_v4 -->
-  <joint name="9" type="revolute">
-    <origin xyz="-0.0075 -0.0109448 -0.005" rpy="-1.5708 1.40969 1.5708"/>
-    <parent link="fusioncomponent_2"/>
-    <child link="danda_v4"/>
+
+  <!-- module 0 -->
+  <link name="module_0_rod_main">
+    <inertial><origin xyz="0 0 0.055" rpy="0 0 0"/><mass value="0.02"/><inertia ixx="1e-5" ixy="0" ixz="0" iyy="1e-5" iyz="0" izz="1e-5"/></inertial>
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="../stls/danda_v4.stl"/></geometry><material name="rod_white"/></visual>
+    <collision><origin xyz="0 0 0.055" rpy="0 0 0"/><geometry><cylinder radius="0.006" length="0.11"/></geometry></collision>
+  </link>
+  <joint name="module_0_servo_a" type="revolute">
+    <origin xyz="0.028 -0.018 0" rpy="0 0 0"/>
+    <parent link="plate_0"/>
+    <child link="module_0_rod_main"/>
     <axis xyz="0 0 1"/>
-    <limit effort="10" velocity="10" lower="-3.141592653589793" upper="3.141592653589793"/>
+    <limit lower="-1.0472" upper="1.0472" effort="12" velocity="4"/>
   </joint>
-  <!-- Joint from fusioncomponent to fusioncomponent_2 -->
-  <joint name="10" type="revolute">
-    <origin xyz="-0.0315576 0.014 -0.000424131" rpy="1.5708 -1.49984 1.5708"/>
-    <parent link="fusioncomponent"/>
-    <child link="fusioncomponent_2"/>
-    <axis xyz="0 0 1"/>
-    <limit effort="10" velocity="10" lower="-3.141592653589793" upper="3.141592653589793"/>
-  </joint>
-  <!-- Link fusioncomponent_3 -->
-  <link name="fusioncomponent_3">
-    <inertial>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="1e-09"/>
-      <inertia ixx="1e-09" ixy="0" ixz="0" iyy="1e-09" iyz="0" izz="1e-09"/>
-    </inertial>
-    <!-- Part fusioncomponent_3 -->
-    <visual>
-      <origin xyz="-0 -0.01 0.0425" rpy="0 0.785398 -0"/>
-      <geometry>
-        <mesh filename="package://assets/fusioncomponent__2.stl"/>
-      </geometry>
-      <material name="fusioncomponent_3_material">
-        <color rgba="0.627451 0.627451 0.627451 1"/>
-      </material>
-    </visual>
-    <collision>
-      <origin xyz="-0 -0.01 0.0425" rpy="0 0.785398 -0"/>
-      <geometry>
-        <mesh filename="package://assets/fusioncomponent__2.stl"/>
-      </geometry>
-    </collision>
+
+  <link name="plate_1">
+    <inertial><origin xyz="0 0 0" rpy="0 0 0"/><mass value="0.12"/><inertia ixx="0.0003" ixy="0" ixz="0" iyy="0.0003" iyz="0" izz="0.0003"/></inertial>
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="../stls/fusioncomponent.stl"/></geometry><material name="plate_white"/></visual>
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="../stls/servo_motor_35kg_motor_v1.stl"/></geometry><material name="servo_dark"/></visual>
+    <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.12 0.12 0.016"/></geometry></collision>
   </link>
-  <!-- Link danda_support_v5 -->
-  <link name="danda_support_v5">
-    <inertial>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="1e-09"/>
-      <inertia ixx="1e-09" ixy="0" ixz="0" iyy="1e-09" iyz="0" izz="1e-09"/>
-    </inertial>
-    <!-- Part danda_support_v5 -->
-    <visual>
-      <origin xyz="-0.045 0.0075 -0.0075" rpy="-0 -0 0"/>
-      <geometry>
-        <mesh filename="package://assets/danda_support_v5.stl"/>
-      </geometry>
-      <material name="danda_support_v5_material">
-        <color rgba="0.627451 0.627451 0.627451 1"/>
-      </material>
-    </visual>
-    <collision>
-      <origin xyz="-0.045 0.0075 -0.0075" rpy="-0 -0 0"/>
-      <geometry>
-        <mesh filename="package://assets/danda_support_v5.stl"/>
-      </geometry>
-    </collision>
+  <joint name="module_0_servo_b" type="revolute">
+    <origin xyz="0 0 0.11" rpy="0 0 0"/>
+    <parent link="module_0_rod_main"/>
+    <child link="plate_1"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-1.0472" upper="1.0472" effort="12" velocity="4"/>
+  </joint>
+
+  <link name="module_0_rod_support">
+    <inertial><origin xyz="0 0 0.055" rpy="0 0 0"/><mass value="0.02"/><inertia ixx="1e-5" ixy="0" ixz="0" iyy="1e-5" iyz="0" izz="1e-5"/></inertial>
+    <visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="../stls/danda_support_v5.stl"/></geometry><material name="rod_white"/></visual>
+    <collision><origin xyz="0 0 0.055" rpy="0 0 0"/><geometry><cylinder radius="0.006" length="0.11"/></geometry></collision>
   </link>
-  <!-- Link fusioncomponent_4 -->
-  <link name="fusioncomponent_4">
-    <inertial>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="1e-09"/>
-      <inertia ixx="1e-09" ixy="0" ixz="0" iyy="1e-09" iyz="0" izz="1e-09"/>
-    </inertial>
-    <!-- Part fusioncomponent_4 -->
-    <visual>
-      <origin xyz="0.0475 -0.0225 0.0075" rpy="3.14159 0.785398 -3.14159"/>
-      <geometry>
-        <mesh filename="package://assets/fusioncomponent__2.stl"/>
-      </geometry>
-      <material name="fusioncomponent_4_material">
-        <color rgba="0.627451 0.627451 0.627451 1"/>
-      </material>
-    </visual>
-    <collision>
-      <origin xyz="0.0475 -0.0225 0.0075" rpy="3.14159 0.785398 -3.14159"/>
-      <geometry>
-        <mesh filename="package://assets/fusioncomponent__2.stl"/>
-      </geometry>
-    </collision>
-  </link>
-  <!-- Link fusioncomponent_5 -->
-  <link name="fusioncomponent_5">
-    <inertial>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="1e-09"/>
-      <inertia ixx="1e-09" ixy="0" ixz="0" iyy="1e-09" iyz="0" izz="1e-09"/>
-    </inertial>
-    <!-- Part fusioncomponent_5 -->
-    <visual>
-      <origin xyz="0.00286148 0.00958185 -0.0401" rpy="3.14159 -0.785398 -0.290204"/>
-      <geometry>
-        <mesh filename="package://assets/fusioncomponent.stl"/>
-      </geometry>
-      <material name="fusioncomponent_5_material">
-        <color rgba="0.627451 0.627451 0.627451 1"/>
-      </material>
-    </visual>
-    <collision>
-      <origin xyz="0.00286148 0.00958185 -0.0401" rpy="3.14159 -0.785398 -0.290204"/>
-      <geometry>
-        <mesh filename="package://assets/fusioncomponent.stl"/>
-      </geometry>
-    </collision>
-    <!-- Part servo_motor_35kg_motor_v1_2 -->
-    <visual>
-      <origin xyz="-0.00542032 0.0016187 -0.0217152" rpy="-1.5708 -0.785398 -0.290204"/>
-      <geometry>
-        <mesh filename="package://assets/servo_motor_35kg_motor_v1.stl"/>
-      </geometry>
-      <material name="servo_motor_35kg_motor_v1_2_material">
-        <color rgba="0.101961 0.101961 0.101961 1"/>
-      </material>
-    </visual>
-    <collision>
-      <origin xyz="-0.00542032 0.0016187 -0.0217152" rpy="-1.5708 -0.785398 -0.290204"/>
-      <geometry>
-        <mesh filename="package://assets/servo_motor_35kg_motor_v1.stl"/>
-      </geometry>
-    </collision>
-  </link>
-  <!-- Link fusioncomponent_6 -->
-  <link name="fusioncomponent_6">
-    <inertial>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="1e-09"/>
-      <inertia ixx="1e-09" ixy="0" ixz="0" iyy="1e-09" iyz="0" izz="1e-09"/>
-    </inertial>
-    <!-- Part fusioncomponent_6 -->
-    <visual>
-      <origin xyz="-0 0.01 -0.0525" rpy="-3.14159 -0.785398 -0"/>
-      <geometry>
-        <mesh filename="package://assets/fusioncomponent__2.stl"/>
-      </geometry>
-      <material name="fusioncomponent_6_material">
-        <color rgba="0.627451 0.627451 0.627451 1"/>
-      </material>
-    </visual>
-    <collision>
-      <origin xyz="-0 0.01 -0.0525" rpy="-3.14159 -0.785398 -0"/>
-      <geometry>
-        <mesh filename="package://assets/fusioncomponent__2.stl"/>
-      </geometry>
-    </collision>
-  </link>
-  <!-- Joint from fusioncomponent_5 to fusioncomponent_6 -->
-  <joint name="3" type="revolute">
-    <origin xyz="-0.0214102 0.00639385 -0.0624446" rpy="0.16687 0.771211 -0.0530924"/>
-    <parent link="fusioncomponent_5"/>
-    <child link="fusioncomponent_6"/>
-    <axis xyz="0 0 1"/>
-    <limit effort="10" velocity="10" lower="-3.141592653589793" upper="3.141592653589793"/>
+  <joint name="module_0_support_fixed" type="fixed">
+    <origin xyz="-0.028 0.018 0" rpy="0 0 0"/>
+    <parent link="plate_0"/>
+    <child link="module_0_rod_support"/>
   </joint>
-  <!-- Joint from fusioncomponent_4 to fusioncomponent_5 -->
-  <joint name="2" type="revolute">
-    <origin xyz="0.005 -0.0125 0.0075" rpy="-3.14159 1.5708 0"/>
-    <parent link="fusioncomponent_4"/>
-    <child link="fusioncomponent_5"/>
-    <axis xyz="0 0 1"/>
-    <limit effort="10" velocity="10" lower="-3.141592653589793" upper="3.141592653589793"/>
-  </joint>
-  <!-- Joint from danda_support_v5 to fusioncomponent_4 -->
-  <joint name="1" type="revolute">
-    <origin xyz="-0.09 0.055 -0" rpy="3.14159 -0 0"/>
-    <parent link="danda_support_v5"/>
-    <child link="fusioncomponent_4"/>
-    <axis xyz="0 0 1"/>
-    <limit effort="10" velocity="10" lower="-3.141592653589793" upper="3.141592653589793"/>
-  </joint>
-  <!-- Joint from fusioncomponent_3 to danda_support_v5 -->
-  <joint name="5" type="revolute">
-    <origin xyz="0.0075 0.0125 -0.005" rpy="1.5708 1.50882 1.5708"/>
-    <parent link="fusioncomponent_3"/>
-    <child link="danda_support_v5"/>
-    <axis xyz="0 0 1"/>
-    <limit effort="10" velocity="10" lower="-3.141592653589793" upper="3.141592653589793"/>
-  </joint>
-  <!-- Joint from fusioncomponent to fusioncomponent_3 -->
-  <joint name="6" type="revolute">
-    <origin xyz="0.0283974 0.014 -0.0287791" rpy="-0.153549 -0.773421 0.218022"/>
-    <parent link="fusioncomponent"/>
-    <child link="fusioncomponent_3"/>
-    <axis xyz="0 0 1"/>
-    <limit effort="10" velocity="10" lower="-3.141592653589793" upper="3.141592653589793"/>
-  </joint>
+
+  <!-- module 1 -->
+  <link name="module_1_rod_main"><inertial><origin xyz="0 0 0.055" rpy="0 0 0"/><mass value="0.02"/><inertia ixx="1e-5" ixy="0" ixz="0" iyy="1e-5" iyz="0" izz="1e-5"/></inertial><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="../stls/danda_v4.stl"/></geometry><material name="rod_white"/></visual><collision><origin xyz="0 0 0.055" rpy="0 0 0"/><geometry><cylinder radius="0.006" length="0.11"/></geometry></collision></link>
+  <joint name="module_1_servo_a" type="revolute"><origin xyz="0.028 -0.018 0" rpy="0 0 0"/><parent link="plate_1"/><child link="module_1_rod_main"/><axis xyz="0 0 1"/><limit lower="-1.0472" upper="1.0472" effort="12" velocity="4"/></joint>
+  <link name="plate_2"><inertial><origin xyz="0 0 0" rpy="0 0 0"/><mass value="0.12"/><inertia ixx="0.0003" ixy="0" ixz="0" iyy="0.0003" iyz="0" izz="0.0003"/></inertial><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="../stls/fusioncomponent.stl"/></geometry><material name="plate_white"/></visual><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="../stls/servo_motor_35kg_motor_v1.stl"/></geometry><material name="servo_dark"/></visual><collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.12 0.12 0.016"/></geometry></collision></link>
+  <joint name="module_1_servo_b" type="revolute"><origin xyz="0 0 0.11" rpy="0 0 0"/><parent link="module_1_rod_main"/><child link="plate_2"/><axis xyz="1 0 0"/><limit lower="-1.0472" upper="1.0472" effort="12" velocity="4"/></joint>
+  <link name="module_1_rod_support"><inertial><origin xyz="0 0 0.055" rpy="0 0 0"/><mass value="0.02"/><inertia ixx="1e-5" ixy="0" ixz="0" iyy="1e-5" iyz="0" izz="1e-5"/></inertial><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="../stls/danda_support_v5.stl"/></geometry><material name="rod_white"/></visual><collision><origin xyz="0 0 0.055" rpy="0 0 0"/><geometry><cylinder radius="0.006" length="0.11"/></geometry></collision></link>
+  <joint name="module_1_support_fixed" type="fixed"><origin xyz="-0.028 0.018 0" rpy="0 0 0"/><parent link="plate_1"/><child link="module_1_rod_support"/></joint>
+
+  <!-- module 2 -->
+  <link name="module_2_rod_main"><inertial><origin xyz="0 0 0.055" rpy="0 0 0"/><mass value="0.02"/><inertia ixx="1e-5" ixy="0" ixz="0" iyy="1e-5" iyz="0" izz="1e-5"/></inertial><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="../stls/danda_v4.stl"/></geometry><material name="rod_white"/></visual><collision><origin xyz="0 0 0.055" rpy="0 0 0"/><geometry><cylinder radius="0.006" length="0.11"/></geometry></collision></link>
+  <joint name="module_2_servo_a" type="revolute"><origin xyz="0.028 -0.018 0" rpy="0 0 0"/><parent link="plate_2"/><child link="module_2_rod_main"/><axis xyz="0 0 1"/><limit lower="-1.0472" upper="1.0472" effort="12" velocity="4"/></joint>
+  <link name="plate_3"><inertial><origin xyz="0 0 0" rpy="0 0 0"/><mass value="0.12"/><inertia ixx="0.0003" ixy="0" ixz="0" iyy="0.0003" iyz="0" izz="0.0003"/></inertial><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="../stls/fusioncomponent.stl"/></geometry><material name="plate_white"/></visual><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="../stls/servo_motor_35kg_motor_v1.stl"/></geometry><material name="servo_dark"/></visual><collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.12 0.12 0.016"/></geometry></collision></link>
+  <joint name="module_2_servo_b" type="revolute"><origin xyz="0 0 0.11" rpy="0 0 0"/><parent link="module_2_rod_main"/><child link="plate_3"/><axis xyz="1 0 0"/><limit lower="-1.0472" upper="1.0472" effort="12" velocity="4"/></joint>
+  <link name="module_2_rod_support"><inertial><origin xyz="0 0 0.055" rpy="0 0 0"/><mass value="0.02"/><inertia ixx="1e-5" ixy="0" ixz="0" iyy="1e-5" iyz="0" izz="1e-5"/></inertial><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="../stls/danda_support_v5.stl"/></geometry><material name="rod_white"/></visual><collision><origin xyz="0 0 0.055" rpy="0 0 0"/><geometry><cylinder radius="0.006" length="0.11"/></geometry></collision></link>
+  <joint name="module_2_support_fixed" type="fixed"><origin xyz="-0.028 0.018 0" rpy="0 0 0"/><parent link="plate_2"/><child link="module_2_rod_support"/></joint>
+
+  <!-- module 3 -->
+  <link name="module_3_rod_main"><inertial><origin xyz="0 0 0.055" rpy="0 0 0"/><mass value="0.02"/><inertia ixx="1e-5" ixy="0" ixz="0" iyy="1e-5" iyz="0" izz="1e-5"/></inertial><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="../stls/danda_v4.stl"/></geometry><material name="rod_white"/></visual><collision><origin xyz="0 0 0.055" rpy="0 0 0"/><geometry><cylinder radius="0.006" length="0.11"/></geometry></collision></link>
+  <joint name="module_3_servo_a" type="revolute"><origin xyz="0.028 -0.018 0" rpy="0 0 0"/><parent link="plate_3"/><child link="module_3_rod_main"/><axis xyz="0 0 1"/><limit lower="-1.0472" upper="1.0472" effort="12" velocity="4"/></joint>
+  <link name="plate_4"><inertial><origin xyz="0 0 0" rpy="0 0 0"/><mass value="0.12"/><inertia ixx="0.0003" ixy="0" ixz="0" iyy="0.0003" iyz="0" izz="0.0003"/></inertial><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="../stls/fusioncomponent.stl"/></geometry><material name="plate_white"/></visual><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="../stls/servo_motor_35kg_motor_v1.stl"/></geometry><material name="servo_dark"/></visual><collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.12 0.12 0.016"/></geometry></collision></link>
+  <joint name="module_3_servo_b" type="revolute"><origin xyz="0 0 0.11" rpy="0 0 0"/><parent link="module_3_rod_main"/><child link="plate_4"/><axis xyz="1 0 0"/><limit lower="-1.0472" upper="1.0472" effort="12" velocity="4"/></joint>
+  <link name="module_3_rod_support"><inertial><origin xyz="0 0 0.055" rpy="0 0 0"/><mass value="0.02"/><inertia ixx="1e-5" ixy="0" ixz="0" iyy="1e-5" iyz="0" izz="1e-5"/></inertial><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="../stls/danda_support_v5.stl"/></geometry><material name="rod_white"/></visual><collision><origin xyz="0 0 0.055" rpy="0 0 0"/><geometry><cylinder radius="0.006" length="0.11"/></geometry></collision></link>
+  <joint name="module_3_support_fixed" type="fixed"><origin xyz="-0.028 0.018 0" rpy="0 0 0"/><parent link="plate_3"/><child link="module_3_rod_support"/></joint>
+
+  <!-- module 4 -->
+  <link name="module_4_rod_main"><inertial><origin xyz="0 0 0.055" rpy="0 0 0"/><mass value="0.02"/><inertia ixx="1e-5" ixy="0" ixz="0" iyy="1e-5" iyz="0" izz="1e-5"/></inertial><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="../stls/danda_v4.stl"/></geometry><material name="rod_white"/></visual><collision><origin xyz="0 0 0.055" rpy="0 0 0"/><geometry><cylinder radius="0.006" length="0.11"/></geometry></collision></link>
+  <joint name="module_4_servo_a" type="revolute"><origin xyz="0.028 -0.018 0" rpy="0 0 0"/><parent link="plate_4"/><child link="module_4_rod_main"/><axis xyz="0 0 1"/><limit lower="-1.0472" upper="1.0472" effort="12" velocity="4"/></joint>
+  <link name="plate_5"><inertial><origin xyz="0 0 0" rpy="0 0 0"/><mass value="0.12"/><inertia ixx="0.0003" ixy="0" ixz="0" iyy="0.0003" iyz="0" izz="0.0003"/></inertial><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="../stls/fusioncomponent.stl"/></geometry><material name="plate_white"/></visual><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="../stls/servo_motor_35kg_motor_v1.stl"/></geometry><material name="servo_dark"/></visual><collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.12 0.12 0.016"/></geometry></collision></link>
+  <joint name="module_4_servo_b" type="revolute"><origin xyz="0 0 0.11" rpy="0 0 0"/><parent link="module_4_rod_main"/><child link="plate_5"/><axis xyz="1 0 0"/><limit lower="-1.0472" upper="1.0472" effort="12" velocity="4"/></joint>
+  <link name="module_4_rod_support"><inertial><origin xyz="0 0 0.055" rpy="0 0 0"/><mass value="0.02"/><inertia ixx="1e-5" ixy="0" ixz="0" iyy="1e-5" iyz="0" izz="1e-5"/></inertial><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="../stls/danda_support_v5.stl"/></geometry><material name="rod_white"/></visual><collision><origin xyz="0 0 0.055" rpy="0 0 0"/><geometry><cylinder radius="0.006" length="0.11"/></geometry></collision></link>
+  <joint name="module_4_support_fixed" type="fixed"><origin xyz="-0.028 0.018 0" rpy="0 0 0"/><parent link="plate_4"/><child link="module_4_rod_support"/></joint>
 </robot>

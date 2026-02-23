@@ -1,0 +1,23 @@
+<mujoco model="snakebot_scene">
+  <include file="snakebot.xml"/>
+
+  <visual>
+    <headlight diffuse="0.8 0.8 0.8" ambient="0.35 0.35 0.35" specular="0.08 0.08 0.08"/>
+    <rgba haze="0.12 0.18 0.24 1"/>
+    <global azimuth="150" elevation="-18"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.4 0.55 0.75" rgb2="0.02 0.02 0.04" width="512" height="3072"/>
+    <texture name="ground_tex" type="2d" builtin="checker" rgb1="0.18 0.2 0.22" rgb2="0.26 0.28 0.3" width="512" height="512"/>
+    <material name="ground_mat" texture="ground_tex" texrepeat="10 10" texuniform="true" reflectance="0.2"/>
+  </asset>
+
+  <worldbody>
+    <light name="sun" pos="0 0 4" dir="0 0 -1" directional="true"/>
+    <light name="fill" pos="-2 -1 2.5" dir="0.8 0.4 -1" directional="true" diffuse="0.4 0.4 0.4"/>
+    <geom name="floor" type="plane" size="4 4 0.1" pos="0 0 0" material="ground_mat" friction="1.2 0.03 0.01"/>
+    <camera name="overview" pos="-1.1 -1.1 0.85" xyaxes="0.7 -0.7 0 0.35 0.35 0.87"/>
+    <camera name="side" pos="0 -1.4 0.5" xyaxes="1 0 0 0 0.35 0.94"/>
+  </worldbody>
+</mujoco>

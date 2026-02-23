@@ -3,7 +3,7 @@ from mujoco import viewer
 import time
 
 # Path to your MuJoCo XML model (make sure assets are relative or absolute correctly)
-xml_path = "top_scene.xml"
+xml_path = "robot_desc/scene.xml"
 
 # Load model and data
 model = mujoco.MjModel.from_xml_path(xml_path)
