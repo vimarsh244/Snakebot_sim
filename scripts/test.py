@@ -1,31 +1,23 @@
-import mujoco
-from mujoco import viewer
+import math
 import time
 
-# Path to your MuJoCo XML model (make sure assets are relative or absolute correctly)
-xml_path = "robot_desc/scene.xml"
+import mujoco
+from mujoco import viewer
 
-# Load model and data
+xml_path = "robot_desc/scene.xml"
 model = mujoco.MjModel.from_xml_path(xml_path)
 data = mujoco.MjData(model)
 
-joint_names = []
-for i in range(model.njnt):
-    joint_name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_JOINT, i)
-    if joint_name:  # Check if a name exists (some joints might not be explicitly named)
-        joint_names.append(joint_name)
+print("model loaded:", xml_path)
+print("joints:", [mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_JOINT, i) for i in range(model.njnt)])
+print("actuators:", [mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_ACTUATOR, i) for i in range(model.nu)])
 
-lowers, uppers = model.jnt_range[1:].T
-print("Joint limits (lower, upper):", lowers.shape, uppers.shape)
-
-print("List of joints:", joint_names)
-
-# Launch viewer (GUI window)
+# controls are kept at zero so joints do not move automatically.
+# you can adjust actuators from the viewer UI sliders or use mouse perturbations.
 with viewer.launch_passive(model, data) as gui:
-    print("✅ Viewer launched. Press ESC to quit.")
-
-    # Step and render simulation
+    print("viewer launched. press ESC to quit.")
     while gui.is_running():
+        data.ctrl[:] = 0.0
         mujoco.mj_step(model, data)
         gui.sync()
-        time.sleep(0.001)
+        time.sleep(model.opt.timestep)

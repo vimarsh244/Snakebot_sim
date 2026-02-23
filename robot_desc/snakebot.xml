@@ -20,6 +20,7 @@
     <mesh name="danda_v4" file="danda_v4.stl"/>
     <mesh name="danda_support_v5" file="danda_support_v5.stl"/>
     <mesh name="servo_motor_35kg_motor_v1" file="servo_motor_35kg_motor_v1.stl"/>
+    <mesh name="Servo_snake_base_plate" file="Servo_snake_base_plate.stl"/>
     <mesh name="default" file="default.stl"/>
     <material name="plate_mat" rgba="0.9 0.9 0.9 1"/>
     <material name="rod_mat" rgba="0.95 0.95 0.95 1"/>
@@ -31,8 +32,7 @@
       <inertial mass="0.120000" pos="0 0 0" diaginertia="0.00030 0.00030 0.00030"/>
       <site name="head_imu" pos="0 0 0.01" size="0.003"/>
       <geom name="plate_0_collision" type="box" size="0.060000 0.060000 0.008000" class="collision"/>
-      <geom name="plate_0_visual" type="mesh" mesh="fusioncomponent" class="visual"/>
-      <geom name="plate_0_servo_visual" type="mesh" mesh="servo_motor_35kg_motor_v1" class="visual"/>
+      <geom name="plate_0_base_servo_visual" type="mesh" mesh="Servo_snake_base_plate" euler="1.5707963 0 0" class="visual"/>
       <geom name="plate_0_horn_visual" type="mesh" mesh="default" class="visual"/>
       <body name="module_0_rod_main" pos="0.028000 -0.018000 0.000000">
         <joint name="module_0_servo_a" type="hinge" axis="0 0 1" range="-1.047198 1.047198"/>
@@ -44,97 +44,8 @@
           <joint name="module_0_servo_b" type="hinge" axis="1 0 0" range="-1.047198 1.047198"/>
           <inertial mass="0.120000" pos="0 0 0" diaginertia="0.00030 0.00030 0.00030"/>
           <geom name="plate_1_collision" type="box" size="0.060000 0.060000 0.008000" class="collision"/>
-          <geom name="plate_1_visual" type="mesh" mesh="fusioncomponent" class="visual"/>
-          <geom name="plate_1_servo_visual" type="mesh" mesh="servo_motor_35kg_motor_v1" class="visual"/>
+          <geom name="plate_1_base_servo_visual" type="mesh" mesh="Servo_snake_base_plate" euler="-1.5707963 0 0" class="visual"/>
           <geom name="plate_1_horn_visual" type="mesh" mesh="default" class="visual"/>
-          <body name="module_1_rod_main" pos="0.028000 -0.018000 0.000000">
-            <joint name="module_1_servo_a" type="hinge" axis="0 0 1" range="-1.047198 1.047198"/>
-            <inertial mass="0.020000" pos="0 0 0.055000" diaginertia="0.00001 0.00001 0.00001"/>
-            <geom name="module_1_rod_main_collision" type="capsule" fromto="0 0 0 0 0 0.110000" size="0.006000" class="collision"/>
-            <geom name="module_1_rod_main_visual" type="mesh" mesh="danda_v4" class="visual"/>
-            <geom name="module_1_rod_main_bracket_visual" type="mesh" mesh="fusioncomponent__2" class="visual"/>
-            <body name="plate_2" pos="0 0 0.110000">
-              <joint name="module_1_servo_b" type="hinge" axis="1 0 0" range="-1.047198 1.047198"/>
-              <inertial mass="0.120000" pos="0 0 0" diaginertia="0.00030 0.00030 0.00030"/>
-              <geom name="plate_2_collision" type="box" size="0.060000 0.060000 0.008000" class="collision"/>
-              <geom name="plate_2_visual" type="mesh" mesh="fusioncomponent" class="visual"/>
-              <geom name="plate_2_servo_visual" type="mesh" mesh="servo_motor_35kg_motor_v1" class="visual"/>
-              <geom name="plate_2_horn_visual" type="mesh" mesh="default" class="visual"/>
-              <body name="module_2_rod_main" pos="0.028000 -0.018000 0.000000">
-                <joint name="module_2_servo_a" type="hinge" axis="0 0 1" range="-1.047198 1.047198"/>
-                <inertial mass="0.020000" pos="0 0 0.055000" diaginertia="0.00001 0.00001 0.00001"/>
-                <geom name="module_2_rod_main_collision" type="capsule" fromto="0 0 0 0 0 0.110000" size="0.006000" class="collision"/>
-                <geom name="module_2_rod_main_visual" type="mesh" mesh="danda_v4" class="visual"/>
-                <geom name="module_2_rod_main_bracket_visual" type="mesh" mesh="fusioncomponent__2" class="visual"/>
-                <body name="plate_3" pos="0 0 0.110000">
-                  <joint name="module_2_servo_b" type="hinge" axis="1 0 0" range="-1.047198 1.047198"/>
-                  <inertial mass="0.120000" pos="0 0 0" diaginertia="0.00030 0.00030 0.00030"/>
-                  <geom name="plate_3_collision" type="box" size="0.060000 0.060000 0.008000" class="collision"/>
-                  <geom name="plate_3_visual" type="mesh" mesh="fusioncomponent" class="visual"/>
-                  <geom name="plate_3_servo_visual" type="mesh" mesh="servo_motor_35kg_motor_v1" class="visual"/>
-                  <geom name="plate_3_horn_visual" type="mesh" mesh="default" class="visual"/>
-                  <body name="module_3_rod_main" pos="0.028000 -0.018000 0.000000">
-                    <joint name="module_3_servo_a" type="hinge" axis="0 0 1" range="-1.047198 1.047198"/>
-                    <inertial mass="0.020000" pos="0 0 0.055000" diaginertia="0.00001 0.00001 0.00001"/>
-                    <geom name="module_3_rod_main_collision" type="capsule" fromto="0 0 0 0 0 0.110000" size="0.006000" class="collision"/>
-                    <geom name="module_3_rod_main_visual" type="mesh" mesh="danda_v4" class="visual"/>
-                    <geom name="module_3_rod_main_bracket_visual" type="mesh" mesh="fusioncomponent__2" class="visual"/>
-                    <body name="plate_4" pos="0 0 0.110000">
-                      <joint name="module_3_servo_b" type="hinge" axis="1 0 0" range="-1.047198 1.047198"/>
-                      <inertial mass="0.120000" pos="0 0 0" diaginertia="0.00030 0.00030 0.00030"/>
-                      <geom name="plate_4_collision" type="box" size="0.060000 0.060000 0.008000" class="collision"/>
-                      <geom name="plate_4_visual" type="mesh" mesh="fusioncomponent" class="visual"/>
-                      <geom name="plate_4_servo_visual" type="mesh" mesh="servo_motor_35kg_motor_v1" class="visual"/>
-                      <geom name="plate_4_horn_visual" type="mesh" mesh="default" class="visual"/>
-                      <body name="module_4_rod_main" pos="0.028000 -0.018000 0.000000">
-                        <joint name="module_4_servo_a" type="hinge" axis="0 0 1" range="-1.047198 1.047198"/>
-                        <inertial mass="0.020000" pos="0 0 0.055000" diaginertia="0.00001 0.00001 0.00001"/>
-                        <geom name="module_4_rod_main_collision" type="capsule" fromto="0 0 0 0 0 0.110000" size="0.006000" class="collision"/>
-                        <geom name="module_4_rod_main_visual" type="mesh" mesh="danda_v4" class="visual"/>
-                        <geom name="module_4_rod_main_bracket_visual" type="mesh" mesh="fusioncomponent__2" class="visual"/>
-                        <body name="plate_5" pos="0 0 0.110000">
-                          <joint name="module_4_servo_b" type="hinge" axis="1 0 0" range="-1.047198 1.047198"/>
-                          <inertial mass="0.120000" pos="0 0 0" diaginertia="0.00030 0.00030 0.00030"/>
-                          <geom name="plate_5_collision" type="box" size="0.060000 0.060000 0.008000" class="collision"/>
-                          <geom name="plate_5_visual" type="mesh" mesh="fusioncomponent" class="visual"/>
-                          <geom name="plate_5_servo_visual" type="mesh" mesh="servo_motor_35kg_motor_v1" class="visual"/>
-                          <geom name="plate_5_horn_visual" type="mesh" mesh="default" class="visual"/>
-                        </body>
-                      </body>
-                      <body name="module_4_rod_support" pos="-0.028000 0.018000 0.000000">
-                        <joint name="module_4_support_passive" type="hinge" axis="0 0 1" range="-1.047198 1.047198"/>
-                        <inertial mass="0.020000" pos="0 0 0.055000" diaginertia="0.00001 0.00001 0.00001"/>
-                        <geom name="module_4_rod_support_collision" type="capsule" fromto="0 0 0 0 0 0.110000" size="0.006000" class="collision"/>
-                        <geom name="module_4_rod_support_visual" type="mesh" mesh="danda_support_v5" class="visual"/>
-                        <geom name="module_4_rod_support_bracket_visual" type="mesh" mesh="fusioncomponent__2" class="visual"/>
-                      </body>
-                    </body>
-                  </body>
-                  <body name="module_3_rod_support" pos="-0.028000 0.018000 0.000000">
-                    <joint name="module_3_support_passive" type="hinge" axis="0 0 1" range="-1.047198 1.047198"/>
-                    <inertial mass="0.020000" pos="0 0 0.055000" diaginertia="0.00001 0.00001 0.00001"/>
-                    <geom name="module_3_rod_support_collision" type="capsule" fromto="0 0 0 0 0 0.110000" size="0.006000" class="collision"/>
-                    <geom name="module_3_rod_support_visual" type="mesh" mesh="danda_support_v5" class="visual"/>
-                    <geom name="module_3_rod_support_bracket_visual" type="mesh" mesh="fusioncomponent__2" class="visual"/>
-                  </body>
-                </body>
-              </body>
-              <body name="module_2_rod_support" pos="-0.028000 0.018000 0.000000">
-                <joint name="module_2_support_passive" type="hinge" axis="0 0 1" range="-1.047198 1.047198"/>
-                <inertial mass="0.020000" pos="0 0 0.055000" diaginertia="0.00001 0.00001 0.00001"/>
-                <geom name="module_2_rod_support_collision" type="capsule" fromto="0 0 0 0 0 0.110000" size="0.006000" class="collision"/>
-                <geom name="module_2_rod_support_visual" type="mesh" mesh="danda_support_v5" class="visual"/>
-                <geom name="module_2_rod_support_bracket_visual" type="mesh" mesh="fusioncomponent__2" class="visual"/>
-              </body>
-            </body>
-          </body>
-          <body name="module_1_rod_support" pos="-0.028000 0.018000 0.000000">
-            <joint name="module_1_support_passive" type="hinge" axis="0 0 1" range="-1.047198 1.047198"/>
-            <inertial mass="0.020000" pos="0 0 0.055000" diaginertia="0.00001 0.00001 0.00001"/>
-            <geom name="module_1_rod_support_collision" type="capsule" fromto="0 0 0 0 0 0.110000" size="0.006000" class="collision"/>
-            <geom name="module_1_rod_support_visual" type="mesh" mesh="danda_support_v5" class="visual"/>
-            <geom name="module_1_rod_support_bracket_visual" type="mesh" mesh="fusioncomponent__2" class="visual"/>
-          </body>
         </body>
       </body>
       <body name="module_0_rod_support" pos="-0.028000 0.018000 0.000000">
@@ -148,22 +59,10 @@
   </worldbody>
   <equality>
     <connect name="module_0_loop_connect" body1="module_0_rod_support" body2="plate_1" anchor="-0.028000 0.018000 0.110000" solref="0.005 1" solimp="0.95 0.99 0.001"/>
-    <connect name="module_1_loop_connect" body1="module_1_rod_support" body2="plate_2" anchor="-0.028000 0.018000 0.110000" solref="0.005 1" solimp="0.95 0.99 0.001"/>
-    <connect name="module_2_loop_connect" body1="module_2_rod_support" body2="plate_3" anchor="-0.028000 0.018000 0.110000" solref="0.005 1" solimp="0.95 0.99 0.001"/>
-    <connect name="module_3_loop_connect" body1="module_3_rod_support" body2="plate_4" anchor="-0.028000 0.018000 0.110000" solref="0.005 1" solimp="0.95 0.99 0.001"/>
-    <connect name="module_4_loop_connect" body1="module_4_rod_support" body2="plate_5" anchor="-0.028000 0.018000 0.110000" solref="0.005 1" solimp="0.95 0.99 0.001"/>
   </equality>
   <actuator>
     <position name="module_0_servo_a_act" joint="module_0_servo_a" class="snake"/>
     <position name="module_0_servo_b_act" joint="module_0_servo_b" class="snake"/>
-    <position name="module_1_servo_a_act" joint="module_1_servo_a" class="snake"/>
-    <position name="module_1_servo_b_act" joint="module_1_servo_b" class="snake"/>
-    <position name="module_2_servo_a_act" joint="module_2_servo_a" class="snake"/>
-    <position name="module_2_servo_b_act" joint="module_2_servo_b" class="snake"/>
-    <position name="module_3_servo_a_act" joint="module_3_servo_a" class="snake"/>
-    <position name="module_3_servo_b_act" joint="module_3_servo_b" class="snake"/>
-    <position name="module_4_servo_a_act" joint="module_4_servo_a" class="snake"/>
-    <position name="module_4_servo_b_act" joint="module_4_servo_b" class="snake"/>
   </actuator>
   <sensor>
     <accelerometer name="head_acc" site="head_imu"/>
@@ -172,21 +71,5 @@
     <jointvel name="module_0_servo_a_vel" joint="module_0_servo_a"/>
     <jointpos name="module_0_servo_b_pos" joint="module_0_servo_b"/>
     <jointvel name="module_0_servo_b_vel" joint="module_0_servo_b"/>
-    <jointpos name="module_1_servo_a_pos" joint="module_1_servo_a"/>
-    <jointvel name="module_1_servo_a_vel" joint="module_1_servo_a"/>
-    <jointpos name="module_1_servo_b_pos" joint="module_1_servo_b"/>
-    <jointvel name="module_1_servo_b_vel" joint="module_1_servo_b"/>
-    <jointpos name="module_2_servo_a_pos" joint="module_2_servo_a"/>
-    <jointvel name="module_2_servo_a_vel" joint="module_2_servo_a"/>
-    <jointpos name="module_2_servo_b_pos" joint="module_2_servo_b"/>
-    <jointvel name="module_2_servo_b_vel" joint="module_2_servo_b"/>
-    <jointpos name="module_3_servo_a_pos" joint="module_3_servo_a"/>
-    <jointvel name="module_3_servo_a_vel" joint="module_3_servo_a"/>
-    <jointpos name="module_3_servo_b_pos" joint="module_3_servo_b"/>
-    <jointvel name="module_3_servo_b_vel" joint="module_3_servo_b"/>
-    <jointpos name="module_4_servo_a_pos" joint="module_4_servo_a"/>
-    <jointvel name="module_4_servo_a_vel" joint="module_4_servo_a"/>
-    <jointpos name="module_4_servo_b_pos" joint="module_4_servo_b"/>
-    <jointvel name="module_4_servo_b_vel" joint="module_4_servo_b"/>
   </sensor>
 </mujoco>

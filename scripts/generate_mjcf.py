@@ -122,20 +122,14 @@ def _add_module(
         size=_vec(cfg.plate_half_extents),
         **{"class": "collision"},
     )
+    euler_val = "-1.5707963 0 0" if module_index % 2 == 0 else "1.5707963 0 0"
     etree.SubElement(
         plate_next,
         "geom",
-        name=f"plate_{module_index + 1}_visual",
+        name=f"plate_{module_index + 1}_base_servo_visual",
         type="mesh",
-        mesh="fusioncomponent",
-        **{"class": "visual"},
-    )
-    etree.SubElement(
-        plate_next,
-        "geom",
-        name=f"plate_{module_index + 1}_servo_visual",
-        type="mesh",
-        mesh="servo_motor_35kg_motor_v1",
+        mesh="Servo_snake_base_plate",
+        euler=euler_val,
         **{"class": "visual"},
     )
     etree.SubElement(
@@ -248,6 +242,7 @@ def build_model_xml(cfg: SnakeConfig) -> etree._ElementTree:
     _add_mesh_asset(asset, "danda_v4", "danda_v4.stl")
     _add_mesh_asset(asset, "danda_support_v5", "danda_support_v5.stl")
     _add_mesh_asset(asset, "servo_motor_35kg_motor_v1", "servo_motor_35kg_motor_v1.stl")
+    _add_mesh_asset(asset, "Servo_snake_base_plate", "Servo_snake_base_plate.stl")
     _add_mesh_asset(asset, "default", "default.stl")
     etree.SubElement(asset, "material", name="plate_mat", rgba="0.9 0.9 0.9 1")
     etree.SubElement(asset, "material", name="rod_mat", rgba="0.95 0.95 0.95 1")
@@ -272,15 +267,7 @@ def build_model_xml(cfg: SnakeConfig) -> etree._ElementTree:
         size=_vec(cfg.plate_half_extents),
         **{"class": "collision"},
     )
-    etree.SubElement(root, "geom", name="plate_0_visual", type="mesh", mesh="fusioncomponent", **{"class": "visual"})
-    etree.SubElement(
-        root,
-        "geom",
-        name="plate_0_servo_visual",
-        type="mesh",
-        mesh="servo_motor_35kg_motor_v1",
-        **{"class": "visual"},
-    )
+    etree.SubElement(root, "geom", name="plate_0_base_servo_visual", type="mesh", mesh="Servo_snake_base_plate", euler="1.5707963 0 0", **{"class": "visual"})
     etree.SubElement(root, "geom", name="plate_0_horn_visual", type="mesh", mesh="default", **{"class": "visual"})
 
     equality = etree.SubElement(mujoco, "equality")
