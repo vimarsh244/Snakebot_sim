@@ -237,11 +237,9 @@ def build_model_xml(cfg: SnakeConfig) -> etree._ElementTree:
     etree.SubElement(collision_default, "geom", group="3", friction="1.2 0.03 0.01")
 
     asset = etree.SubElement(mujoco, "asset")
-    _add_mesh_asset(asset, "fusioncomponent", "fusioncomponent.stl")
     _add_mesh_asset(asset, "fusioncomponent__2", "fusioncomponent__2.stl")
     _add_mesh_asset(asset, "danda_v4", "danda_v4.stl")
     _add_mesh_asset(asset, "danda_support_v5", "danda_support_v5.stl")
-    _add_mesh_asset(asset, "servo_motor_35kg_motor_v1", "servo_motor_35kg_motor_v1.stl")
     _add_mesh_asset(asset, "Servo_snake_base_plate", "Servo_snake_base_plate.stl")
     _add_mesh_asset(asset, "default", "default.stl")
     etree.SubElement(asset, "material", name="plate_mat", rgba="0.9 0.9 0.9 1")

@@ -4,7 +4,7 @@ import time
 import mujoco
 from mujoco import viewer
 
-xml_path = "robot_desc/scene.xml"
+xml_path = "best2JointsRemoved/scene.xml"
 model = mujoco.MjModel.from_xml_path(xml_path)
 data = mujoco.MjData(model)
 

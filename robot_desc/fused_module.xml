@@ -1,0 +1,87 @@
+<?xml version="1.0" ?>
+<!-- Auto-generated fused module: all parts in a single rigid body -->
+<mujoco model="fused-module">
+  <compiler angle="radian" meshdir="assets" autolimits="true"/>
+  <default>
+    <default class="fused-module">
+      <joint damping="0.01" frictionloss="0.01" armature="0.002"/>
+      <default class="visual">
+        <geom type="mesh" contype="0" conaffinity="0" group="2"/>
+      </default>
+      <default class="collision">
+        <geom group="3"/>
+      </default>
+    </default>
+  </default>
+  <worldbody>
+    <!-- Single fused body: all servo+fusioncomponent parts rigidly fixed -->
+    <body name="fused_module" pos="0 0 0.05" quat="1 0 0 0" childclass="fused-module">
+      <freejoint name="fused_module_freejoint"/>
+      <inertial pos="0 0 0" mass="1.0500" fullinertia="0.001 0.001 0.001 0 0 0"/>
+
+      <!-- servo_motor_35kg_motor_v1 -->
+      <geom type="mesh" class="visual" pos="0.0087362384 0.014000003 0.017475516" quat="0 0.71174413 0 0.70243882" mesh="servo_motor_35kg_motor_v1"/>
+      <!-- servo_motor_35kg_motor_v1 -->
+      <geom type="mesh" class="collision" pos="0.0087362384 0.014000003 0.017475516" quat="0 0.71174413 0 0.70243882" mesh="servo_motor_35kg_motor_v1"/>
+      <!-- fusioncomponent -->
+      <geom type="mesh" class="visual" pos="0.0010113123 0.007041815 -0.006140756" quat="0.36960599 0.60461793 0.58462025 0.39502877" mesh="fusioncomponent"/>
+      <!-- fusioncomponent -->
+      <geom type="mesh" class="collision" pos="0.0010113123 0.007041815 -0.006140756" quat="0.36960599 0.60461793 0.58462025 0.39502877" mesh="fusioncomponent"/>
+      <!-- fusioncomponent__2 -->
+      <geom type="mesh" class="visual" pos="-0.0365576 0.017133435 -0.00064678064" quat="-2.0509837e-08 -5.7787091e-07 0.035469741 0.99937075" mesh="fusioncomponent__2"/>
+      <!-- fusioncomponent__2 -->
+      <geom type="mesh" class="collision" pos="-0.0365576 0.017133435 -0.00064678064" quat="-2.0509837e-08 -5.7787091e-07 0.035469741 0.99937075" mesh="fusioncomponent__2"/>
+      <!-- danda_v4 -->
+      <geom type="mesh" class="visual" pos="-0.0049631274 0.05877214 0.010004037" quat="0.28862463 -0.31023058 -0.61746993 0.66270936" mesh="danda_v4"/>
+      <!-- danda_v4 -->
+      <geom type="mesh" class="collision" pos="-0.0049631274 0.05877214 0.010004037" quat="0.28862463 -0.31023058 -0.61746993 0.66270936" mesh="danda_v4"/>
+      <!-- fusioncomponent__2 -->
+      <geom type="mesh" class="visual" pos="0.031589195 0.017103494 -0.032658373" quat="-0.029703132 0.38152824 0.071709613 0.92109264" mesh="fusioncomponent__2"/>
+      <!-- fusioncomponent__2 -->
+      <geom type="mesh" class="collision" pos="0.031589195 0.017103494 -0.032658373" quat="-0.029703132 0.38152824 0.071709613 0.92109264" mesh="fusioncomponent__2"/>
+      <!-- danda_support_v5 -->
+      <geom type="mesh" class="visual" pos="-0.017560204 0.047950194 -0.015886559" quat="0.41671574 0.63648596 0.6353989 0.13229454" mesh="danda_support_v5"/>
+      <!-- danda_support_v5 -->
+      <geom type="mesh" class="collision" pos="-0.017560204 0.047950194 -0.015886559" quat="0.41671574 0.63648596 0.6353989 0.13229454" mesh="danda_support_v5"/>
+      <!-- fusioncomponent__2 -->
+      <geom type="mesh" class="visual" pos="-0.042190954 0.08430301 0.026233933" quat="0.91973002 -0.059853439 0.38356698 0.058229047" mesh="fusioncomponent__2"/>
+      <!-- fusioncomponent__2 -->
+      <geom type="mesh" class="collision" pos="-0.042190954 0.08430301 0.026233933" quat="0.91973002 -0.059853439 0.38356698 0.058229047" mesh="fusioncomponent__2"/>
+      <!-- fusioncomponent -->
+      <geom type="mesh" class="visual" pos="-0.016475858 0.097202901 -0.00409347" quat="0.67773883 0.19186599 -0.10040532 -0.70269217" mesh="fusioncomponent"/>
+      <!-- fusioncomponent -->
+      <geom type="mesh" class="collision" pos="-0.016475858 0.097202901 -0.00409347" quat="0.67773883 0.19186599 -0.10040532 -0.70269217" mesh="fusioncomponent"/>
+      <!-- servo_motor_35kg_motor_v1 -->
+      <geom type="mesh" class="visual" pos="0.0068124839 0.088041572 0.002194585" quat="0.99727345 0.06879887 0.00028438854 -0.026689114" mesh="servo_motor_35kg_motor_v1"/>
+      <!-- servo_motor_35kg_motor_v1 -->
+      <geom type="mesh" class="collision" pos="0.0068124839 0.088041572 0.002194585" quat="0.99727345 0.06879887 0.00028438854 -0.026689114" mesh="servo_motor_35kg_motor_v1"/>
+      <!-- fusioncomponent__2 -->
+      <geom type="mesh" class="visual" pos="-0.011151864 0.092118555 -0.042788866" quat="0.70350497 0.007890183 0.70490899 0.090121133" mesh="fusioncomponent__2"/>
+      <!-- fusioncomponent__2 -->
+      <geom type="mesh" class="collision" pos="-0.011151864 0.092118555 -0.042788866" quat="0.70350497 0.007890183 0.70490899 0.090121133" mesh="fusioncomponent__2"/>
+
+    </body>
+  </worldbody>
+  <asset>
+    <mesh name="danda_support_v5" file="danda_support_v5.stl"/>
+    <mesh name="danda_v4" file="danda_v4.stl"/>
+    <mesh name="fusioncomponent" file="fusioncomponent.stl"/>
+    <mesh name="fusioncomponent__2" file="fusioncomponent__2.stl"/>
+    <mesh name="servo_motor_35kg_motor_v1" file="servo_motor_35kg_motor_v1.stl"/>
+    <!-- extra servo variant: servo_motor_35kg_motor_v1__2.stl -->
+    <mesh name="servo_motor_35kg_motor_v1__2" file="servo_motor_35kg_motor_v1__2.stl"/>
+    <!-- extra servo variant: servo_motor_35kg_motor_v1__3.stl -->
+    <mesh name="servo_motor_35kg_motor_v1__3" file="servo_motor_35kg_motor_v1__3.stl"/>
+    <!-- extra servo variant: servo_motor_35kg_motor_v1__4.stl -->
+    <mesh name="servo_motor_35kg_motor_v1__4" file="servo_motor_35kg_motor_v1__4.stl"/>
+    <!-- extra servo variant: servo_motor_35kg_motor_v1__5.stl -->
+    <mesh name="servo_motor_35kg_motor_v1__5" file="servo_motor_35kg_motor_v1__5.stl"/>
+    <!-- Materials -->
+    <material name="servo_motor_35kg_motor_v1_material" rgba="0.101961 0.101961 0.101961 1"/>
+    <material name="fusioncomponent_material"   rgba="0.627451 0.627451 0.627451 1"/>
+    <material name="fusioncomponent__2_material" rgba="0.627451 0.627451 0.627451 1"/>
+    <material name="danda_v4_material"          rgba="0.627451 0.627451 0.627451 1"/>
+    <material name="danda_support_v5_material"  rgba="0.627451 0.627451 0.627451 1"/>
+    <material name="default_material" rgba="0.866667 0.909804 1 1"/>
+  </asset>
+</mujoco>
