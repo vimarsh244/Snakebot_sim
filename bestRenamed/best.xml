@@ -19,20 +19,10 @@
         <body name="bottom-base-plate-v1" pos="0.0 0.033146846605945184 0.0145310940675635" euler="-3.141592653589787 -0.0 0.0">
             <geom name="bottom-base-plate-v1_geom" type="mesh" mesh="bottom-base-plate-v1" pos="0 0 0" euler="0 0 0" />
             <inertial mass="0.6346416371043081" pos="-0.005347637848628755 0.017762619548364243 0.005846593790389482" fullinertia="0.00035240661436305326 0.0004045289246972485 0.0006907997214385136 2.0631258195209793e-05 1.3728562784376835e-05 2.136024439408237e-06" />
-            <body name="bottom-diagonal-chintu-v1" pos="0.04926263546510042 -0.04140998343068075 0.009999457199693682" euler="-1.5603770637091834 3.3923831869601494e-14 -0.7853981633974351">
-                <joint name="Revolute-8" type="hinge" axis="-1.0000003094489522 3.8658312662143146e-14 1.2434497875801753e-14" pos="-0.0425002751358633 0.009999904807428087 -1.0747999264540658e-07" ref="3.141592653589793" />
-                <geom name="bottom-diagonal-chintu-v1_geom" type="mesh" mesh="bottom-diagonal-chintu-v1" pos="0 0 0" euler="0 0 0" />
-                <inertial mass="0.02683295322437194" pos="-0.03749999999999955 0.011871044300627112 -7.670762931010015e-05" fullinertia="2.583516087012673e-06 1.6570207418707578e-06 1.3643364476595977e-06 -7.783679114529989e-19 -2.3414566936227997e-19 5.3236682858778105e-09" />
-            </body>
             <body name="bottom-side-chintu-v1" pos="-0.00799999999999995 0.016966177185297776 0.009999942800696776" euler="-1.5674140388758464 9.144902985720049e-17 -8.872539658711765e-15">
                 <joint name="Revolute-9" type="hinge" axis="1.0 -6.143908029357409e-17 8.872798214762224e-15" pos="-0.03250000000000005 0.009999905414152896 -1.5307501481837577e-07" />
                 <geom name="bottom-side-chintu-v1_geom" type="mesh" mesh="bottom-side-chintu-v1" pos="0 0 0" euler="0 0 0" />
                 <inertial mass="0.02683295322437194" pos="-0.03749999999999956 0.011871044300627118 -7.670762931009596e-05" fullinertia="2.5835160870126677e-06 1.6570207418707627e-06 1.3643364476595892e-06 -7.869942493139945e-19 -2.3724382550196554e-19 5.323668285882103e-09" />
-                <body name="danda-top-servo-v1" pos="-0.001039225735187278 0.030188428968929436 -0.0001000000000005552" euler="-3.141592653589793 -3.094550169498861e-15 -3.136427452099049">
-                    <joint name="Revolute-13" type="hinge" axis="1.4489308988763791e-09 -2.805176106089602e-07 0.9999997189799212" pos="0.036499999974189734 -0.007499995003343646 -0.007499610395922852" />
-                    <geom name="danda-top-servo-v1_geom" type="mesh" mesh="danda-top-servo-v1" pos="0 0 0" euler="0 0 0" />
-                    <inertial mass="0.0922506301325943" pos="-2.3784152288882894e-05 0.02001791956679029 -0.01786461691933594" fullinertia="4.2350317380439685e-05 9.535228719088794e-05 0.00010032395639346058 4.066768036356792e-05 3.919681021637052e-08 -2.9531843309192267e-08" />
-                </body>
             </body>
             <body name="bottom-chintu-and-servo-head-v1" pos="-0.00909307013060929 0.01600000000000013 0.009999693148195961" euler="-1.5629623830476533 -1.0643858845815612e-16 -1.5707963267949052">
                 <joint name="Revolute-15" type="hinge" axis="-1.0 6.33541605345897e-15 -8.555451894091773e-15" pos="-0.031599846605945045 0.009999903831887062 -2.6776042357766494e-07" />
@@ -61,27 +51,34 @@
                     <joint name="Revolute-11" type="hinge" axis="-2.8891292943510017e-10 6.86758660859571e-08 0.999999434404338" pos="-0.044999711787780526 0.04750026372664425 -0.007499920962069091" ref="3.141592653589793" />
                     <geom name="danda-support-v1_geom" type="mesh" mesh="danda-support-v1" pos="0 0 0" euler="0 0 0" />
                     <inertial mass="0.10848592066715428" pos="-2.9218977497941223e-15 0.019999999999999987 -0.023051676135472255" fullinertia="5.76472579093131e-05 0.00016423658507161952 0.0001583087957754129 5.5901833496867315e-05 7.27961290694027e-18 -6.183340514956392e-20" />
-                    <!-- <body name="bottom-diagonal-chintu-v1-top" pos="0.08259432575460177 -0.029842038202836773 0.00010000000000056409" euler="-5.551115123125784e-17 -3.095795537648397e-15 0.0042070173104540795">
-                        <joint name="Revolute-8-top" type="hinge" axis="-1.0000003094489522 3.8658312662143146e-14 1.2434497875801753e-14" pos="-0.0425002751358633 0.009999904807428087 -1.0747999264540658e-07" ref="3.141592653589793" />
-                        <geom name="bottom-diagonal-chintu-v1_top_geom" type="mesh" mesh="bottom-diagonal-chintu-v1" pos="0 0 0" euler="0 0 0" />
+                    <body name="bottom-diagonal-chintu-v1" pos="0.08259432575460178 -0.029842038202836808 0.00010000000000058448" euler="-3.709095707813945e-16 -3.2135450099949987e-15 0.004207017310453853">
+                        <joint name="Revolute-8" type="hinge" axis="-1.0000003094489522 3.8658312662143146e-14 1.2434497875801753e-14" pos="-0.0425002751358633 0.009999904807428087 -1.0747999264540658e-07" ref="3.141592653589793" />
+                        <geom name="bottom-diagonal-chintu-v1_geom" type="mesh" mesh="bottom-diagonal-chintu-v1" pos="0 0 0" euler="0 0 0" />
                         <inertial mass="0.02683295322437194" pos="-0.03749999999999955 0.011871044300627112 -7.670762931010015e-05" fullinertia="2.583516087012673e-06 1.6570207418707578e-06 1.3643364476595977e-06 -7.783679114529989e-19 -2.3414566936227997e-19 5.3236682858778105e-09" />
-                    </body> -->
+                    </body>
                 </body>
             </body>
             <body name="top-chintu-and-servo-head-v1" pos="-0.00898090867971997 0.015099999999999631 0.009999942800695454" euler="-1.5741786147141739 4.058338165747889e-14 -1.5707963267948932">
                 <joint name="Revolute-16" type="hinge" axis="-1.0 -3.991444155681031e-12 1.5061075503405146e-14" pos="-0.03250005861126232 0.009999958703343846 -8.886286865848563e-09" />
                 <geom name="top-chintu-and-servo-head-v1_geom" type="mesh" mesh="top-chintu-and-servo-head-v1" pos="0 0 0" euler="0 0 0" />
                 <inertial mass="0.03185386237967729" pos="-0.03650460388444623 0.011576204158460028 -6.457349709795596e-05" fullinertia="2.834780996599465e-06 1.9489301299972826e-06 1.6711645787284378e-06 4.99611700119453e-08 -2.05354592953819e-09 5.931450301505956e-09" />
+                <body name="danda-top-servo-v1" pos="-0.0012458328763153299 0.07018789538413171 -0.00010000000000055754" euler="-3.141592653589793 3.1852447341414843e-15 0.005165201494735579">
+                    <joint name="Revolute-13" type="hinge" axis="1.4489308988763791e-09 -2.805176106089602e-07 0.9999997189799212" pos="0.036499999974189734 -0.007499995003343646 -0.007499610395922852" />
+                    <geom name="danda-top-servo-v1_geom" type="mesh" mesh="danda-top-servo-v1" pos="0 0 0" euler="0 0 0" />
+                    <inertial mass="0.0922506301325943" pos="-2.3784152288882894e-05 0.02001791956679029 -0.01786461691933594" fullinertia="4.2350317380439685e-05 9.535228719088794e-05 0.00010032395639346058 4.066768036356792e-05 3.919681021637052e-08 -2.9531843309192267e-08" />
+                </body>
             </body>
         </body>
     </worldbody>
     <equality>
-        <connect name="loop_top_head_to_danda_top" body1="top-chintu-and-servo-head-v1" body2="danda-top-servo-v1" anchor="-0.045500 0.008705 0.027006" solref="0.005 1" solimp="0.95 0.99 0.001" />
+        <connect name="loop_bottom_side_to_danda_top" body1="bottom-side-chintu-v1" body2="danda-top-servo-v1" anchor="-0.045500 0.008705 0.027006" solref="0.005 1" solimp="0.95 0.99 0.001" />
         <connect name="loop_top_side_to_danda_bottom" body1="top-side-chintu-v1" body2="danda-bottom-servo-v1-v1" anchor="-0.001083 0.052360 0.082349" solref="0.005 1" solimp="0.95 0.99 0.001" />
+        <connect name="loop_bottom_base_to_bottom_diag" body1="bottom-base-plate-v1" body2="bottom-diagonal-chintu-v1" anchor="0.019284 0.044431 0.014531" solref="0.005 1" solimp="0.95 0.99 0.001" />
     </equality>
     <contact>
-        <exclude body1="top-chintu-and-servo-head-v1" body2="danda-top-servo-v1" />
+        <exclude body1="bottom-side-chintu-v1" body2="danda-top-servo-v1" />
         <exclude body1="top-side-chintu-v1" body2="danda-bottom-servo-v1-v1" />
+        <exclude body1="bottom-base-plate-v1" body2="bottom-diagonal-chintu-v1" />
     </contact>
     <actuator>
         <position name="servo_bottom" joint="Revolute-15" kp="25" ctrlrange="-1.5708 1.5708" />
