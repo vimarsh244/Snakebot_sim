@@ -348,13 +348,6 @@
             <child>top-side-chintu-v1</child>
             <axis>
                 <xyz expressed_in="__model__">0.0 -1.0 0.0</xyz>
-            
-                <limit>
-                    <lower>-1.5707963</lower>
-                    <upper>1.5707963</upper>
-                    <effort>30</effort>
-                    <velocity>1.0</velocity>
-                </limit>
             </axis>
         </joint>
         <joint name="top-side-chintu-v1_Revolute-5" type="revolute">
@@ -363,13 +356,6 @@
             <child>danda-bottom-servo-v1-v1</child>
             <axis>
                 <xyz expressed_in="__model__">-0.999969 -0.0 0.007834</xyz>
-            
-                <limit>
-                    <lower>-1.5707963</lower>
-                    <upper>1.5707963</upper>
-                    <effort>30</effort>
-                    <velocity>1.0</velocity>
-                </limit>
             </axis>
         </joint>
         <joint name="bottom-chintu-and-servo-head-v1_Revolute-6" type="revolute">
@@ -378,13 +364,6 @@
             <child>danda-bottom-servo-v1-v1</child>
             <axis>
                 <xyz expressed_in="__model__">-0.999969 -0.0 0.007834</xyz>
-            
-                <limit>
-                    <lower>-1.5707963</lower>
-                    <upper>1.5707963</upper>
-                    <effort>30</effort>
-                    <velocity>1.0</velocity>
-                </limit>
             </axis>
         </joint>
         <joint name="top-base-plate-v1_Revolute-7" type="revolute">
@@ -393,13 +372,6 @@
             <child>top-diagonal-chintu-v1</child>
             <axis>
                 <xyz expressed_in="__model__">0.707107 0.707107 -0.0</xyz>
-            
-                <limit>
-                    <lower>-1.5707963</lower>
-                    <upper>1.5707963</upper>
-                    <effort>30</effort>
-                    <velocity>1.0</velocity>
-                </limit>
             </axis>
         </joint>
         <joint name="bottom-base-plate-v1_Revolute-8" type="revolute">
@@ -408,13 +380,6 @@
             <child>bottom-diagonal-chintu-v1</child>
             <axis>
                 <xyz expressed_in="__model__">-0.707107 -0.707107 0.0</xyz>
-            
-                <limit>
-                    <lower>-1.5707963</lower>
-                    <upper>1.5707963</upper>
-                    <effort>30</effort>
-                    <velocity>1.0</velocity>
-                </limit>
             </axis>
         </joint>
         <joint name="bottom-base-plate-v1_Revolute-9" type="revolute">
@@ -423,13 +388,6 @@
             <child>bottom-side-chintu-v1</child>
             <axis>
                 <xyz expressed_in="__model__">1.0 -0.0 -0.0</xyz>
-            
-                <limit>
-                    <lower>-1.5707963</lower>
-                    <upper>1.5707963</upper>
-                    <effort>30</effort>
-                    <velocity>1.0</velocity>
-                </limit>
             </axis>
         </joint>
         <joint name="danda-support-v1_Revolute-10" type="revolute">
@@ -438,13 +396,6 @@
             <child>bottom-diagonal-chintu-v1</child>
             <axis>
                 <xyz expressed_in="__model__">0.707068 -0.707068 -0.010419</xyz>
-            
-                <limit>
-                    <lower>-1.5707963</lower>
-                    <upper>1.5707963</upper>
-                    <effort>30</effort>
-                    <velocity>1.0</velocity>
-                </limit>
             </axis>
         </joint>
         <joint name="top-diagonal-chintu-v1_Revolute-11" type="revolute">
@@ -453,13 +404,6 @@
             <child>danda-support-v1</child>
             <axis>
                 <xyz expressed_in="__model__">0.707068 -0.707068 -0.010419</xyz>
-            
-                <limit>
-                    <lower>-1.5707963</lower>
-                    <upper>1.5707963</upper>
-                    <effort>30</effort>
-                    <velocity>1.0</velocity>
-                </limit>
             </axis>
         </joint>
         <joint name="bottom-side-chintu-v1_Revolute-13" type="revolute">
@@ -468,13 +412,6 @@
             <child>danda-top-servo-v1</child>
             <axis>
                 <xyz expressed_in="__model__">-0.0 0.999994 0.003382</xyz>
-            
-                <limit>
-                    <lower>-1.5707963</lower>
-                    <upper>1.5707963</upper>
-                    <effort>30</effort>
-                    <velocity>1.0</velocity>
-                </limit>
             </axis>
         </joint>
         <joint name="top-chintu-and-servo-head-v1_Revolute-14" type="revolute">
@@ -483,13 +420,6 @@
             <child>danda-top-servo-v1</child>
             <axis>
                 <xyz expressed_in="__model__">-0.0 0.999994 0.003382</xyz>
-            
-                <limit>
-                    <lower>-1.5707963</lower>
-                    <upper>1.5707963</upper>
-                    <effort>30</effort>
-                    <velocity>1.0</velocity>
-                </limit>
             </axis>
         </joint>
         <joint name="bottom-base-plate-v1_Revolute-15" type="revolute">
@@ -498,13 +428,6 @@
             <child>bottom-chintu-and-servo-head-v1</child>
             <axis>
                 <xyz expressed_in="__model__">-0.0 -1.0 -0.0</xyz>
-            
-                <limit>
-                    <lower>-1.5707963</lower>
-                    <upper>1.5707963</upper>
-                    <effort>30</effort>
-                    <velocity>1.0</velocity>
-                </limit>
             </axis>
         </joint>
         <joint name="top-base-plate-v1_Revolute-16" type="revolute">
@@ -513,13 +436,6 @@
             <child>top-chintu-and-servo-head-v1</child>
             <axis>
                 <xyz expressed_in="__model__">1.0 0.0 -0.0</xyz>
-            
-                <limit>
-                    <lower>-1.5707963</lower>
-                    <upper>1.5707963</upper>
-                    <effort>30</effort>
-                    <velocity>1.0</velocity>
-                </limit>
             </axis>
         </joint>
     </model>

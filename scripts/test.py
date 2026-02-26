@@ -4,7 +4,7 @@ import time
 import mujoco
 from mujoco import viewer
 
-xml_path = "bestRenamed/scene.xml"
+xml_path = "snake_description/scene.xml"
 model = mujoco.MjModel.from_xml_path(xml_path)
 data = mujoco.MjData(model)
 

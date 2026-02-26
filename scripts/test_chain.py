@@ -5,8 +5,8 @@ from mujoco import viewer
 
 num = int(sys.argv[1]) if len(sys.argv) > 1 else 3
 
-scene_path = f"bestRenamed/chain_scene.xml"
-chain_path = f"bestRenamed/chain_{num}.xml"
+scene_path = f"snake_description/chain_scene.xml"
+chain_path = f"snake_description/chain_{num}.xml"
 
 # generate chain xml if needed
 import os

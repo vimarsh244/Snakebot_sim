@@ -5,7 +5,7 @@ Usage:
     python scripts/generate_chain.py <num_modules> [output_path]
     
 Example:
-    python scripts/generate_chain.py 3 bestRenamed/chain_3.xml
+    python scripts/generate_chain.py 3 snake_description/chain_3.xml
     
 Pattern for 3 modules:
     module_1 - battery_1 - module_2 - battery_2 - module_3 - battery_3
