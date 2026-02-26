@@ -256,11 +256,11 @@
         <weld name="chain_link_2" body1="battery_2" body2="m3_bottom-base-plate-v1" solref="0.0005 1" solimp="0.9999 0.99999 0.00001" />
     </equality>
     <actuator>
-<position name="module_1_servo_bottom" joint="m1_Revolute-15" kp="25" ctrlrange="-12.56637 12.56637" />
-<position name="module_1_servo_top" joint="m1_Revolute-16" kp="25" ctrlrange="-12.56637 12.56637" />
-<position name="module_2_servo_bottom" joint="m2_Revolute-15" kp="25" ctrlrange="-12.56637 12.56637" />
-<position name="module_2_servo_top" joint="m2_Revolute-16" kp="25" ctrlrange="-12.56637 12.56637" />
-<position name="module_3_servo_bottom" joint="m3_Revolute-15" kp="25" ctrlrange="-12.56637 12.56637" />
-<position name="module_3_servo_top" joint="m3_Revolute-16" kp="25" ctrlrange="-12.56637 12.56637" />
+<position name="module_1_servo_bottom" joint="m1_Revolute-15" kp="25" ctrlrange="-0.5236 0.5236" />
+<position name="module_1_servo_top" joint="m1_Revolute-16" kp="25" ctrlrange="-0.5236 0.5236" />
+<position name="module_2_servo_bottom" joint="m2_Revolute-15" kp="25" ctrlrange="-0.5236 0.5236" />
+<position name="module_2_servo_top" joint="m2_Revolute-16" kp="25" ctrlrange="-0.5236 0.5236" />
+<position name="module_3_servo_bottom" joint="m3_Revolute-15" kp="25" ctrlrange="-0.5236 0.5236" />
+<position name="module_3_servo_top" joint="m3_Revolute-16" kp="25" ctrlrange="-0.5236 0.5236" />
     </actuator>
 </mujoco>

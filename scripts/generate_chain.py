@@ -128,8 +128,8 @@ def actuator_xml(n):
     """Generate actuators for module n."""
     p = f"m{n}_"
     return textwrap.dedent(f"""\
-        <position name="module_{n}_servo_bottom" joint="{p}Revolute-15" kp="25" ctrlrange="-12.56637 12.56637" />
-        <position name="module_{n}_servo_top" joint="{p}Revolute-16" kp="25" ctrlrange="-12.56637 12.56637" />""")
+        <position name="module_{n}_servo_bottom" joint="{p}Revolute-15" kp="25" ctrlrange="-0.5236 0.5236" />
+        <position name="module_{n}_servo_top" joint="{p}Revolute-16" kp="25" ctrlrange="-0.5236 0.5236" />""")
 
 
 def generate_chain(num_modules, output_path):
