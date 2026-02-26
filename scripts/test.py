@@ -4,7 +4,7 @@ import time
 import mujoco
 from mujoco import viewer
 
-xml_path = "best2JointsRemoved/scene.xml"
+xml_path = "bestRenamed/scene.xml"
 model = mujoco.MjModel.from_xml_path(xml_path)
 data = mujoco.MjData(model)
 
@@ -16,8 +16,8 @@ print("actuators:", [mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_ACTUATOR, i) f
 # you can adjust actuators from the viewer UI sliders or use mouse perturbations.
 with viewer.launch_passive(model, data) as gui:
     print("viewer launched. press ESC to quit.")
+    data.ctrl[:] = 0.0
     while gui.is_running():
-        data.ctrl[:] = 0.0
         mujoco.mj_step(model, data)
         gui.sync()
         time.sleep(model.opt.timestep)
