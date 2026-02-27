@@ -67,7 +67,7 @@ def snakebot_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     cfg.scene.entities = {"robot": get_snakebot_robot_cfg()}
 
     # ── Terrain: flat plane, no height scanner ────────────────────────────────
-    cfg.sim.njmax = 3234
+    cfg.sim.njmax = 4000
     cfg.sim.nconmax = 500
     cfg.sim.mujoco.ccd_iterations = 100
     assert cfg.scene.terrain is not None
@@ -202,12 +202,12 @@ def snakebot_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         # ── Keep going straight: penalise lateral drift ──
         "lateral_velocity_penalty": RewardTermCfg(
             func=snakebot_mdp.lateral_velocity_penalty,
-            weight=-0.5,
+            weight=-0.05,    # was -0.5: max clamped penalty 9 × 0.05 = 0.45/step
         ),
         # ── Keep straight heading: penalise yaw rate ──
         "yaw_rate_penalty": RewardTermCfg(
             func=snakebot_mdp.yaw_rate_penalty,
-            weight=-0.2,
+            weight=-0.05,    # was -0.2: max clamped penalty 25 × 0.05 = 1.25/step
         ),
         # ── Energy efficiency: penalise large actions (prevents "launch" behaviour) ──
         "control_cost": RewardTermCfg(
@@ -228,10 +228,10 @@ def snakebot_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
 
     # ── Terminations ──────────────────────────────────────────────────────────
     cfg.terminations.pop("illegal_contact", None)
-    # Raise orientation limit: snake DOES tilt during locomotion, only terminate
-    # if it fully tumbles over 120°.
+    # Tighten orientation limit to 80 °: ends tumble early before velocities
+    # blow up (120° was too permissive — the snake would spin at 100 rad/s).
     if "fell_over" in cfg.terminations:
-        cfg.terminations["fell_over"].params["limit_angle"] = math.radians(120.0)
+        cfg.terminations["fell_over"].params["limit_angle"] = math.radians(80.0)
 
     # ── Curriculum: start slow, add lateral/yaw penalties later ──────────────
     cfg.curriculum.pop("terrain_levels", None)

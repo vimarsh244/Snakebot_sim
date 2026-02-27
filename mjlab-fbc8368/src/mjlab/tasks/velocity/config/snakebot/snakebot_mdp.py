@@ -100,28 +100,36 @@ def lateral_velocity_penalty(
     env: ManagerBasedRlEnv,
     asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
 ) -> torch.Tensor:
-    """Squared lateral (Y-body-frame) CoM velocity.
+    """Squared lateral (Y-body-frame) CoM velocity, clamped before squaring.
 
     Without this, the policy may learn to "crab-walk" sideways or spin in
     place — exploiting anisotropic friction in the wrong direction.  This
     penalty forces truly forward motion.
+
+    Clamped to ±3 m/s before squaring so that physics blowup during tumbling
+    (which can push velocities to ±100+) doesn't produce million-scale
+    rewards that cause NaN PPO gradients.
     """
     asset: Entity = env.scene[asset_cfg.name]
-    return torch.square(asset.data.root_link_lin_vel_b[:, 1])   # (B,)
+    v_lat = asset.data.root_link_lin_vel_b[:, 1].clamp(-3.0, 3.0)
+    return torch.square(v_lat)   # (B,)  max penalty = 9 per step
 
 
 def yaw_rate_penalty(
     env: ManagerBasedRlEnv,
     asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
 ) -> torch.Tensor:
-    """Squared yaw angular velocity (Z-body-frame).
+    """Squared yaw angular velocity (Z-body-frame), clamped before squaring.
 
     Without this the snake tends to curve and circle.  Penalising Z angular
     velocity keeps the snake tracking in a straight line.
+
+    Clamped to ±5 rad/s before squaring so a tumble (ω ≈ ±50 rad/s) doesn't
+    produce thousands per step and blow up the value function.
     """
     asset: Entity = env.scene[asset_cfg.name]
-    # root_link_ang_vel_b: angular velocity in body frame; index 2 = yaw (Z)
-    return torch.square(asset.data.root_link_ang_vel_b[:, 2])   # (B,)
+    omega_z = asset.data.root_link_ang_vel_b[:, 2].clamp(-5.0, 5.0)
+    return torch.square(omega_z)   # (B,)  max penalty = 25 per step
 
 
 def action_smoothness_penalty(env: ManagerBasedRlEnv) -> torch.Tensor:
