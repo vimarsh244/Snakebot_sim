@@ -16,6 +16,7 @@ def snakebot_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
       obs_normalization=False,
       stochastic=True,
       init_noise_std=1.0,
+      noise_std_type="log",
     ),
     critic=RslRlModelCfg(
       hidden_dims=(256, 128, 64),

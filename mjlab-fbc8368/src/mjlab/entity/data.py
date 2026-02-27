@@ -100,7 +100,10 @@ class EntityData:
     assert pose.shape[-1] == self.ROOT_POSE_DIM
 
     env_ids = self._resolve_env_ids(env_ids)
-    self.data.qpos[env_ids, self.indexing.free_joint_q_adr] = pose
+    # Only the first free joint is treated as the floating base root. If there
+    # are additional free joints in the model, we leave their state untouched.
+    base_q_idx = self.indexing.free_joint_q_adr[: self.ROOT_POSE_DIM]
+    self.data.qpos[env_ids, base_q_idx] = pose
 
   def write_root_velocity(
     self, velocity: torch.Tensor, env_ids: torch.Tensor | slice | None = None
@@ -110,10 +113,14 @@ class EntityData:
     assert velocity.shape[-1] == self.ROOT_VEL_DIM
 
     env_ids = self._resolve_env_ids(env_ids)
-    quat_w = self.data.qpos[env_ids, self.indexing.free_joint_q_adr[3:7]]
+    base_q_idx = self.indexing.free_joint_q_adr[: self.ROOT_POSE_DIM]
+    quat_w = self.data.qpos[env_ids, base_q_idx[3:7]]
     ang_vel_b = quat_apply_inverse(quat_w, velocity[:, 3:])
     velocity_qvel = torch.cat([velocity[:, :3], ang_vel_b], dim=-1)
-    self.data.qvel[env_ids, self.indexing.free_joint_v_adr] = velocity_qvel
+    # Same convention as write_root_pose: only drive the first free joint as the
+    # base; any additional free joints (if present) keep their current state.
+    base_v_idx = self.indexing.free_joint_v_adr[: self.ROOT_VEL_DIM]
+    self.data.qvel[env_ids, base_v_idx] = velocity_qvel
 
   def write_root_com_velocity(
     self, velocity: torch.Tensor, env_ids: torch.Tensor | slice | None = None
@@ -124,7 +131,8 @@ class EntityData:
 
     env_ids = self._resolve_env_ids(env_ids)
     com_offset_b = self.model.body_ipos[:, self.indexing.root_body_id]
-    quat_w = self.data.qpos[env_ids, self.indexing.free_joint_q_adr[3:7]]
+    base_q_idx = self.indexing.free_joint_q_adr[: self.ROOT_POSE_DIM]
+    quat_w = self.data.qpos[env_ids, base_q_idx[3:7]]
     com_offset_w = quat_apply(quat_w, com_offset_b[env_ids])
     lin_vel_com = velocity[:, :3]
     ang_vel_w = velocity[:, 3:]

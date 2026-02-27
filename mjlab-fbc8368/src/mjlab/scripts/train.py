@@ -8,7 +8,21 @@ from datetime import datetime
 from pathlib import Path
 from typing import Literal, cast
 
+import torch
 import tyro
+
+# clamp Normal.sample std so PPO never hits "normal expects all elements of std >= 0.0"
+from torch.distributions.normal import Normal as _TorchNormal
+
+_orig_normal_sample = _TorchNormal.sample
+
+def _safe_normal_sample(self, sample_shape=torch.Size()):
+  shape = self._extended_shape(sample_shape)
+  mean = self.loc.expand(shape)
+  std = torch.clamp(self.scale.expand(shape), min=1e-6)
+  return torch.normal(mean, std)
+
+_TorchNormal.sample = _safe_normal_sample
 
 from mjlab.envs import ManagerBasedRlEnv, ManagerBasedRlEnvCfg
 from mjlab.rl import MjlabOnPolicyRunner, RslRlOnPolicyRunnerCfg, RslRlVecEnvWrapper
@@ -17,7 +31,7 @@ from mjlab.tasks.tracking.mdp import MotionCommandCfg
 from mjlab.utils.gpu import select_gpus
 from mjlab.utils.os import dump_yaml, get_checkpoint_path, get_wandb_checkpoint_path
 from mjlab.utils.torch import configure_torch_backends
-from mjlab.utils.wandb import add_wandb_tags
+from mjlab.utils.wandb import add_wandb_tags, patch_wandb_save_file_for_windows
 from mjlab.utils.wrappers import VideoRecorder
 
 
@@ -58,6 +72,9 @@ def run_train(task_id: str, cfg: TrainConfig, log_dir: Path) -> None:
     seed = cfg.agent.seed + local_rank
 
   configure_torch_backends()
+
+  # Avoid wandb symlink failure on Windows (OSError 1314)
+  patch_wandb_save_file_for_windows()
 
   cfg.agent.seed = seed
   cfg.env.seed = seed

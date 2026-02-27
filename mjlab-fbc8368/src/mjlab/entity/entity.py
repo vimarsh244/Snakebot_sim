@@ -145,12 +145,14 @@ class Entity:
   def _identify_joints(self) -> None:
     self._all_joints = self._spec.joints
     self._free_joint = None
-    self._non_free_joints = tuple(self._all_joints)
+    # Exclude all free joints so joint_names/default_joint_pos match joint_q_adr.
+    self._non_free_joints = tuple(
+      j for j in self._all_joints if j.type != mujoco.mjtJoint.mjJNT_FREE
+    )
     if self._all_joints and self._all_joints[0].type == mujoco.mjtJoint.mjJNT_FREE:
       self._free_joint = self._all_joints[0]
       if not self._free_joint.name:
         self._free_joint.name = "floating_base_joint"
-      self._non_free_joints = tuple(self._all_joints[1:])
 
   def _apply_spec_editors(self) -> None:
     for cfg_list in [
@@ -523,20 +525,30 @@ class Entity:
     if self.is_articulated:
       if self.cfg.init_state.joint_pos is None:
         # Use keyframe joint positions.
+        #
+        # We index the keyframe qpos with joint_q_adr so that
+        # default_joint_pos has the same layout and width as
+        # EntityData.joint_pos (qpos[:, joint_q_adr]). This is
+        # important for robots whose MjModel contains extra free
+        # joints or other layout differences.
         key_qpos = mj_model.key("init_state").qpos
-        nq_root = 7 if not self.is_fixed_base else 0
-        default_joint_pos = torch.tensor(key_qpos[nq_root:], device=device)[
-          None
-        ].repeat(nworld, 1)
+        qpos_indices = indexing.joint_q_adr.cpu().numpy()
+        default_joint_pos = torch.tensor(
+          key_qpos[qpos_indices], dtype=torch.float, device=device
+        )[None].repeat(nworld, 1)
+        # No keyframe velocities: start at zero, aligned with joint_v_adr.
+        default_joint_vel = torch.zeros(
+          (nworld, indexing.joint_v_adr.numel()), dtype=torch.float, device=device
+        )
       else:
         default_joint_pos = torch.tensor(
           resolve_expr(self.cfg.init_state.joint_pos, self.joint_names, 0.0),
           device=device,
         )[None].repeat(nworld, 1)
-      default_joint_vel = torch.tensor(
-        resolve_expr(self.cfg.init_state.joint_vel, self.joint_names, 0.0),
-        device=device,
-      )[None].repeat(nworld, 1)
+        default_joint_vel = torch.tensor(
+          resolve_expr(self.cfg.init_state.joint_vel, self.joint_names, 0.0),
+          device=device,
+        )[None].repeat(nworld, 1)
 
       # Joint limits.
       joint_ids_global = torch.tensor(

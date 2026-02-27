@@ -5,7 +5,10 @@
 
     <default>
         <joint damping="0.5" armature="0.01" />
-        <geom contype="2" conaffinity="1" />
+        <!-- condim=6 enables anisotropic friction (separate x/y sliding friction).
+             friction="slide_forward slide_lateral roll": low forward friction so the
+             snake can glide in +x, high lateral friction to resist sideways slipping. -->
+        <geom contype="2" conaffinity="1" condim="6" friction="0.3 1.5 0.001" />
     </default>
 
     <asset>
@@ -23,6 +26,16 @@
         <mesh name="battery_middle_module_v2" file="meshes/battery_middle_module_v2.stl" scale="0.001 0.001 0.001" />
     </asset>
     <worldbody>
+        <!-- Ground plane: contype=1 conaffinity=2 so robot geoms (contype=2,conaffinity=1)
+             collide with it. condim=6 + friction to match anisotropic snake contact. -->
+        <geom name="ground" type="plane" size="5 5 0.1"
+              pos="0 0 0" euler="0 0 0"
+              contype="1" conaffinity="2"
+              condim="6" friction="1.5 1.5 0.001"
+              rgba="0.0 0.0 0.0 0"
+              />
+              <!-- rgba="0.4 0.4 0.4 1"
+            /> -->
         <frame pos="0 0 0.08" euler="0 1.5707963267948966 0">
             <!-- module 1 -->
 <body name="m1_bottom-base-plate-v1" pos="0.0 0.033146846605945184 0.0145310940675635" euler="-3.141592653589787 -0.0 0.0">
