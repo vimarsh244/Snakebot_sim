@@ -1,135 +1,297 @@
-"""Snakebot chain_5 velocity environment configurations (flat terrain only)."""
+"""Snakebot chain_5 velocity environment configurations (flat terrain only).
+
+Design philosophy:
+- Actor:  joint_pos + joint_vel + last_action + command + root IMU (~42 dim).
+          Deployable to hardware; no privileged information.
+- Critic: actor obs + per-module positions, lin-vels, ang-vels, actuator effort
+          (~139 dim, privileged simulation state, zero noise).
+- 10 Hz control:   decimation=20  (MuJoCo dt=0.005 s × 20 = 0.10 s / step).
+- Rewards tuned for serpentine locomotion; all foot-specific terms removed.
+"""
 
 import math
 
 from mjlab.asset_zoo.robots import (
-  SNAKEBOT_ACTION_SCALE,
-  get_snakebot_robot_cfg,
+    SNAKEBOT_ACTION_SCALE,
+    get_snakebot_robot_cfg,
 )
 from mjlab.envs import ManagerBasedRlEnvCfg
 from mjlab.envs.mdp.actions import JointPositionActionCfg
-from mjlab.tasks.velocity.mdp import UniformVelocityCommandCfg
+from mjlab.envs.mdp.observations import (
+    base_ang_vel,
+    base_lin_vel,
+    builtin_sensor,
+    generated_commands,
+    joint_pos_rel,
+    joint_vel_rel,
+    last_action,
+    projected_gravity,
+)
+from mjlab.envs.mdp.rewards import action_rate_l2, joint_pos_limits
+from mjlab.managers.observation_manager import ObservationGroupCfg, ObservationTermCfg
+from mjlab.managers.reward_manager import RewardTermCfg
+from mjlab.managers.scene_entity_config import SceneEntityCfg
+from mjlab.managers.termination_manager import TerminationTermCfg
+from mjlab.tasks.velocity.mdp import (
+    UniformVelocityCommandCfg,
+    flat_orientation,
+    nan_detection,
+    track_linear_velocity,
+)
 from mjlab.tasks.velocity.velocity_env_cfg import make_velocity_env_cfg
 from mjlab.utils.noise import UniformNoiseCfg as Unoise
 
-# reference body for viewer and orientation rewards (first module bottom plate)
+from . import snakebot_mdp
+
+# ── Body references ───────────────────────────────────────────────────────────
+# Root / viewer body: bottom base-plate of the first module.
 SNAKE_ROOT_BODY = "m1_bottom-base-plate-v1"
 
+# One canonical structural body per module (5 total).  Used for per-module
+# position / velocity / angular-velocity observations (critic privileges).
+_MODULE_BODIES = "m[1-5]_bottom-base-plate-v1"
 
+
+# ─────────────────────────────────────────────────────────────────────────────
 def snakebot_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
-  """Create Snakebot flat terrain velocity configuration (no feet; snake uses full body contact)."""
-  cfg = make_velocity_env_cfg()
+    """Create Snakebot flat terrain velocity configuration.
 
-  cfg.scene.entities = {"robot": get_snakebot_robot_cfg()}
+    Actor/critic obs split
+    ─────────────────────
+    Actor  (~42 dim, no privileged info):
+        joint_pos_rel (10) · joint_vel_rel (10) · last_action (10)
+        command (3) · root lin_vel (3) · root ang_vel (3) · projected_gravity (3)
 
-  # flat terrain, no terrain scan
-  cfg.sim.njmax = 2000
-  cfg.sim.nconmax = 500
-  cfg.sim.mujoco.ccd_iterations = 100
-  assert cfg.scene.terrain is not None
-  cfg.scene.terrain.terrain_type = "plane"
-  cfg.scene.terrain.terrain_generator = None
+    Critic (~139 dim, privileged simulation state, zero noise):
+        All actor terms  +
+        all_body_pos_rel    (5 modules × 3 = 15)
+        all_body_lin_vel    (5 modules × 3 = 15)
+        all_body_ang_vel    (5 modules × 3 = 15)   ← simulated IMU per module
+        joint_efforts       (10)                   ← actuator force
 
-  cfg.scene.sensors = tuple(
-    s for s in (cfg.scene.sensors or ()) if s.name != "terrain_scan"
-  )
-  del cfg.observations["actor"].terms["height_scan"]
-  del cfg.observations["critic"].terms["height_scan"]
-  del cfg.observations["critic"].terms["foot_height"]
-  del cfg.observations["critic"].terms["foot_air_time"]
-  del cfg.observations["critic"].terms["foot_contact"]
-  del cfg.observations["critic"].terms["foot_contact_forces"]
-  # critic gets same obs as actor; enable corruption so critic sees same noisy obs
-  cfg.observations["critic"].enable_corruption = True
+    Control frequency
+    ─────────────────
+    decimation=20  →  0.005 s × 20 = 0.10 s / RL step  →  10 Hz
+    """
+    cfg = make_velocity_env_cfg()
 
-  # heavy observation noise and domain randomization for sim-to-real
-  cfg.observations["actor"].terms["base_lin_vel"].noise = Unoise(n_min=-1.5, n_max=1.5)
-  cfg.observations["actor"].terms["base_ang_vel"].noise = Unoise(n_min=-0.6, n_max=0.6)
-  cfg.observations["actor"].terms["projected_gravity"].noise = Unoise(n_min=-0.12, n_max=0.12)
-  cfg.observations["actor"].terms["joint_pos"].noise = Unoise(n_min=-0.06, n_max=0.06)
-  cfg.observations["actor"].terms["joint_vel"].noise = Unoise(n_min=-4.0, n_max=4.0)
-  cfg.observations["critic"].terms["base_lin_vel"].noise = Unoise(n_min=-1.5, n_max=1.5)
-  cfg.observations["critic"].terms["base_ang_vel"].noise = Unoise(n_min=-0.6, n_max=0.6)
-  cfg.observations["critic"].terms["projected_gravity"].noise = Unoise(n_min=-0.12, n_max=0.12)
-  cfg.observations["critic"].terms["joint_pos"].noise = Unoise(n_min=-0.06, n_max=0.06)
-  cfg.observations["critic"].terms["joint_vel"].noise = Unoise(n_min=-4.0, n_max=4.0)
-  cfg.observations["actor"].terms["command"].noise = Unoise(n_min=-0.08, n_max=0.08)
-  cfg.observations["critic"].terms["command"].noise = Unoise(n_min=-0.08, n_max=0.08)
+    # ── Robot ─────────────────────────────────────────────────────────────────
+    cfg.scene.entities = {"robot": get_snakebot_robot_cfg()}
 
-  # domain randomization: encoder bias and base COM
-  cfg.events["encoder_bias"].params["bias_range"] = (-0.04, 0.04)
-  cfg.events["base_com"].params["ranges"] = {
-    0: (-0.06, 0.06),
-    1: (-0.06, 0.06),
-    2: (-0.05, 0.05),
-  }
-  # stronger pushes during training for robustness
-  cfg.events["push_robot"].params["velocity_range"] = {
-    "x": (-0.8, 0.8),
-    "y": (-0.8, 0.8),
-    "z": (-0.5, 0.5),
-    "roll": (-0.6, 0.6),
-    "pitch": (-0.6, 0.6),
-    "yaw": (-0.4, 0.4),
-  }
+    # ── Terrain: flat plane, no height scanner ────────────────────────────────
+    cfg.sim.njmax = 2000
+    cfg.sim.nconmax = 500
+    cfg.sim.mujoco.ccd_iterations = 100
+    assert cfg.scene.terrain is not None
+    cfg.scene.terrain.terrain_type = "plane"
+    cfg.scene.terrain.terrain_generator = None
+    cfg.scene.sensors = tuple(
+        s for s in (cfg.scene.sensors or ()) if s.name != "terrain_scan"
+    )
 
-  joint_pos_action = cfg.actions["joint_pos"]
-  assert isinstance(joint_pos_action, JointPositionActionCfg)
-  joint_pos_action.scale = SNAKEBOT_ACTION_SCALE
+    # ── 10 Hz control frequency ───────────────────────────────────────────────
+    cfg.decimation = 20   # 0.005 s × 20 = 0.10 s / step
 
-  cfg.viewer.body_name = SNAKE_ROOT_BODY
-  cfg.viewer.distance = 2.0
-  cfg.viewer.elevation = -15.0
+    # ── Observations (fully replaced) ─────────────────────────────────────────
+    _module_body_cfg = SceneEntityCfg("robot", body_names=(_MODULE_BODIES,))
+    _all_joint_cfg   = SceneEntityCfg("robot", joint_names=(".*",))
 
-  cfg.events["base_com"].params["asset_cfg"].body_names = (SNAKE_ROOT_BODY,)
-  cfg.events.pop("foot_friction", None)
+    actor_terms: dict = {
+        "joint_pos": ObservationTermCfg(
+            func=joint_pos_rel,
+            noise=Unoise(n_min=-0.06, n_max=0.06),
+        ),
+        "joint_vel": ObservationTermCfg(
+            func=joint_vel_rel,
+            noise=Unoise(n_min=-4.0, n_max=4.0),
+        ),
+        "actions": ObservationTermCfg(func=last_action),
+        "command": ObservationTermCfg(
+            func=generated_commands,
+            params={"command_name": "twist"},
+            noise=Unoise(n_min=-0.08, n_max=0.08),
+        ),
+        # Root-module IMU  (only the first module — sim-to-real deployable)
+        "base_lin_vel": ObservationTermCfg(
+            func=builtin_sensor,
+            params={"sensor_name": "robot/imu_lin_vel"},
+            noise=Unoise(n_min=-1.5, n_max=1.5),
+        ),
+        "base_ang_vel": ObservationTermCfg(
+            func=builtin_sensor,
+            params={"sensor_name": "robot/imu_ang_vel"},
+            noise=Unoise(n_min=-0.6, n_max=0.6),
+        ),
+        "projected_gravity": ObservationTermCfg(
+            func=projected_gravity,
+            noise=Unoise(n_min=-0.12, n_max=0.12),
+        ),
+    }
 
-  cfg.rewards["upright"].params["asset_cfg"].body_names = (SNAKE_ROOT_BODY,)
-  cfg.rewards["upright"].params["std"] = math.sqrt(0.1)  # tighter: penalize tilt more so snake doesn't topple
-  cfg.rewards["upright"].weight = 2.0
-  cfg.rewards["body_ang_vel"].params["asset_cfg"].body_names = (SNAKE_ROOT_BODY,)
-  cfg.rewards["pose"].params["std_standing"] = {".*Revolute.*": 0.1}
-  cfg.rewards["pose"].params["std_walking"] = {".*Revolute.*": 0.3}
-  cfg.rewards["pose"].params["std_running"] = {".*Revolute.*": 0.3}
+    # Critic: same actor terms (noise stripped below if enable_corruption=False)
+    # plus privileged full-chain state.
+    critic_terms: dict = {
+        **actor_terms,  # shallow copy — each term will be deep-copied by the manager
+        # Full kinematic chain: positions relative to root
+        "all_body_pos_rel": ObservationTermCfg(
+            func=snakebot_mdp.all_body_positions_rel,
+            params={"asset_cfg": _module_body_cfg},
+        ),
+        # Full chain linear velocities
+        "all_body_lin_vel": ObservationTermCfg(
+            func=snakebot_mdp.all_body_lin_velocities,
+            params={"asset_cfg": _module_body_cfg},
+        ),
+        # Per-module angular velocities: simulated IMU on every module
+        "all_body_ang_vel": ObservationTermCfg(
+            func=snakebot_mdp.all_body_ang_velocities,
+            params={"asset_cfg": _module_body_cfg},
+        ),
+        # Actuator forces: energy / torque load awareness
+        "joint_efforts": ObservationTermCfg(
+            func=snakebot_mdp.joint_efforts,
+            params={"asset_cfg": SceneEntityCfg("robot")},
+        ),
+    }
 
-  # forward-only: no angular velocity reward or command
-  cfg.rewards["track_linear_velocity"].weight = 4.0
-  cfg.rewards["track_angular_velocity"].weight = 0.0
-  cfg.rewards["body_ang_vel"].weight = 0.0
-  cfg.rewards["angular_momentum"].weight = 0.0
-  cfg.rewards["air_time"].weight = 0.0
-  del cfg.rewards["foot_clearance"]
-  del cfg.rewards["foot_swing_height"]
-  del cfg.rewards["foot_slip"]
-  del cfg.rewards["soft_landing"]
+    cfg.observations = {
+        "actor": ObservationGroupCfg(
+            terms=actor_terms,
+            concatenate_terms=True,
+            enable_corruption=True,    # noise applied during training
+        ),
+        "critic": ObservationGroupCfg(
+            terms=critic_terms,
+            concatenate_terms=True,
+            enable_corruption=False,   # privileged info: zero noise
+        ),
+    }
 
-  cfg.terminations.pop("illegal_contact", None)
+    # ── Actions ───────────────────────────────────────────────────────────────
+    joint_pos_action = cfg.actions["joint_pos"]
+    assert isinstance(joint_pos_action, JointPositionActionCfg)
+    joint_pos_action.scale = SNAKEBOT_ACTION_SCALE
 
-  cfg.curriculum.pop("terrain_levels", None)
-
-  # forward-only velocity: no yaw/lateral command so snake stays aligned and doesn't topple
-  twist_cmd = cfg.commands["twist"]
-  assert isinstance(twist_cmd, UniformVelocityCommandCfg)
-  twist_cmd.ranges.lin_vel_x = (0.1, 0.5)
-  twist_cmd.ranges.lin_vel_y = (0.0, 0.0)
-  twist_cmd.ranges.ang_vel_z = (0.0, 0.0)
-  twist_cmd.ranges.heading = (-math.pi, math.pi)
-  cfg.curriculum["command_vel"].params["velocity_stages"] = [
-    {"step": 0, "lin_vel_x": (0.1, 0.35), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (0.0, 0.0)},
-    {"step": 3000 * 24, "lin_vel_x": (0.15, 0.45), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (0.0, 0.0)},
-    {"step": 8000 * 24, "lin_vel_x": (0.2, 0.55), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (0.0, 0.0)},
-  ]
-
-  if play:
-    cfg.episode_length_s = int(1e9)
-    cfg.observations["actor"].enable_corruption = False
-    cfg.observations["critic"].enable_corruption = False
-    cfg.events.pop("push_robot", None)
-    cfg.curriculum = {}
+    # ── Commands: forward-only, conservative speed ────────────────────────────
     twist_cmd = cfg.commands["twist"]
     assert isinstance(twist_cmd, UniformVelocityCommandCfg)
-    twist_cmd.ranges.lin_vel_x = (0.1, 0.5)
-    twist_cmd.ranges.lin_vel_y = (0.0, 0.0)
-    twist_cmd.ranges.ang_vel_z = (0.0, 0.0)
+    twist_cmd.ranges.lin_vel_x   = (0.05, 0.30)
+    twist_cmd.ranges.lin_vel_y   = (0.00, 0.00)
+    twist_cmd.ranges.ang_vel_z   = (0.00, 0.00)
+    twist_cmd.ranges.heading     = (-math.pi, math.pi)
+    twist_cmd.rel_standing_envs  = 0.10  # 10 % envs: command = 0
 
-  return cfg
+    # ── Events / Domain randomisation ────────────────────────────────────────
+    cfg.events["base_com"].params["asset_cfg"].body_names = (SNAKE_ROOT_BODY,)
+    cfg.events["base_com"].params["ranges"] = {
+        0: (-0.06, 0.06),
+        1: (-0.06, 0.06),
+        2: (-0.04, 0.04),
+    }
+    cfg.events["encoder_bias"].params["bias_range"] = (-0.04, 0.04)
+    cfg.events["push_robot"].params["velocity_range"] = {
+        "x": (-0.6, 0.6),
+        "y": (-0.6, 0.6),
+        "z": (-0.4, 0.4),
+        "roll":  (-0.5, 0.5),
+        "pitch": (-0.5, 0.5),
+        "yaw":   (-0.4, 0.4),
+    }
+    cfg.events.pop("foot_friction", None)  # snake has no feet
+
+    # ── Rewards (fully replaced for serpentine locomotion) ────────────────────
+    cfg.rewards = {
+        # ── Primary: track commanded forward velocity ──
+        "track_linear_velocity": RewardTermCfg(
+            func=track_linear_velocity,
+            weight=5.0,
+            params={"command_name": "twist", "std": math.sqrt(0.25)},
+        ),
+        # ── Bonus: direct exp-reward on forward CoM displacement ──
+        "snake_forward_progress": RewardTermCfg(
+            func=snakebot_mdp.snake_forward_progress,
+            weight=2.0,
+            params={"command_name": "twist"},
+        ),
+        # ── Encourage modules to hover at ~8 cm (natural ground contact height) ──
+        "snake_body_height": RewardTermCfg(
+            func=snakebot_mdp.snake_body_height,
+            weight=1.5,
+            params={
+                "target_height": 0.08,
+                "std": 0.04,
+                "asset_cfg": SceneEntityCfg("robot", body_names=(_MODULE_BODIES,)),
+            },
+        ),
+        # ── Reward serpentine wave: alternating joint sign pattern ──
+        "snake_undulation": RewardTermCfg(
+            func=snakebot_mdp.snake_undulation,
+            weight=0.5,
+            params={"asset_cfg": _all_joint_cfg},
+        ),
+        # ── Penalise lateral drift perpendicular to heading ──
+        "snake_lateral_deviation": RewardTermCfg(
+            func=snakebot_mdp.snake_lateral_deviation,
+            weight=-0.5,
+            params={"command_name": "twist"},
+        ),
+        # ── Soft orientation reward: penalise first module flipping ──
+        "upright": RewardTermCfg(
+            func=flat_orientation,
+            weight=0.5,
+            params={
+                "std": math.sqrt(0.25),
+                "asset_cfg": SceneEntityCfg("robot", body_names=(SNAKE_ROOT_BODY,)),
+            },
+        ),
+        # ── Regularisation ──
+        "action_rate_l2": RewardTermCfg(
+            func=action_rate_l2,
+            weight=-0.05,
+        ),
+        "dof_pos_limits": RewardTermCfg(
+            func=joint_pos_limits,
+            weight=-0.001,
+        ),
+        "snake_joint_torque": RewardTermCfg(
+            func=snakebot_mdp.snake_joint_torque_penalty,
+            weight=-0.002,
+        ),
+    }
+
+    # ── Terminations ──────────────────────────────────────────────────────────
+    cfg.terminations.pop("illegal_contact", None)
+    # Relax orientation limit: snake naturally tilts; only terminate if it
+    # fully flips (> 120 °).
+    if "fell_over" in cfg.terminations:
+        cfg.terminations["fell_over"].params["limit_angle"] = math.radians(120.0)
+    cfg.terminations["nan_detection"] = TerminationTermCfg(func=nan_detection)
+
+    # ── Curriculum ────────────────────────────────────────────────────────────
+    cfg.curriculum.pop("terrain_levels", None)
+    cfg.curriculum["command_vel"].params["velocity_stages"] = [
+        {"step": 0,          "lin_vel_x": (0.05, 0.15), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (0.0, 0.0)},
+        {"step": 2000 * 24,  "lin_vel_x": (0.05, 0.25), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (0.0, 0.0)},
+        {"step": 5000 * 24,  "lin_vel_x": (0.05, 0.35), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (0.0, 0.0)},
+        {"step": 10000 * 24, "lin_vel_x": (0.05, 0.50), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (0.0, 0.0)},
+    ]
+
+    # ── Viewer ────────────────────────────────────────────────────────────────
+    cfg.viewer.body_name = SNAKE_ROOT_BODY
+    cfg.viewer.distance  = 2.0
+    cfg.viewer.elevation = -15.0
+
+    # ── Play-mode ─────────────────────────────────────────────────────────────
+    if play:
+        cfg.episode_length_s = int(1e9)
+        cfg.observations["actor"].enable_corruption  = False
+        cfg.observations["critic"].enable_corruption = False
+        cfg.events.pop("push_robot", None)
+        cfg.curriculum = {}
+        twist_cmd = cfg.commands["twist"]
+        assert isinstance(twist_cmd, UniformVelocityCommandCfg)
+        twist_cmd.ranges.lin_vel_x = (0.15, 0.35)
+        twist_cmd.ranges.lin_vel_y = (0.00, 0.00)
+        twist_cmd.ranges.ang_vel_z = (0.00, 0.00)
+
+    return cfg

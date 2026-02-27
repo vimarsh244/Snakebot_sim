@@ -8,6 +8,38 @@ This document describes how to set up, train, and visualize the 5-module snakebo
 - **MJCF**: `src/mjlab/asset_zoo/robots/snakebot/xmls/chain_5.xml` (copy of the original with minimal Warp-compat edit: `noslip_iterations` removed).
 - **Meshes**: All STLs live under `snakebot/xmls/meshes/`.
 
+## RL Implementation Details
+
+The RL pipeline uses an **asymmetric actor/critic** setup tuned for serpentine locomotion at **10 Hz**:
+
+### Observations
+
+**Actor** (Sim-to-real deployable — ~42 dim):
+- Joint positions and velocities (10 + 10)
+- Previous actions (10)
+- Velocity commands (3: vx, vy, wz)
+- Root module IMU (linear velocity, angular velocity, projected gravity)
+
+**Critic** (Privileged simulation state — ~139 dim):
+- All actor observations (without noise)
+- `all_body_pos_rel`: Complete kinematic chain positions relative to root (15)
+- `all_body_lin_vel`: Linear velocities of all 5 modules (15)
+- `all_body_ang_vel`: Simulated IMU data (angular velocity) for every module (15)
+- `joint_efforts`: Actuator forces for energy estimation (10)
+
+### Rewards
+
+Rewards are tuned for serpentine motion (no gait/foot dependence):
+- **track_linear_velocity**: Primary reward for following forward command
+- **snake_forward_progress**: Bonus for actual CoM forward displacement
+- **snake_body_height**: Encourages modules to hover near 8 cm (normal ground contact height)
+- **snake_undulation**: Rewards alternating joint signs (the classic serpentine wave pattern)
+- **snake_lateral_deviation**: Penalises sideways drift
+- **upright**: Soft penalty to keep the head module from fully flipping over
+
+### Control Frequency
+The environment operates at **10 Hz** (MuJoCo timestep `0.005 s` with `decimation=20`).
+
 ## Setup
 
 From the mjlab repo root:
@@ -97,6 +129,7 @@ The snake uses equality constraints (welds). If training fails on GPU (e.g. Warp
   - `xmls/meshes/*.stl` — meshes
   - `snakebot_constants.py` — `get_snakebot_robot_cfg()`, action scale
 - `src/mjlab/tasks/velocity/config/snakebot/` — task registration
-  - `env_cfgs.py` — flat velocity env (no feet; reference body `m1_bottom-base-plate-v1`)
-  - `rl_cfg.py` — PPO + wandb
+  - `env_cfgs.py` — flat velocity env, decoupled actor/critic definition (10Hz)
+  - `snakebot_mdp.py` — custom serpentine rewards and multi-module observation functions
+  - `rl_cfg.py` — PPO + wandb configs (large actor/critic networks)
   - `__init__.py` — registers `Mjlab-Velocity-Flat-Snakebot`

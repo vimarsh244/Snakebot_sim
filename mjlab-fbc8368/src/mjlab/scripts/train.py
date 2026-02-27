@@ -15,11 +15,26 @@ import tyro
 from torch.distributions.normal import Normal as _TorchNormal
 
 _orig_normal_sample = _TorchNormal.sample
+_safe_normal_warned = False
 
 def _safe_normal_sample(self, sample_shape=torch.Size()):
+  global _safe_normal_warned
   shape = self._extended_shape(sample_shape)
   mean = self.loc.expand(shape)
-  std = torch.clamp(self.scale.expand(shape), min=1e-6)
+  std = self.scale.expand(shape)
+  invalid = (~torch.isfinite(std)) | (std < 0.0) | (~torch.isfinite(mean))
+  if invalid.any():
+    if not _safe_normal_warned:
+      num_invalid = int(invalid.sum().item())
+      total = invalid.numel()
+      print(
+        "[WARN] Non-finite/negative Normal parameters detected in policy output; "
+        f"sanitizing sample input ({num_invalid}/{total} invalid elements)."
+      )
+      _safe_normal_warned = True
+    mean = torch.nan_to_num(mean, nan=0.0, posinf=1e6, neginf=-1e6)
+    std = torch.nan_to_num(std, nan=1e-6, posinf=1.0, neginf=1e-6)
+  std = torch.clamp(std, min=1e-6)
   return torch.normal(mean, std)
 
 _TorchNormal.sample = _safe_normal_sample
