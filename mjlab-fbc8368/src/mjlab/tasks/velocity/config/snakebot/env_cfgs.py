@@ -67,7 +67,7 @@ def snakebot_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     cfg.scene.entities = {"robot": get_snakebot_robot_cfg()}
 
     # ── Terrain: flat plane, no height scanner ────────────────────────────────
-    cfg.sim.njmax = 2000
+    cfg.sim.njmax = 3234
     cfg.sim.nconmax = 500
     cfg.sim.mujoco.ccd_iterations = 100
     assert cfg.scene.terrain is not None
