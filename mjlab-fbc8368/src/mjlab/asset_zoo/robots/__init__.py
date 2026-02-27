@@ -16,3 +16,9 @@ from mjlab.asset_zoo.robots.unitree_go1.go1_constants import (
 from mjlab.asset_zoo.robots.unitree_go1.go1_constants import (
   get_go1_robot_cfg as get_go1_robot_cfg,
 )
+from mjlab.asset_zoo.robots.snakebot.snakebot_constants import (
+  SNAKEBOT_ACTION_SCALE as SNAKEBOT_ACTION_SCALE,
+)
+from mjlab.asset_zoo.robots.snakebot.snakebot_constants import (
+  get_snakebot_robot_cfg as get_snakebot_robot_cfg,
+)
