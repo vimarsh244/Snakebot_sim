@@ -68,7 +68,8 @@ def _get_goal_pos(env: ManagerBasedRlEnv) -> torch.Tensor:
 def _get_head_pos_xy(env: ManagerBasedRlEnv) -> torch.Tensor:
     """Get head/root module XY world position, shape (B, 2)."""
     asset: Entity = env.scene["robot"]
-    return asset.data.root_link_pos_w[:, :2]
+    head_xy = asset.data.root_link_pos_w[:, :2]
+    return torch.nan_to_num(head_xy, nan=0.0, posinf=0.0, neginf=0.0)
 
 
 def _distance_to_goal(env: ManagerBasedRlEnv) -> torch.Tensor:
@@ -95,6 +96,9 @@ def goal_vector_body_frame(
 
     # Get robot heading from root quaternion
     quat = asset.data.root_link_quat_w  # (B, 4) wxyz
+    quat = torch.nan_to_num(quat, nan=0.0, posinf=0.0, neginf=0.0)
+    quat_norm = torch.norm(quat, dim=1, keepdim=True).clamp(min=1e-8)
+    quat = quat / quat_norm
     w, x, y, z = quat[:, 0], quat[:, 1], quat[:, 2], quat[:, 3]
     # Yaw angle from quaternion
     yaw = torch.atan2(2.0 * (w * z + x * y), 1.0 - 2.0 * (y * y + z * z))
@@ -105,7 +109,8 @@ def goal_vector_body_frame(
     goal_body_x = cos_yaw * goal_w[:, 0] - sin_yaw * goal_w[:, 1]
     goal_body_y = sin_yaw * goal_w[:, 0] + cos_yaw * goal_w[:, 1]
 
-    return torch.stack([goal_body_x, goal_body_y], dim=1)  # (B, 2)
+    goal_body = torch.stack([goal_body_x, goal_body_y], dim=1)
+    return torch.nan_to_num(goal_body, nan=0.0, posinf=0.0, neginf=0.0)  # (B, 2)
 
 
 def heading_to_goal(

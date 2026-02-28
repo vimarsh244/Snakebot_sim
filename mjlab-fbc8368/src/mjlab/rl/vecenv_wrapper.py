@@ -23,6 +23,7 @@ class RslRlVecEnvWrapper(VecEnv):
 
     # Reset at the start since rsl_rl does not call reset.
     self.env.reset()
+    self._warned_non_finite = False
 
   @property
   def cfg(self) -> ManagerBasedRlEnvCfg:
@@ -63,10 +64,12 @@ class RslRlVecEnvWrapper(VecEnv):
 
   def get_observations(self) -> TensorDict:
     obs_dict = self.unwrapped.observation_manager.compute()
+    obs_dict = self._sanitize_obs_dict(obs_dict)
     return TensorDict(obs_dict, batch_size=[self.num_envs])
 
   def reset(self) -> tuple[TensorDict, dict]:
     obs_dict, extras = self.env.reset()
+    obs_dict = self._sanitize_obs_dict(obs_dict)
     return TensorDict(obs_dict, batch_size=[self.num_envs]), extras
 
   def step(
@@ -75,6 +78,8 @@ class RslRlVecEnvWrapper(VecEnv):
     if self.clip_actions is not None:
       actions = torch.clamp(actions, -self.clip_actions, self.clip_actions)
     obs_dict, rew, terminated, truncated, extras = self.env.step(actions)
+    obs_dict = self._sanitize_obs_dict(obs_dict)
+    rew = self._sanitize_tensor(rew, name="reward")
     term_or_trunc = terminated | truncated
     assert isinstance(rew, torch.Tensor)
     assert isinstance(term_or_trunc, torch.Tensor)
@@ -105,3 +110,23 @@ class RslRlVecEnvWrapper(VecEnv):
     self.unwrapped.action_space = batch_space(
       self.unwrapped.single_action_space, self.num_envs
     )
+
+  def _sanitize_obs_dict(self, obs_dict: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
+    sanitized: dict[str, torch.Tensor] = {}
+    for key, value in obs_dict.items():
+      sanitized[key] = self._sanitize_tensor(value, name=f"obs.{key}")
+    return sanitized
+
+  def _sanitize_tensor(self, tensor: torch.Tensor, name: str) -> torch.Tensor:
+    invalid = ~torch.isfinite(tensor)
+    if invalid.any():
+      if not self._warned_non_finite:
+        num_invalid = int(invalid.sum().item())
+        total = invalid.numel()
+        print(
+          f"[WARN] Non-finite values detected in {name}; "
+          f"sanitizing tensor ({num_invalid}/{total} invalid elements)."
+        )
+        self._warned_non_finite = True
+      tensor = torch.nan_to_num(tensor, nan=0.0, posinf=0.0, neginf=0.0)
+    return tensor
