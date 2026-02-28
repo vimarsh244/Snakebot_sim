@@ -41,6 +41,7 @@ from . import locomotion_mdp
 # ── Body references ───────────────────────────────────────────────────────────
 SNAKE_ROOT_BODY = "m1_bottom-base-plate-v1"
 _MODULE_BODIES = "m[1-5]_bottom-base-plate-v1"
+_ACTUATED_JOINTS = (".*Revolute-15", ".*Revolute-16")
 
 # ── Goal parameters ───────────────────────────────────────────────────────────
 GOAL_RADIUS_MIN = 1.0   # metres
@@ -135,6 +136,7 @@ def snakebot_locomotion_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
 
     # ── Observations ──────────────────────────────────────────────────────────
     _module_body_cfg = SceneEntityCfg("robot", body_names=(_MODULE_BODIES,))
+    _actuated_joint_cfg = SceneEntityCfg("robot", joint_names=_ACTUATED_JOINTS)
 
     actor_terms: dict = {
         "goal_vector": ObservationTermCfg(
@@ -147,10 +149,12 @@ def snakebot_locomotion_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         ),
         "joint_pos": ObservationTermCfg(
             func=joint_pos_rel,
+            params={"asset_cfg": _actuated_joint_cfg},
             noise=Unoise(n_min=-0.06, n_max=0.06),
         ),
         "joint_vel": ObservationTermCfg(
             func=joint_vel_rel,
+            params={"asset_cfg": _actuated_joint_cfg},
             noise=Unoise(n_min=-4.0, n_max=4.0),
         ),
         "actions": ObservationTermCfg(func=last_action),
@@ -261,6 +265,7 @@ def snakebot_locomotion_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         ),
         "dof_pos_limits": RewardTermCfg(
             func=joint_pos_limits,
+            params={"asset_cfg": _actuated_joint_cfg},
             weight=-1.0,
         ),
     }

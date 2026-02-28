@@ -50,8 +50,18 @@ MODULE_BODY_PATTERN = "m[1-5]_bottom-base-plate-v1"
 def _get_goal_pos(env: ManagerBasedRlEnv) -> torch.Tensor:
     """Get goal XY position, shape (B, 2). Lazily initializes on first call."""
     if not hasattr(env, "_loco_goal_pos"):
-        env._loco_goal_pos = torch.zeros(env.num_envs, 2, device=env.device)
-        env._loco_prev_dist = torch.ones(env.num_envs, device=env.device) * 1.5
+        # Initialize with random goals spread around the origin to give
+        # the obs normalizer diverse initial statistics (prevents NaN from
+        # zero-variance normalization on the first forward pass).
+        import math
+        n = env.num_envs
+        angle = torch.rand(n, device=env.device) * 2 * math.pi
+        radius = 1.0 + torch.rand(n, device=env.device)  # 1-2m
+        env._loco_goal_pos = torch.stack([
+            radius * torch.cos(angle),
+            radius * torch.sin(angle),
+        ], dim=1)
+        env._loco_prev_dist = radius.clone()
     return env._loco_goal_pos  # set by reset event
 
 

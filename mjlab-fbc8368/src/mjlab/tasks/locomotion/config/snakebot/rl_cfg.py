@@ -14,32 +14,26 @@ from mjlab.rl import (
 def snakebot_locomotion_ppo_cfg() -> RslRlOnPolicyRunnerCfg:
     """Create RL runner configuration for Snakebot locomotion task."""
     return RslRlOnPolicyRunnerCfg(
-        # ------------------------------------------------------------------
         # Actor: sim-to-real deployable, ~34 dim obs → moderate network
         # goal_vector(2) + heading(2) + joint_pos(10) + joint_vel(10) + actions(10) = 34
-        # ------------------------------------------------------------------
         actor=RslRlModelCfg(
             hidden_dims=(256, 128, 64),
             activation="elu",
-            obs_normalization=True,
+            obs_normalization=False,  # disabled — obs ranges are bounded
             stochastic=True,
-            init_noise_std=1.0,
+            init_noise_std=0.35,
             noise_std_type="log",
         ),
-        # ------------------------------------------------------------------
         # Critic: full privileged state → ~79 dim obs → larger network
         # actor(34) + body_pos(15) + body_lin_vel(15) + body_ang_vel(15) + efforts(10) = 89
-        # ------------------------------------------------------------------
         critic=RslRlModelCfg(
             hidden_dims=(512, 256, 128),
             activation="elu",
-            obs_normalization=True,
+            obs_normalization=False,  # disabled — obs ranges are bounded
             stochastic=False,
             init_noise_std=1.0,
         ),
-        # ------------------------------------------------------------------
         # PPO hyper-parameters
-        # ------------------------------------------------------------------
         algorithm=RslRlPpoAlgorithmCfg(
             value_loss_coef=1.0,
             use_clipped_value_loss=True,
