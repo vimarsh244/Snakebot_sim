@@ -5,40 +5,44 @@ This document describes how to set up, train, and visualize the 5-module snakebo
 ## Model
 
 - **Robot**: 5-module snake chain with closed kinematic loops (equality welds). Actuated joints: 10 (2 per module: `m*_Revolute-15`, `m*_Revolute-16`).
-- **MJCF**: `src/mjlab/asset_zoo/robots/snakebot/xmls/chain_5.xml` (copy of the original with minimal Warp-compat edit: `noslip_iterations` removed).
+- **MJCF**: `src/mjlab/asset_zoo/robots/snakebot/xmls/chain_5.xml` (copy of the original with Warp-compat edits: `noslip_iterations` removed, equality constraint `solref` relaxed to `0.002 1`).
 - **Meshes**: All STLs live under `snakebot/xmls/meshes/`.
 
-## RL Implementation Details
+## Available Tasks
 
-The RL pipeline uses an **asymmetric actor/critic** setup tuned for serpentine locomotion at **10 Hz**:
+### 1. `Mjlab-Velocity-Flat-Snakebot` — Velocity Tracking
 
-### Observations
+Forward velocity tracking task. The robot learns to follow velocity commands.
 
-**Actor** (Sim-to-real deployable — ~42 dim):
-- Joint positions and velocities (10 + 10)
+**Actor** (~42 dim): Joint pos/vel (20), last action (10), velocity commands (3), root IMU (9)
+**Critic** (~139 dim): Actor obs + per-module pos/vel/ang-vel (45) + joint efforts (10)
+
+### 2. `Mjlab-Locomotion-Flat-Snakebot` — Goal-Reaching (NEW)
+
+Navigate to a random XY goal 1–2 m away. Reward design informed by 5 research papers (COBRA thesis, snakebot-gym, Naish/EELS, serpentine locomotion RL, sensors-22-09867).
+
+**Actor** (~34 dim, hardware-deployable):
+- Goal vector in body frame (2): XY offset to goal, rotated by robot yaw
+- Heading to goal (2): sin/cos of angle between heading and goal direction
+- Joint positions/velocities (20)
 - Previous actions (10)
-- Velocity commands (3: vx, vy, wz)
-- Root module IMU (linear velocity, angular velocity, projected gravity)
 
-**Critic** (Privileged simulation state — ~139 dim):
-- All actor observations (without noise)
-- `all_body_pos_rel`: Complete kinematic chain positions relative to root (15)
-- `all_body_lin_vel`: Linear velocities of all 5 modules (15)
-- `all_body_ang_vel`: Simulated IMU data (angular velocity) for every module (15)
-- `joint_efforts`: Actuator forces for energy estimation (10)
+**Critic** (~89 dim, privileged):
+- All actor obs + per-module positions/velocities/angular-vel (45) + joint efforts (10)
 
-### Rewards
+**Rewards**:
+| Term | Weight | Purpose |
+|---|---|---|
+| `progress_reward` | +5.0 | Δ distance to goal (KEY signal) |
+| `distance_penalty` | -0.5 | Persistent pull toward goal |
+| `heading_alignment` | +1.0 | Face the goal (cos similarity) |
+| `goal_reached_bonus` | +100.0 | Sparse bonus on arrival (<15 cm) |
+| `alive_bonus` | +0.5 | Encourage long episodes |
+| `control_cost` | -0.05 | Energy efficiency |
+| `action_smoothness` | -0.02 | Sim-to-real, no jitter |
+| `dof_pos_limits` | -1.0 | Prevent self-collision |
 
-Rewards are tuned for serpentine motion (no gait/foot dependence):
-- **track_linear_velocity**: Primary reward for following forward command
-- **snake_forward_progress**: Bonus for actual CoM forward displacement
-- **snake_body_height**: Encourages modules to hover near 8 cm (normal ground contact height)
-- **snake_undulation**: Rewards alternating joint signs (the classic serpentine wave pattern)
-- **snake_lateral_deviation**: Penalises sideways drift
-- **upright**: Soft penalty to keep the head module from fully flipping over
-
-### Control Frequency
-The environment operates at **10 Hz** (MuJoCo timestep `0.005 s` with `decimation=20`).
+**Episode**: 30 s max (300 steps at 10 Hz). Terminates early on goal reach or fall-over.
 
 ## Setup
 
@@ -53,46 +57,45 @@ Requires Python 3.10–3.13 and (for GPU training) NVIDIA GPU + CUDA.
 
 ## Training
 
-Train with PPO (wandb logging by default):
-
+### Velocity task
 ```bash
 uv run train Mjlab-Velocity-Flat-Snakebot --env.scene.num-envs 2048
 ```
 
+### Locomotion task (goal-reaching)
+```bash
+uv run train Mjlab-Locomotion-Flat-Snakebot --env.scene.num-envs 2048
+```
+
 Tune parallelism:
-
 ```bash
-uv run train Mjlab-Velocity-Flat-Snakebot --env.scene.num-envs 1024
-uv run train Mjlab-Velocity-Flat-Snakebot --env.scene.num-envs 4096 --gpu-ids 0 1
+uv run train Mjlab-Locomotion-Flat-Snakebot --env.scene.num-envs 1024
+uv run train Mjlab-Locomotion-Flat-Snakebot --env.scene.num-envs 4096 --gpu-ids 0 1
 ```
 
-Training uses **Weights & Biases** by default. Log in once:
+Training uses **Weights & Biases** by default. Log in once: `wandb login`.
 
-```bash
-wandb login
-```
-
-Runs appear under the `mjlab` project. Checkpoints and ONNX are saved under `logs/rsl_rl/snakebot_velocity/<timestamp>/` and (if `upload_model` is true) synced to wandb.
+Runs appear under the `mjlab` project. Checkpoints and ONNX are saved under `logs/rsl_rl/<experiment_name>/<timestamp>/`.
 
 ## Visualization
 
 ### Zero / random agent (no policy)
 
 ```bash
-uv run play Mjlab-Velocity-Flat-Snakebot --agent zero
-uv run play Mjlab-Velocity-Flat-Snakebot --agent random
+uv run play Mjlab-Locomotion-Flat-Snakebot --agent zero
+uv run play Mjlab-Locomotion-Flat-Snakebot --agent random
 ```
 
 ### Trained policy (from wandb)
 
 ```bash
-uv run play Mjlab-Velocity-Flat-Snakebot --wandb-run-path YOUR_ENTITY/mjlab/RUN_ID
+uv run play Mjlab-Locomotion-Flat-Snakebot --wandb-run-path YOUR_ENTITY/mjlab/RUN_ID
 ```
 
 ### Trained policy (local checkpoint)
 
 ```bash
-uv run play Mjlab-Velocity-Flat-Snakebot --checkpoint-file path/to/model_XXXX.pt
+uv run play Mjlab-Locomotion-Flat-Snakebot --checkpoint-file path/to/model_XXXX.pt
 ```
 
 ### Viewers
@@ -103,16 +106,14 @@ uv run play Mjlab-Velocity-Flat-Snakebot --checkpoint-file path/to/model_XXXX.pt
 ### Recording video
 
 ```bash
-uv run play Mjlab-Velocity-Flat-Snakebot --agent zero --video
+uv run play Mjlab-Locomotion-Flat-Snakebot --agent zero --video
 ```
-
-Videos are written under the run directory.
 
 ## Wandb
 
 - **Project**: `mjlab` (set in task RL config).
 - **Tags**: Add via `--agent.wandb-tags tag1 tag2`.
-- **Resume**: `uv run train Mjlab-Velocity-Flat-Snakebot --agent.resume --wandb-run-path ENTITY/mjlab/RUN_ID`.
+- **Resume**: `uv run train Mjlab-Locomotion-Flat-Snakebot --agent.resume --wandb-run-path ENTITY/mjlab/RUN_ID`.
 
 ## If MuJoCo Warp fails
 
@@ -125,11 +126,16 @@ The snake uses equality constraints (welds). If training fails on GPU (e.g. Warp
 ## File layout
 
 - `src/mjlab/asset_zoo/robots/snakebot/` — robot assets and config
-  - `xmls/chain_5.xml` — MJCF (Warp-compat)
+  - `xmls/chain_5.xml` — MJCF (Warp-compat, relaxed solref)
   - `xmls/meshes/*.stl` — meshes
   - `snakebot_constants.py` — `get_snakebot_robot_cfg()`, action scale
-- `src/mjlab/tasks/velocity/config/snakebot/` — task registration
-  - `env_cfgs.py` — flat velocity env, decoupled actor/critic definition (10Hz)
-  - `snakebot_mdp.py` — custom serpentine rewards and multi-module observation functions
-  - `rl_cfg.py` — PPO + wandb configs (large actor/critic networks)
+- `src/mjlab/tasks/velocity/config/snakebot/` — velocity task
+  - `env_cfgs.py` — flat velocity env (10 Hz, asymmetric actor/critic)
+  - `snakebot_mdp.py` — velocity reward & observation functions
+  - `rl_cfg.py` — PPO + wandb configs
   - `__init__.py` — registers `Mjlab-Velocity-Flat-Snakebot`
+- `src/mjlab/tasks/locomotion/config/snakebot/` — locomotion task (NEW)
+  - `env_cfg.py` — goal-reaching env (10 Hz, goal sampling, distance rewards)
+  - `locomotion_mdp.py` — goal-reaching rewards & observations
+  - `rl_cfg.py` — PPO config for goal-reaching
+  - `__init__.py` — registers `Mjlab-Locomotion-Flat-Snakebot`
