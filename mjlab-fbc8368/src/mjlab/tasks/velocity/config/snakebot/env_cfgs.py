@@ -25,10 +25,11 @@ from mjlab.envs.mdp.observations import (
     last_action,
     projected_gravity,
 )
-from mjlab.envs.mdp.rewards import action_rate_l2, joint_pos_limits
+from mjlab.envs.mdp.rewards import joint_pos_limits
 from mjlab.managers.observation_manager import ObservationGroupCfg, ObservationTermCfg
 from mjlab.managers.reward_manager import RewardTermCfg
 from mjlab.managers.scene_entity_config import SceneEntityCfg
+from mjlab.managers.termination_manager import TerminationTermCfg
 from mjlab.tasks.velocity.mdp import (
     UniformVelocityCommandCfg,
 )
@@ -51,12 +52,13 @@ def snakebot_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     ┌──────────────────────────┬────────┬─────────────────────────────────────┐
     │ Term                     │ Weight │ Purpose                             │
     ├──────────────────────────┼────────┼─────────────────────────────────────┤
-    │ forward_velocity         │ +10.0  │ Primary locomotion signal           │
+    │ forward_velocity_track   │ +12.0  │ Track commanded forward speed        │
     │ alive_bonus              │  +0.05 │ Small keep-alive baseline           │
-    │ lateral_velocity_penalty │ -0.002 │ Gentle anti-crab-walk               │
-    │ yaw_rate_penalty         │ -0.002 │ Gentle heading correction           │
-    │ control_cost             │ -0.002 │ Tiny energy term                    │
-    │ action_smoothness        │ -0.001 │ Tiny smoothness term                │
+    │ lateral_velocity_penalty │ -0.01  │ Discourage crab-walk                │
+    │ yaw_rate_penalty         │ -0.01  │ Keep heading stable                 │
+    │ control_cost             │ -0.004 │ Avoid high-effort thrashing         │
+    │ action_smoothness        │ -0.002 │ Reduce jitter                       │
+    │ vertical_velocity        │ -0.08  │ Discourage launching/bouncing       │
     │ dof_pos_limits           │  -0.1  │ Soft joint-limit guard              │
     └──────────────────────────┴────────┴─────────────────────────────────────┘
     """
@@ -78,6 +80,7 @@ def snakebot_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
 
     # ── 10 Hz control frequency ───────────────────────────────────────────────
     cfg.decimation = 20   # 0.005 s × 20 = 0.10 s / step
+    cfg.episode_length_s = 30.0
 
     # ── Observations (fully replaced) ─────────────────────────────────────────
     _module_body_cfg = SceneEntityCfg("robot", body_names=(_MODULE_BODIES,))
@@ -165,7 +168,7 @@ def snakebot_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     # ── Commands: forward-only ────────────────────────────────────────────────
     twist_cmd = cfg.commands["twist"]
     assert isinstance(twist_cmd, UniformVelocityCommandCfg)
-    twist_cmd.ranges.lin_vel_x   = (0.05, 0.15)   # easier initial targets
+    twist_cmd.ranges.lin_vel_x   = (0.05, 0.20)
     twist_cmd.ranges.lin_vel_y   = (0.00, 0.00)
     twist_cmd.ranges.ang_vel_z   = (0.00, 0.00)
     twist_cmd.ranges.heading     = (-math.pi, math.pi)
@@ -191,9 +194,10 @@ def snakebot_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
 
     # ── Rewards — forward velocity dominates, penalties near-zero ─────────────
     cfg.rewards = {
-        "forward_velocity": RewardTermCfg(
-            func=snakebot_mdp.forward_velocity,
-            weight=10.0,
+        "forward_velocity_track": RewardTermCfg(
+            func=snakebot_mdp.track_forward_velocity_command,
+            params={"command_name": "twist", "std": 0.08},
+            weight=12.0,
         ),
         "alive_bonus": RewardTermCfg(
             func=snakebot_mdp.alive_bonus,
@@ -201,19 +205,23 @@ def snakebot_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         ),
         "lateral_velocity_penalty": RewardTermCfg(
             func=snakebot_mdp.lateral_velocity_penalty,
-            weight=-0.002,
+            weight=-0.01,
         ),
         "yaw_rate_penalty": RewardTermCfg(
             func=snakebot_mdp.yaw_rate_penalty,
-            weight=-0.002,
+            weight=-0.01,
         ),
         "control_cost": RewardTermCfg(
             func=snakebot_mdp.control_cost,
-            weight=-0.002,
+            weight=-0.004,
         ),
         "action_smoothness": RewardTermCfg(
             func=snakebot_mdp.action_smoothness_penalty,
-            weight=-0.001,
+            weight=-0.002,
+        ),
+        "vertical_velocity": RewardTermCfg(
+            func=snakebot_mdp.vertical_velocity_penalty,
+            weight=-0.08,
         ),
         "dof_pos_limits": RewardTermCfg(
             func=joint_pos_limits,
@@ -224,11 +232,14 @@ def snakebot_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
 
     # ── Terminations ──────────────────────────────────────────────────────────
     cfg.terminations.pop("illegal_contact", None)
-    # bad_orientation checks acos(-projected_gravity_b[:, 2]) > limit_angle.
-    # the snake's body-frame Z points along world -X (horizontal), so
-    # projected_gravity_b[:, 2] is ~0 and the angle is always ~90deg.
-    # this would immediately terminate every episode, so we remove it.
+    # bad_orientation uses projected_gravity_b[:, 2] which is ~0 for a snake
+    # lying flat, so the check always gives ~90deg — remove it.
     cfg.terminations.pop("fell_over", None)
+    # terminate if the snake gets launched into the air (physics blowup)
+    cfg.terminations["too_high"] = TerminationTermCfg(
+        func=snakebot_mdp.root_too_high,
+        params={"max_height": 0.3},
+    )
 
     # ── Curriculum: start slow, add lateral/yaw penalties later ──────────────
     cfg.curriculum.pop("terrain_levels", None)

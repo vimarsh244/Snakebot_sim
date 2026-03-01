@@ -28,11 +28,11 @@ from mjlab.envs.mdp.observations import (
     last_action,
 )
 from mjlab.envs.mdp.rewards import joint_pos_limits
+from mjlab.managers.event_manager import EventTermCfg
 from mjlab.managers.observation_manager import ObservationGroupCfg, ObservationTermCfg
 from mjlab.managers.reward_manager import RewardTermCfg
 from mjlab.managers.scene_entity_config import SceneEntityCfg
 from mjlab.managers.termination_manager import TerminationTermCfg
-from mjlab.managers.event_manager import EventTermCfg
 from mjlab.tasks.velocity.velocity_env_cfg import make_velocity_env_cfg
 from mjlab.utils.noise import UniformNoiseCfg as Unoise
 
@@ -132,7 +132,7 @@ def snakebot_locomotion_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     cfg.decimation = 20
 
     # ── Episode ────────────────────────────────────────────────────────────
-    cfg.episode_length_s = 30.0  # 300 steps at 10 Hz
+    cfg.episode_length_s = 40.0  # 400 steps at 10 Hz
 
     # ── Observations ──────────────────────────────────────────────────────────
     _module_body_cfg = SceneEntityCfg("robot", body_names=(_MODULE_BODIES,))
@@ -210,13 +210,6 @@ def snakebot_locomotion_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         func=_sample_goals,
         mode="reset",
     )
-    # Update prev_distance each step for progress reward
-    cfg.events["update_prev_dist"] = EventTermCfg(
-        func=_update_prev_distance,
-        mode="interval",
-        interval_range_s=(0.0, 0.0),
-    )
-
     # Domain randomisation — reduced for initial learning
     cfg.events["base_com"].params["asset_cfg"].body_names = (SNAKE_ROOT_BODY,)
     cfg.events["base_com"].params["ranges"] = {
@@ -243,7 +236,7 @@ def snakebot_locomotion_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         ),
         "heading_alignment": RewardTermCfg(
             func=locomotion_mdp.heading_alignment_reward,
-            weight=3.0,
+            weight=2.0,
         ),
         "goal_reached_bonus": RewardTermCfg(
             func=locomotion_mdp.goal_reached_bonus,
@@ -284,6 +277,10 @@ def snakebot_locomotion_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     # lying flat (body Z = world -X), so the check always gives ~90deg and
     # would immediately terminate every episode. remove it.
     cfg.terminations.pop("fell_over", None)
+    cfg.terminations["too_high"] = TerminationTermCfg(
+        func=locomotion_mdp.root_too_high,
+        params={"max_height": 0.35},
+    )
 
     # ── Curriculum ────────────────────────────────────────────────────────────
     cfg.curriculum.pop("terrain_levels", None)

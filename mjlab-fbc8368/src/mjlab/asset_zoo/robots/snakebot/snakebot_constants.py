@@ -61,8 +61,8 @@ INIT_STATE = EntityCfg.InitialStateCfg(
 ##
 
 SNAKEBOT_ACTION_SCALE: dict[str, float] = {
-  ".*Revolute-15": 1.0,
-  ".*Revolute-16": 1.0,
+  ".*Revolute-15": 0.5,
+  ".*Revolute-16": 0.5,
 }
 
 ##

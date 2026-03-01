@@ -414,16 +414,16 @@
         <weld name="chain_link_4" body1="battery_4" body2="m5_bottom-base-plate-v1" solref="0.001 1" solimp="0.9999 0.99999 0.00001" />
     </equality>
     <actuator>
-        <position name="module_1_servo_bottom" joint="m1_Revolute-15" kp="2.0" kv="0.05" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
-        <position name="module_1_servo_top" joint="m1_Revolute-16" kp="2.0" kv="0.05" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
-        <position name="module_2_servo_bottom" joint="m2_Revolute-15" kp="2.0" kv="0.05" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
-        <position name="module_2_servo_top" joint="m2_Revolute-16" kp="2.0" kv="0.05" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
-        <position name="module_3_servo_bottom" joint="m3_Revolute-15" kp="2.0" kv="0.05" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
-        <position name="module_3_servo_top" joint="m3_Revolute-16" kp="2.0" kv="0.05" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
-        <position name="module_4_servo_bottom" joint="m4_Revolute-15" kp="2.0" kv="0.05" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
-        <position name="module_4_servo_top" joint="m4_Revolute-16" kp="2.0" kv="0.05" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
-        <position name="module_5_servo_bottom" joint="m5_Revolute-15" kp="2.0" kv="0.05" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
-        <position name="module_5_servo_top" joint="m5_Revolute-16" kp="2.0" kv="0.05" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_1_servo_bottom" joint="m1_Revolute-15" kp="2.4" kv="0.12" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_1_servo_top" joint="m1_Revolute-16" kp="2.4" kv="0.12" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_2_servo_bottom" joint="m2_Revolute-15" kp="2.4" kv="0.12" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_2_servo_top" joint="m2_Revolute-16" kp="2.4" kv="0.12" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_3_servo_bottom" joint="m3_Revolute-15" kp="2.4" kv="0.12" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_3_servo_top" joint="m3_Revolute-16" kp="2.4" kv="0.12" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_4_servo_bottom" joint="m4_Revolute-15" kp="2.4" kv="0.12" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_4_servo_top" joint="m4_Revolute-16" kp="2.4" kv="0.12" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_5_servo_bottom" joint="m5_Revolute-15" kp="2.4" kv="0.12" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_5_servo_top" joint="m5_Revolute-16" kp="2.4" kv="0.12" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
     </actuator>
     <sensor>
         <gyro name="imu_ang_vel" site="imu" />

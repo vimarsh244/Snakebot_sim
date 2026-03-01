@@ -20,7 +20,7 @@ by the event callbacks in env_cfg.py.
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import torch
 
@@ -33,6 +33,10 @@ if TYPE_CHECKING:
 
 # Module body regex — one representative body per snake module (5 total)
 MODULE_BODY_PATTERN = "m[1-5]_bottom-base-plate-v1"
+_DEFAULT_ASSET_CFG = SceneEntityCfg("robot")
+_DEFAULT_MODULE_ASSET_CFG = SceneEntityCfg(
+    "robot", body_names=(MODULE_BODY_PATTERN,)
+)
 
 # gait period in env steps (15 steps * 0.1s = 1.5s cycle at 10 Hz)
 GAIT_PERIOD_STEPS = 15
@@ -44,7 +48,8 @@ GAIT_PERIOD_STEPS = 15
 
 def _get_goal_pos(env: ManagerBasedRlEnv) -> torch.Tensor:
     """Get goal XY position, shape (B, 2). Lazily initializes on first call."""
-    if not hasattr(env, "_loco_goal_pos"):
+    env_any = cast(Any, env)
+    if not hasattr(env_any, "_loco_goal_pos"):
         # Initialize with random goals spread around the origin to give
         # the obs normalizer diverse initial statistics (prevents NaN from
         # zero-variance normalization on the first forward pass).
@@ -52,12 +57,12 @@ def _get_goal_pos(env: ManagerBasedRlEnv) -> torch.Tensor:
         n = env.num_envs
         angle = torch.rand(n, device=env.device) * 2 * math.pi
         radius = 0.3 + torch.rand(n, device=env.device) * 0.5  # 0.3-0.8m
-        env._loco_goal_pos = torch.stack([
+        env_any._loco_goal_pos = torch.stack([
             radius * torch.cos(angle),
             radius * torch.sin(angle),
         ], dim=1)
-        env._loco_prev_dist = radius.clone()
-    return env._loco_goal_pos  # set by reset event
+        env_any._loco_prev_dist = radius.clone()
+    return env_any._loco_goal_pos  # set by reset event
 
 
 def _get_head_pos_xy(env: ManagerBasedRlEnv) -> torch.Tensor:
@@ -79,7 +84,7 @@ def _distance_to_goal(env: ManagerBasedRlEnv) -> torch.Tensor:
 
 def goal_vector_body_frame(
     env: ManagerBasedRlEnv,
-    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
 ) -> torch.Tensor:
     """Goal direction in the snake's local frame, shape (B, 2).
 
@@ -115,7 +120,7 @@ def goal_vector_body_frame(
 
 def heading_to_goal(
     env: ManagerBasedRlEnv,
-    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
 ) -> torch.Tensor:
     """Sin/cos of angle between robot heading and goal direction, shape (B, 2).
 
@@ -145,7 +150,7 @@ def phase_clock(env: ManagerBasedRlEnv) -> torch.Tensor:
 
 def all_body_positions_rel(
     env: ManagerBasedRlEnv,
-    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot", body_names=(MODULE_BODY_PATTERN,)),
+    asset_cfg: SceneEntityCfg = _DEFAULT_MODULE_ASSET_CFG,
 ) -> torch.Tensor:
     """Positions of all module bodies relative to the root body, shape (B, N*3)."""
     asset: Entity = env.scene[asset_cfg.name]
@@ -156,7 +161,7 @@ def all_body_positions_rel(
 
 def all_body_lin_velocities(
     env: ManagerBasedRlEnv,
-    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot", body_names=(MODULE_BODY_PATTERN,)),
+    asset_cfg: SceneEntityCfg = _DEFAULT_MODULE_ASSET_CFG,
 ) -> torch.Tensor:
     """World-frame linear velocities of all module bodies, shape (B, N*3)."""
     asset: Entity = env.scene[asset_cfg.name]
@@ -165,7 +170,7 @@ def all_body_lin_velocities(
 
 def all_body_ang_velocities(
     env: ManagerBasedRlEnv,
-    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot", body_names=(MODULE_BODY_PATTERN,)),
+    asset_cfg: SceneEntityCfg = _DEFAULT_MODULE_ASSET_CFG,
 ) -> torch.Tensor:
     """Angular velocities of all module bodies, shape (B, N*3)."""
     asset: Entity = env.scene[asset_cfg.name]
@@ -174,7 +179,7 @@ def all_body_ang_velocities(
 
 def joint_efforts(
     env: ManagerBasedRlEnv,
-    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
 ) -> torch.Tensor:
     """Raw actuator forces for all 10 servos, shape (B, 10)."""
     asset: Entity = env.scene[asset_cfg.name]
@@ -192,10 +197,14 @@ def progress_reward(env: ManagerBasedRlEnv) -> torch.Tensor:
     Key shaped reward from COBRA thesis and snakebot-gym.
     Clamped to [-1, 1] to prevent blowup during resets.
     """
+    env_any = cast(Any, env)
     _get_goal_pos(env)  # ensure lazy init
     curr_dist = _distance_to_goal(env)
-    prev_dist = env._loco_prev_dist
-    return (prev_dist - curr_dist).clamp(-1.0, 1.0)
+    prev_dist = env_any._loco_prev_dist
+    progress = (prev_dist - curr_dist).clamp(-1.0, 1.0)
+    # update history here so reward is independent of event callback ordering
+    env_any._loco_prev_dist = curr_dist.detach()
+    return progress
 
 
 def distance_penalty(env: ManagerBasedRlEnv) -> torch.Tensor:
@@ -221,7 +230,7 @@ def goal_reached_bonus(
 
 def heading_alignment_reward(
     env: ManagerBasedRlEnv,
-    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
 ) -> torch.Tensor:
     """Cosine similarity between body heading and goal direction.
 
@@ -231,7 +240,9 @@ def heading_alignment_reward(
     goal_body = goal_vector_body_frame(env, asset_cfg)  # (B, 2)
     dist = torch.norm(goal_body, dim=1, keepdim=True).clamp(min=0.01)
     direction = goal_body / dist
-    return direction[:, 0]  # cos(angle)
+    # reward alignment but do not add extra penalty when facing away; progress
+    # and distance terms already provide directional pressure.
+    return torch.clamp(direction[:, 0], min=0.0)
 
 
 def alive_bonus(env: ManagerBasedRlEnv) -> torch.Tensor:
@@ -241,7 +252,7 @@ def alive_bonus(env: ManagerBasedRlEnv) -> torch.Tensor:
 
 def control_cost(
     env: ManagerBasedRlEnv,
-    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
 ) -> torch.Tensor:
     """Squared sum of all actions (energy penalty)."""
     return torch.sum(torch.square(env.action_manager.action), dim=1)
@@ -263,3 +274,13 @@ def goal_reached_termination(
 ) -> torch.Tensor:
     """Terminate episode when the snake reaches the goal."""
     return _distance_to_goal(env) < threshold
+
+
+def root_too_high(
+    env: ManagerBasedRlEnv,
+    max_height: float = 0.3,
+    asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
+) -> torch.Tensor:
+    """Terminate if the root body rises above max_height (physics blowup)."""
+    asset: Entity = env.scene[asset_cfg.name]
+    return asset.data.root_link_pos_w[:, 2] > max_height

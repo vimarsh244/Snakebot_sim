@@ -39,6 +39,10 @@ GAIT_PERIOD_STEPS = 15
 # Module body regex — one representative body per snake module (5 total)
 # ---------------------------------------------------------------------------
 MODULE_BODY_PATTERN = "m[1-5]_bottom-base-plate-v1"
+_DEFAULT_ASSET_CFG = SceneEntityCfg("robot")
+_DEFAULT_MODULE_ASSET_CFG = SceneEntityCfg(
+    "robot", body_names=(MODULE_BODY_PATTERN,)
+)
 
 
 # ---------------------------------------------------------------------------
@@ -47,7 +51,7 @@ MODULE_BODY_PATTERN = "m[1-5]_bottom-base-plate-v1"
 
 def all_body_positions_rel(
     env: ManagerBasedRlEnv,
-    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot", body_names=(MODULE_BODY_PATTERN,)),
+    asset_cfg: SceneEntityCfg = _DEFAULT_MODULE_ASSET_CFG,
 ) -> torch.Tensor:
     """Positions of all module bodies relative to the root body, shape (B, N*3)."""
     asset: Entity = env.scene[asset_cfg.name]
@@ -58,7 +62,7 @@ def all_body_positions_rel(
 
 def all_body_lin_velocities(
     env: ManagerBasedRlEnv,
-    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot", body_names=(MODULE_BODY_PATTERN,)),
+    asset_cfg: SceneEntityCfg = _DEFAULT_MODULE_ASSET_CFG,
 ) -> torch.Tensor:
     """World-frame linear velocities of all module bodies, shape (B, N*3)."""
     asset: Entity = env.scene[asset_cfg.name]
@@ -67,7 +71,7 @@ def all_body_lin_velocities(
 
 def all_body_ang_velocities(
     env: ManagerBasedRlEnv,
-    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot", body_names=(MODULE_BODY_PATTERN,)),
+    asset_cfg: SceneEntityCfg = _DEFAULT_MODULE_ASSET_CFG,
 ) -> torch.Tensor:
     """Angular velocities of all module bodies — simulated IMU per module, shape (B, N*3)."""
     asset: Entity = env.scene[asset_cfg.name]
@@ -76,7 +80,7 @@ def all_body_ang_velocities(
 
 def joint_efforts(
     env: ManagerBasedRlEnv,
-    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
 ) -> torch.Tensor:
     """Raw actuator forces for all 10 servos, shape (B, 10)."""
     asset: Entity = env.scene[asset_cfg.name]
@@ -100,24 +104,30 @@ def phase_clock(env: ManagerBasedRlEnv) -> torch.Tensor:
 # Reward functions (literature-grounded for wheelless serpentine locomotion)
 # ---------------------------------------------------------------------------
 
-def forward_velocity(
+def track_forward_velocity_command(
     env: ManagerBasedRlEnv,
-    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    command_name: str = "twist",
+    std: float = 0.08,
+    asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
 ) -> torch.Tensor:
-    """Forward CoM velocity along the snake's travel axis (world X).
+    """Track commanded forward speed in world X (snake's physical forward axis).
 
-    The snake lies along world X, so world-frame X velocity is the correct
-    forward signal. We use world frame because the body frame's X-axis
-    actually points downward (world -Z) due to the compound frame rotations
-    in the MJCF — using body-frame X would reward vertical motion.
+    Velocity commands in this task are sampled as a scalar `lin_vel_x`.
+    For snakebot, we intentionally interpret that scalar as desired *world-X*
+    speed because the snake root body frame is rotated (body X points down).
     """
     asset: Entity = env.scene[asset_cfg.name]
-    return asset.data.root_link_lin_vel_w[:, 0]   # (B,)  world X = forward
+    command = env.command_manager.get_command(command_name)
+    assert command is not None, f"Command '{command_name}' not found."
+    target_vx = command[:, 0].clamp(0.0, 0.4)
+    actual_vx = asset.data.root_link_lin_vel_w[:, 0].clamp(-1.0, 1.0)
+    error = target_vx - actual_vx
+    return torch.exp(-torch.square(error) / (std**2))
 
 
 def lateral_velocity_penalty(
     env: ManagerBasedRlEnv,
-    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
 ) -> torch.Tensor:
     """Squared lateral (world Y) CoM velocity, clamped before squaring.
 
@@ -131,7 +141,7 @@ def lateral_velocity_penalty(
 
 def yaw_rate_penalty(
     env: ManagerBasedRlEnv,
-    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
 ) -> torch.Tensor:
     """Squared yaw rate (rotation around world Z), clamped before squaring.
 
@@ -143,6 +153,20 @@ def yaw_rate_penalty(
     asset: Entity = env.scene[asset_cfg.name]
     omega_z = asset.data.root_link_ang_vel_w[:, 2].clamp(-5.0, 5.0)
     return torch.square(omega_z)   # (B,)  max penalty = 25 per step
+
+
+def vertical_velocity_penalty(
+    env: ManagerBasedRlEnv,
+    asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
+) -> torch.Tensor:
+    """Squared vertical (world Z) CoM velocity, clamped before squaring.
+
+    Discourages the snake from launching itself upward or bouncing.
+    A snake doing proper serpentine locomotion should have near-zero Z velocity.
+    """
+    asset: Entity = env.scene[asset_cfg.name]
+    v_z = asset.data.root_link_lin_vel_w[:, 2].clamp(-3.0, 3.0)
+    return torch.square(v_z)   # (B,)
 
 
 def action_smoothness_penalty(env: ManagerBasedRlEnv) -> torch.Tensor:
@@ -166,7 +190,7 @@ def alive_bonus(env: ManagerBasedRlEnv) -> torch.Tensor:
 
 def control_cost(
     env: ManagerBasedRlEnv,
-    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
 ) -> torch.Tensor:
     """Squared sum of all actions.
 
@@ -174,3 +198,22 @@ def control_cost(
     shortcut (e.g. 'launch' behaviour).  Equivalent to an L2 action penalty.
     """
     return torch.sum(torch.square(env.action_manager.action), dim=1)   # (B,)
+
+
+# ---------------------------------------------------------------------------
+# Termination: catch flying / physics blowup
+# ---------------------------------------------------------------------------
+
+def root_too_high(
+    env: ManagerBasedRlEnv,
+    max_height: float = 0.3,
+    asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
+) -> torch.Tensor:
+    """Terminate if the root body rises above max_height.
+
+    A snake doing serpentine locomotion stays near z=0.08 (its initial height).
+    If z exceeds max_height the snake has been launched and further simulation
+    is wasted compute.
+    """
+    asset: Entity = env.scene[asset_cfg.name]
+    return asset.data.root_link_pos_w[:, 2] > max_height
