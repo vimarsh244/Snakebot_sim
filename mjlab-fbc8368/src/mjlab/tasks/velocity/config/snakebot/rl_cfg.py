@@ -1,7 +1,7 @@
 """RL configuration for Snakebot velocity task.
 
 Actor and critic use different network sizes reflecting their very different
-observation dimensions (~42 vs ~139 dims after asymmetric split).
+observation dimensions (~44 vs ~99 dims after asymmetric split).
 obs_normalization is enabled on both to handle the wide input ranges from
 per-module position / velocity data.
 """
@@ -22,7 +22,7 @@ def snakebot_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
         actor=RslRlModelCfg(
             hidden_dims=(512, 256, 128),
             activation="elu",
-            obs_normalization=True,   # normalise ~42-dim actor obs
+            obs_normalization=True,   # normalise ~44-dim actor obs
             stochastic=True,
             init_noise_std=1.0,
             noise_std_type="log",
@@ -33,7 +33,7 @@ def snakebot_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
         critic=RslRlModelCfg(
             hidden_dims=(512, 512, 256),
             activation="elu",
-            obs_normalization=True,   # normalise ~139-dim critic obs
+            obs_normalization=True,   # normalise ~99-dim critic obs
             stochastic=False,
             init_noise_std=1.0,
         ),

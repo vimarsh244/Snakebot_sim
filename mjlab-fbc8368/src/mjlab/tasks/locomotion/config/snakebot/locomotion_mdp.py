@@ -1,27 +1,17 @@
 """Snakebot locomotion MDP: observation and reward functions for goal-reaching.
 
-Reward design (informed by 5 reference papers):
-  1. Progress reward — change in distance to goal per step (COBRA thesis,
-     Naish/EELS, snakebot-gym). THE key shaped signal.
-  2. Distance penalty — negative current distance to goal (snakebot-gym).
-  3. Goal bonus — large sparse reward when goal reached (snakebot-gym, +100).
-  4. Alive bonus — constant +1 to encourage long episodes.
-  5. Control cost — L2 action penalty for energy efficiency.
-  6. Action smoothness — L2 action-delta penalty for sim-to-real.
-  7. Heading reward — reward cos(angle_to_goal) to encourage facing goal
-     (Naish/EELS heading reward, sensors paper direction reward).
-  8. Joint limits — soft penalty near limits (prevent self-collision).
+Body-frame convention for this snake:
+  The MJCF has compound frame rotations that make body-frame X = world -Z
+  (downward), body Y = world -Y, and body Z = world -X. The snake's forward
+  axis is therefore body -Z, and its lateral axis is body -Y. All body-frame
+  computations use full quaternion rotation to avoid gimbal-lock issues.
 
 Observation design:
-  Actor (~34 dim, hardware-deployable):
-    - goal_vector_body_frame (2): XY vector from root to goal in body frame
-    - heading_to_goal (2): sin/cos of angle between heading and goal direction
-    - joint_pos (10): actuated joint angles
-    - joint_vel (10): actuated joint velocities
-    - last_action (10): previous actions
-
-  Critic (~89 dim, privileged):
-    - All actor obs + per-module positions/velocities/angular-velocities + efforts
+  Actor (~38 dim):
+    - phase_clock (2), goal_vector (2, forward/lateral in body frame),
+      heading_to_goal (2), joint_pos (10), joint_vel (10), last_action (10)
+  Critic (~93 dim, privileged):
+    - actor obs + per-module positions/velocities/angular-velocities + efforts
 
 Goal data is stored as env._loco_goal_pos (B, 2) and env._loco_prev_dist (B,)
 by the event callbacks in env_cfg.py.
@@ -29,18 +19,23 @@ by the event callbacks in env_cfg.py.
 
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING
 
 import torch
 
 from mjlab.entity import Entity
 from mjlab.managers.scene_entity_config import SceneEntityCfg
+from mjlab.utils.lab_api.math import quat_apply_inverse
 
 if TYPE_CHECKING:
     from mjlab.envs import ManagerBasedRlEnv
 
 # Module body regex — one representative body per snake module (5 total)
 MODULE_BODY_PATTERN = "m[1-5]_bottom-base-plate-v1"
+
+# gait period in env steps (15 steps * 0.1s = 1.5s cycle at 10 Hz)
+GAIT_PERIOD_STEPS = 15
 
 
 # ---------------------------------------------------------------------------
@@ -56,7 +51,7 @@ def _get_goal_pos(env: ManagerBasedRlEnv) -> torch.Tensor:
         import math
         n = env.num_envs
         angle = torch.rand(n, device=env.device) * 2 * math.pi
-        radius = 1.0 + torch.rand(n, device=env.device)  # 1-2m
+        radius = 0.3 + torch.rand(n, device=env.device) * 0.5  # 0.3-0.8m
         env._loco_goal_pos = torch.stack([
             radius * torch.cos(angle),
             radius * torch.sin(angle),
@@ -86,31 +81,36 @@ def goal_vector_body_frame(
     env: ManagerBasedRlEnv,
     asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
 ) -> torch.Tensor:
-    """XY vector from root to goal expressed in body frame, shape (B, 2).
+    """Goal direction in the snake's local frame, shape (B, 2).
 
-    On hardware this would come from onboard localisation (SLAM, UWB, etc).
+    Uses full quaternion rotation instead of yaw extraction because the
+    snake's initial pitch is ~90deg (body X points down), which puts the
+    standard yaw formula in gimbal lock.
+
+    The snake's forward axis is body -Z (maps to world +X initially) and
+    lateral axis is body -Y (maps to world +Y). We return (forward, lateral)
+    so that a positive first component means "goal is ahead."
     """
     asset: Entity = env.scene[asset_cfg.name]
-    # Goal vector in world frame
-    goal_w = _get_goal_pos(env) - _get_head_pos_xy(env)  # (B, 2)
+    goal_w_2d = _get_goal_pos(env) - _get_head_pos_xy(env)  # (B, 2)
+    # pad to 3D (goal is on XY plane, z=0)
+    goal_w_3d = torch.cat([
+        goal_w_2d,
+        torch.zeros_like(goal_w_2d[:, :1]),
+    ], dim=1)  # (B, 3)
 
-    # Get robot heading from root quaternion
     quat = asset.data.root_link_quat_w  # (B, 4) wxyz
     quat = torch.nan_to_num(quat, nan=0.0, posinf=0.0, neginf=0.0)
     quat_norm = torch.norm(quat, dim=1, keepdim=True).clamp(min=1e-8)
     quat = quat / quat_norm
-    w, x, y, z = quat[:, 0], quat[:, 1], quat[:, 2], quat[:, 3]
-    # Yaw angle from quaternion
-    yaw = torch.atan2(2.0 * (w * z + x * y), 1.0 - 2.0 * (y * y + z * z))
 
-    # Rotate goal vector into body frame
-    cos_yaw = torch.cos(-yaw)
-    sin_yaw = torch.sin(-yaw)
-    goal_body_x = cos_yaw * goal_w[:, 0] - sin_yaw * goal_w[:, 1]
-    goal_body_y = sin_yaw * goal_w[:, 0] + cos_yaw * goal_w[:, 1]
+    goal_b = quat_apply_inverse(quat, goal_w_3d)  # (B, 3)
 
-    goal_body = torch.stack([goal_body_x, goal_body_y], dim=1)
-    return torch.nan_to_num(goal_body, nan=0.0, posinf=0.0, neginf=0.0)  # (B, 2)
+    # body -Z = forward along snake axis, body -Y = lateral
+    forward = -goal_b[:, 2]
+    lateral = -goal_b[:, 1]
+    result = torch.stack([forward, lateral], dim=1)
+    return torch.nan_to_num(result, nan=0.0, posinf=0.0, neginf=0.0)  # (B, 2)
 
 
 def heading_to_goal(
@@ -124,6 +124,19 @@ def heading_to_goal(
     goal_body = goal_vector_body_frame(env, asset_cfg)  # (B, 2)
     angle = torch.atan2(goal_body[:, 1], goal_body[:, 0])  # (B,)
     return torch.stack([torch.sin(angle), torch.cos(angle)], dim=1)  # (B, 2)
+
+
+# ---------------------------------------------------------------------------
+# Actor observation: periodic clock for gait coordination
+# ---------------------------------------------------------------------------
+
+def phase_clock(env: ManagerBasedRlEnv) -> torch.Tensor:
+    """Sin/cos of normalised episode time — gives the policy a time reference
+    for learning periodic gaits. Shape (B, 2)."""
+    phase = (
+        2.0 * math.pi * env.episode_length_buf.float() / GAIT_PERIOD_STEPS
+    )
+    return torch.stack([torch.sin(phase), torch.cos(phase)], dim=1)
 
 
 # ---------------------------------------------------------------------------

@@ -1,15 +1,15 @@
 """Snakebot goal-reaching locomotion environment configuration (flat terrain).
 
-Task: given a random goal on the XY ground plane (1–2 m away), navigate there.
+Task: given a random goal on the XY ground plane (0.3–0.8 m away), navigate there.
 
 Design (informed by snakebot-gym, COBRA thesis, Naish/EELS, sensors-22-09867):
-- Actor:  goal_vector + heading + joint_pos + joint_vel + last_action (~34 dim)
-- Critic: actor obs + full module pos/vel/ang-vel + efforts (~89 dim)
+- Actor:  phase_clock + goal_vector + heading + joint_pos + joint_vel + last_action (~36 dim)
+- Critic: actor obs + full module pos/vel/ang-vel + efforts (~91 dim)
 - 10 Hz control (decimation=20, dt=0.005s)
-- Rewards: progress + distance + heading + alive + goal_bonus + smoothness
+- Rewards: progress + heading + goal_bonus + distance + alive (penalties minimal)
 
 Goal sampling:
-- On each episode reset, a random XY goal is placed 1–2 m from the snake.
+- On each episode reset, a random XY goal is placed 0.3–0.8 m from the snake.
 """
 
 import math
@@ -44,14 +44,14 @@ _MODULE_BODIES = "m[1-5]_bottom-base-plate-v1"
 _ACTUATED_JOINTS = (".*Revolute-15", ".*Revolute-16")
 
 # ── Goal parameters ───────────────────────────────────────────────────────────
-GOAL_RADIUS_MIN = 1.0   # metres
-GOAL_RADIUS_MAX = 2.0
-GOAL_REACH_THRESHOLD = 0.15  # metres
+GOAL_RADIUS_MIN = 0.3   # metres — close goals the snake can actually reach
+GOAL_RADIUS_MAX = 0.8
+GOAL_REACH_THRESHOLD = 0.25  # metres — relaxed threshold for easier success
 
 
 # ── Goal sampling reset callback ──────────────────────────────────────────────
 def _sample_goals(env, env_ids, **kwargs):
-    """Sample random goals 1–2 m from the robot's reset position.
+    """Sample random goals 0.3–0.8 m from the robot's reset position.
 
     Called as a reset event. Stores _loco_goal_pos (B,2) and
     _loco_prev_dist (B,) on the env for use by MDP functions.
@@ -75,7 +75,7 @@ def _sample_goals(env, env_ids, **kwargs):
     # Initialise storage on first call
     if not hasattr(env, "_loco_goal_pos"):
         env._loco_goal_pos = torch.zeros(env.num_envs, 2, device=device)
-        env._loco_prev_dist = torch.ones(env.num_envs, device=device) * 1.5
+        env._loco_prev_dist = torch.ones(env.num_envs, device=device) * 0.55
 
     env._loco_goal_pos[env_ids] = goal_xy
     env._loco_prev_dist[env_ids] = torch.norm(goal_xy - root_pos, dim=1)
@@ -98,18 +98,18 @@ def _update_prev_distance(env, env_ids=None, **kwargs):
 def snakebot_locomotion_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     """Create Snakebot flat terrain goal-reaching locomotion configuration.
 
-    Reward design (literature-grounded):
+    Reward design — progress dominates, penalties minimal:
     ┌──────────────────────────┬────────┬──────────────────────────────────────┐
     │ Term                     │ Weight │ Purpose                              │
     ├──────────────────────────┼────────┼──────────────────────────────────────┤
-    │ progress_reward          │  +5.0  │ Δ distance — KEY shaped signal       │
-    │ distance_penalty         │  -0.5  │ Persist pull toward goal             │
-    │ heading_alignment        │  +1.0  │ Face the goal                        │
-    │ goal_reached_bonus       │ +100.0 │ Sparse big bonus on arrival          │
-    │ alive_bonus              │  +0.5  │ Encourage long episodes              │
-    │ control_cost             │  -0.05 │ Energy efficiency                    │
-    │ action_smoothness        │  -0.02 │ Sim-to-real, no jitter               │
-    │ dof_pos_limits           │  -1.0  │ Prevent self-collision via limits    │
+    │ progress_reward          │ +15.0  │ Δ distance — KEY shaped signal       │
+    │ heading_alignment        │  +3.0  │ Face the goal                        │
+    │ goal_reached_bonus       │+200.0  │ Sparse big bonus on arrival          │
+    │ distance_penalty         │  +0.1  │ Gentle pull toward goal              │
+    │ alive_bonus              │  +0.05 │ Small keep-alive baseline            │
+    │ control_cost             │ -0.002 │ Tiny energy term                     │
+    │ action_smoothness        │ -0.001 │ Tiny smoothness term                 │
+    │ dof_pos_limits           │  -0.1  │ Soft joint-limit guard               │
     └──────────────────────────┴────────┴──────────────────────────────────────┘
     """
     cfg = make_velocity_env_cfg()
@@ -139,6 +139,9 @@ def snakebot_locomotion_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     _actuated_joint_cfg = SceneEntityCfg("robot", joint_names=_ACTUATED_JOINTS)
 
     actor_terms: dict = {
+        "phase_clock": ObservationTermCfg(
+            func=locomotion_mdp.phase_clock,
+        ),
         "goal_vector": ObservationTermCfg(
             func=locomotion_mdp.goal_vector_body_frame,
             noise=Unoise(n_min=-0.05, n_max=0.05),
@@ -214,59 +217,59 @@ def snakebot_locomotion_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         interval_range_s=(0.0, 0.0),
     )
 
-    # Domain randomisation
+    # Domain randomisation — reduced for initial learning
     cfg.events["base_com"].params["asset_cfg"].body_names = (SNAKE_ROOT_BODY,)
     cfg.events["base_com"].params["ranges"] = {
-        0: (-0.06, 0.06),
-        1: (-0.06, 0.06),
-        2: (-0.04, 0.04),
+        0: (-0.03, 0.03),
+        1: (-0.03, 0.03),
+        2: (-0.02, 0.02),
     }
-    cfg.events["encoder_bias"].params["bias_range"] = (-0.04, 0.04)
+    cfg.events.pop("encoder_bias", None)
     cfg.events["push_robot"].params["velocity_range"] = {
-        "x": (-0.3, 0.3),
-        "y": (-0.3, 0.3),
-        "z": (-0.2, 0.2),
-        "roll": (-0.3, 0.3),
-        "pitch": (-0.3, 0.3),
-        "yaw": (-0.2, 0.2),
+        "x": (-0.15, 0.15),
+        "y": (-0.15, 0.15),
+        "z": (-0.1, 0.1),
+        "roll": (-0.15, 0.15),
+        "pitch": (-0.15, 0.15),
+        "yaw": (-0.1, 0.1),
     }
     cfg.events.pop("foot_friction", None)
 
-    # ── Rewards ──────────────────────────────────────────────────────────────
+    # ── Rewards — progress dominates, penalties near-zero ─────────────────────
     cfg.rewards = {
         "progress_reward": RewardTermCfg(
             func=locomotion_mdp.progress_reward,
-            weight=5.0,
-        ),
-        "distance_penalty": RewardTermCfg(
-            func=locomotion_mdp.distance_penalty,
-            weight=0.5,
+            weight=15.0,
         ),
         "heading_alignment": RewardTermCfg(
             func=locomotion_mdp.heading_alignment_reward,
-            weight=1.0,
+            weight=3.0,
         ),
         "goal_reached_bonus": RewardTermCfg(
             func=locomotion_mdp.goal_reached_bonus,
             params={"threshold": GOAL_REACH_THRESHOLD},
-            weight=100.0,
+            weight=200.0,
+        ),
+        "distance_penalty": RewardTermCfg(
+            func=locomotion_mdp.distance_penalty,
+            weight=0.1,
         ),
         "alive_bonus": RewardTermCfg(
             func=locomotion_mdp.alive_bonus,
-            weight=0.5,
+            weight=0.05,
         ),
         "control_cost": RewardTermCfg(
             func=locomotion_mdp.control_cost,
-            weight=-0.05,
+            weight=-0.002,
         ),
         "action_smoothness": RewardTermCfg(
             func=locomotion_mdp.action_smoothness_penalty,
-            weight=-0.02,
+            weight=-0.001,
         ),
         "dof_pos_limits": RewardTermCfg(
             func=joint_pos_limits,
             params={"asset_cfg": _actuated_joint_cfg},
-            weight=-1.0,
+            weight=-0.1,
         ),
     }
 
@@ -277,8 +280,10 @@ def snakebot_locomotion_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         params={"threshold": GOAL_REACH_THRESHOLD},
         time_out=False,
     )
-    if "fell_over" in cfg.terminations:
-        cfg.terminations["fell_over"].params["limit_angle"] = math.radians(80.0)
+    # bad_orientation uses projected_gravity_b[:, 2] which is ~0 for a snake
+    # lying flat (body Z = world -X), so the check always gives ~90deg and
+    # would immediately terminate every episode. remove it.
+    cfg.terminations.pop("fell_over", None)
 
     # ── Curriculum ────────────────────────────────────────────────────────────
     cfg.curriculum.pop("terrain_levels", None)

@@ -14,35 +14,36 @@ This document describes how to set up, train, and visualize the 5-module snakebo
 
 Forward velocity tracking task. The robot learns to follow velocity commands.
 
-**Actor** (~42 dim): Joint pos/vel (20), last action (10), velocity commands (3), root IMU (9)
-**Critic** (~139 dim): Actor obs + per-module pos/vel/ang-vel (45) + joint efforts (10)
+**Actor** (~44 dim): Phase clock (2), actuated joint pos/vel (20), last action (10), velocity commands (3), root IMU (9)
+**Critic** (~99 dim): Actor obs + per-module pos/vel/ang-vel (45) + joint efforts (10)
 
-### 2. `Mjlab-Locomotion-Flat-Snakebot` — Goal-Reaching (NEW)
+### 2. `Mjlab-Locomotion-Flat-Snakebot` — Goal-Reaching
 
-Navigate to a random XY goal 1–2 m away. Reward design informed by 5 research papers (COBRA thesis, snakebot-gym, Naish/EELS, serpentine locomotion RL, sensors-22-09867).
+Navigate to a random XY goal 0.3–0.8 m away. Reward design informed by 5 research papers (COBRA thesis, snakebot-gym, Naish/EELS, serpentine locomotion RL, sensors-22-09867).
 
-**Actor** (~34 dim, hardware-deployable):
-- Goal vector in body frame (2): XY offset to goal, rotated by robot yaw
+**Actor** (~36 dim, hardware-deployable):
+- Phase clock (2): sin/cos of normalised episode time for gait coordination
+- Goal vector in body frame (2): forward/lateral offset to goal via full quaternion rotation
 - Heading to goal (2): sin/cos of angle between heading and goal direction
 - Joint positions/velocities (20)
 - Previous actions (10)
 
-**Critic** (~89 dim, privileged):
+**Critic** (~91 dim, privileged):
 - All actor obs + per-module positions/velocities/angular-vel (45) + joint efforts (10)
 
 **Rewards**:
 | Term | Weight | Purpose |
 |---|---|---|
-| `progress_reward` | +5.0 | Δ distance to goal (KEY signal) |
-| `distance_penalty` | -0.5 | Persistent pull toward goal |
-| `heading_alignment` | +1.0 | Face the goal (cos similarity) |
-| `goal_reached_bonus` | +100.0 | Sparse bonus on arrival (<15 cm) |
-| `alive_bonus` | +0.5 | Encourage long episodes |
-| `control_cost` | -0.05 | Energy efficiency |
-| `action_smoothness` | -0.02 | Sim-to-real, no jitter |
-| `dof_pos_limits` | -1.0 | Prevent self-collision |
+| `progress_reward` | +15.0 | Δ distance to goal (KEY signal) |
+| `heading_alignment` | +3.0 | Face the goal (cos similarity) |
+| `goal_reached_bonus` | +200.0 | Sparse bonus on arrival (<25 cm) |
+| `distance_penalty` | +0.1 | Gentle pull toward goal |
+| `alive_bonus` | +0.05 | Small keep-alive baseline |
+| `control_cost` | -0.002 | Tiny energy term |
+| `action_smoothness` | -0.001 | Tiny smoothness term |
+| `dof_pos_limits` | -0.1 | Soft joint-limit guard |
 
-**Episode**: 30 s max (300 steps at 10 Hz). Terminates early on goal reach or fall-over.
+**Episode**: 30 s max (300 steps at 10 Hz). Terminates early on goal reach.
 
 ## Setup
 

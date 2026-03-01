@@ -3,18 +3,24 @@
 Actor observations:  joint states + root IMU only (sim-to-real deployable).
 Critic observations: actor obs + full per-module positions / velocities / ang-vel (privileged).
 
-Reward design philosophy (based on locomotion literature for wheelless snakes):
-  1. Forward velocity    — primary locomotion signal (CoM velocity along heading)
+All velocity-based rewards use WORLD-FRAME velocities because the snake's
+body frame X-axis points downward (world -Z) due to the compound frame
+rotations in the MJCF. Using body-frame velocities would reward vertical
+motion instead of horizontal forward travel.
+
+Reward design philosophy:
+  1. Forward velocity    — world-X CoM velocity (snake lies along world X)
   2. Alive bonus         — constant positive signal to encourage long episodes
-  3. Control cost        — penalise large squared actions (energy & prevent degenerate solutions)
-  4. Smoothness          — penalise action *changes* each step (sim-to-real, prevents high-freq jitter)
-  5. Lateral drift       — penalise Y-axis CoM velocity (no crab-walking or spinning)
-  6. Yaw rate            — penalise angular velocity around Z (stay straight)
-  7. Joint pos limits    — soft penalty for hitting joint limits (prevent self-collision)
+  3. Control cost        — penalise large squared actions
+  4. Smoothness          — penalise action changes each step
+  5. Lateral drift       — penalise world-Y CoM velocity
+  6. Yaw rate            — penalise rotation around world Z
+  7. Joint pos limits    — soft penalty for hitting joint limits
 """
 
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING
 
 import torch
@@ -24,6 +30,9 @@ from mjlab.managers.scene_entity_config import SceneEntityCfg
 
 if TYPE_CHECKING:
     from mjlab.envs import ManagerBasedRlEnv
+
+# gait period in env steps (15 steps * 0.1s = 1.5s cycle at 10 Hz)
+GAIT_PERIOD_STEPS = 15
 
 
 # ---------------------------------------------------------------------------
@@ -75,6 +84,19 @@ def joint_efforts(
 
 
 # ---------------------------------------------------------------------------
+# Actor observation: periodic clock for gait coordination
+# ---------------------------------------------------------------------------
+
+def phase_clock(env: ManagerBasedRlEnv) -> torch.Tensor:
+    """Sin/cos of normalised episode time — gives the policy a time reference
+    for learning periodic gaits. Shape (B, 2)."""
+    phase = (
+        2.0 * math.pi * env.episode_length_buf.float() / GAIT_PERIOD_STEPS
+    )
+    return torch.stack([torch.sin(phase), torch.cos(phase)], dim=1)
+
+
+# ---------------------------------------------------------------------------
 # Reward functions (literature-grounded for wheelless serpentine locomotion)
 # ---------------------------------------------------------------------------
 
@@ -82,36 +104,28 @@ def forward_velocity(
     env: ManagerBasedRlEnv,
     asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
 ) -> torch.Tensor:
-    """Forward CoM velocity in the body frame (x-component).
+    """Forward CoM velocity along the snake's travel axis (world X).
 
-    This is the **primary locomotion reward** — directly measuring the rate at
-    which the snake moves forward.  Using body-frame velocity means the reward
-    is agnostic to world-frame heading, which pairs well with the yaw penalty.
-
-    Returns velocity in m/s (raw, not exp-transformed — keep it linear so the
-    gradient signal is always informative regardless of current speed).
+    The snake lies along world X, so world-frame X velocity is the correct
+    forward signal. We use world frame because the body frame's X-axis
+    actually points downward (world -Z) due to the compound frame rotations
+    in the MJCF — using body-frame X would reward vertical motion.
     """
     asset: Entity = env.scene[asset_cfg.name]
-    # root_link_lin_vel_b: linear velocity expressed in the robot body frame
-    return asset.data.root_link_lin_vel_b[:, 0]   # (B,)  x = forward
+    return asset.data.root_link_lin_vel_w[:, 0]   # (B,)  world X = forward
 
 
 def lateral_velocity_penalty(
     env: ManagerBasedRlEnv,
     asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
 ) -> torch.Tensor:
-    """Squared lateral (Y-body-frame) CoM velocity, clamped before squaring.
+    """Squared lateral (world Y) CoM velocity, clamped before squaring.
 
-    Without this, the policy may learn to "crab-walk" sideways or spin in
-    place — exploiting anisotropic friction in the wrong direction.  This
-    penalty forces truly forward motion.
-
-    Clamped to ±3 m/s before squaring so that physics blowup during tumbling
-    (which can push velocities to ±100+) doesn't produce million-scale
-    rewards that cause NaN PPO gradients.
+    Penalises sideways drift so the snake travels along its body axis (world X).
+    Clamped to ±3 m/s before squaring to avoid blowup from tumbling.
     """
     asset: Entity = env.scene[asset_cfg.name]
-    v_lat = asset.data.root_link_lin_vel_b[:, 1].clamp(-3.0, 3.0)
+    v_lat = asset.data.root_link_lin_vel_w[:, 1].clamp(-3.0, 3.0)
     return torch.square(v_lat)   # (B,)  max penalty = 9 per step
 
 
@@ -119,16 +133,15 @@ def yaw_rate_penalty(
     env: ManagerBasedRlEnv,
     asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
 ) -> torch.Tensor:
-    """Squared yaw angular velocity (Z-body-frame), clamped before squaring.
+    """Squared yaw rate (rotation around world Z), clamped before squaring.
 
-    Without this the snake tends to curve and circle.  Penalising Z angular
-    velocity keeps the snake tracking in a straight line.
-
-    Clamped to ±5 rad/s before squaring so a tumble (ω ≈ ±50 rad/s) doesn't
-    produce thousands per step and blow up the value function.
+    Penalises heading changes so the snake travels in a straight line.
+    Uses world-frame angular velocity because the body frame's Z-axis
+    points along world -X (not upward), so body-frame Z rotation would
+    penalise pitch instead of yaw.
     """
     asset: Entity = env.scene[asset_cfg.name]
-    omega_z = asset.data.root_link_ang_vel_b[:, 2].clamp(-5.0, 5.0)
+    omega_z = asset.data.root_link_ang_vel_w[:, 2].clamp(-5.0, 5.0)
     return torch.square(omega_z)   # (B,)  max penalty = 25 per step
 
 

@@ -7,7 +7,7 @@
     <default>
         <joint damping="0.5" armature="0.01" />
         
-        <geom contype="2" conaffinity="1" condim="6" friction="0.3 0.1 0.001" />
+        <geom contype="2" conaffinity="1" condim="6" friction="1.0 0.05 0.001" />
     </default>
 
     <asset>
@@ -26,7 +26,7 @@
     </asset>
     <worldbody>
         
-        <geom name="ground" type="plane" size="5 5 0.1" pos="0 0 0" euler="0 0 0" contype="1" conaffinity="2" condim="6" friction="0.1 0.1 0.001" rgba="0.0 0.0 0.0 0" />
+        <geom name="ground" type="plane" size="5 5 0.1" pos="0 0 0" euler="0 0 0" contype="1" conaffinity="2" condim="6" friction="1.5 0.05 0.001" rgba="0.0 0.0 0.0 0" />
               
         <frame pos="0 0 0.08" euler="0 1.5707963267948966 0">
             
@@ -393,37 +393,37 @@
         </frame>
     </worldbody>
     <equality>
-<weld name="m1_loop_Rev6" body1="m1_proxy_Rev6" body2="m1_danda-bottom-servo-v1-v1" solref="0.002 1" solimp="0.9999 0.99999 0.00001" />
-<weld name="m1_loop_Rev10" body1="m1_proxy_Rev10" body2="m1_bottom-diagonal-chintu-v1" solref="0.002 1" solimp="0.9999 0.99999 0.00001" />
-<weld name="m1_loop_Rev14" body1="m1_proxy_Rev14" body2="m1_danda-top-servo-v1" solref="0.002 1" solimp="0.9999 0.99999 0.00001" />
-<weld name="m2_loop_Rev6" body1="m2_proxy_Rev6" body2="m2_danda-bottom-servo-v1-v1" solref="0.002 1" solimp="0.9999 0.99999 0.00001" />
-<weld name="m2_loop_Rev10" body1="m2_proxy_Rev10" body2="m2_bottom-diagonal-chintu-v1" solref="0.002 1" solimp="0.9999 0.99999 0.00001" />
-<weld name="m2_loop_Rev14" body1="m2_proxy_Rev14" body2="m2_danda-top-servo-v1" solref="0.002 1" solimp="0.9999 0.99999 0.00001" />
-<weld name="m3_loop_Rev6" body1="m3_proxy_Rev6" body2="m3_danda-bottom-servo-v1-v1" solref="0.002 1" solimp="0.9999 0.99999 0.00001" />
-<weld name="m3_loop_Rev10" body1="m3_proxy_Rev10" body2="m3_bottom-diagonal-chintu-v1" solref="0.002 1" solimp="0.9999 0.99999 0.00001" />
-<weld name="m3_loop_Rev14" body1="m3_proxy_Rev14" body2="m3_danda-top-servo-v1" solref="0.002 1" solimp="0.9999 0.99999 0.00001" />
-<weld name="m4_loop_Rev6" body1="m4_proxy_Rev6" body2="m4_danda-bottom-servo-v1-v1" solref="0.002 1" solimp="0.9999 0.99999 0.00001" />
-<weld name="m4_loop_Rev10" body1="m4_proxy_Rev10" body2="m4_bottom-diagonal-chintu-v1" solref="0.002 1" solimp="0.9999 0.99999 0.00001" />
-<weld name="m4_loop_Rev14" body1="m4_proxy_Rev14" body2="m4_danda-top-servo-v1" solref="0.002 1" solimp="0.9999 0.99999 0.00001" />
-<weld name="m5_loop_Rev6" body1="m5_proxy_Rev6" body2="m5_danda-bottom-servo-v1-v1" solref="0.002 1" solimp="0.9999 0.99999 0.00001" />
-<weld name="m5_loop_Rev10" body1="m5_proxy_Rev10" body2="m5_bottom-diagonal-chintu-v1" solref="0.002 1" solimp="0.9999 0.99999 0.00001" />
-<weld name="m5_loop_Rev14" body1="m5_proxy_Rev14" body2="m5_danda-top-servo-v1" solref="0.002 1" solimp="0.9999 0.99999 0.00001" />
-        <weld name="chain_link_1" body1="battery_1" body2="m2_bottom-base-plate-v1" solref="0.002 1" solimp="0.9999 0.99999 0.00001" />
-        <weld name="chain_link_2" body1="battery_2" body2="m3_bottom-base-plate-v1" solref="0.002 1" solimp="0.9999 0.99999 0.00001" />
-        <weld name="chain_link_3" body1="battery_3" body2="m4_bottom-base-plate-v1" solref="0.002 1" solimp="0.9999 0.99999 0.00001" />
-        <weld name="chain_link_4" body1="battery_4" body2="m5_bottom-base-plate-v1" solref="0.002 1" solimp="0.9999 0.99999 0.00001" />
+<weld name="m1_loop_Rev6" body1="m1_proxy_Rev6" body2="m1_danda-bottom-servo-v1-v1" solref="0.001 1" solimp="0.9999 0.99999 0.00001" />
+<weld name="m1_loop_Rev10" body1="m1_proxy_Rev10" body2="m1_bottom-diagonal-chintu-v1" solref="0.001 1" solimp="0.9999 0.99999 0.00001" />
+<weld name="m1_loop_Rev14" body1="m1_proxy_Rev14" body2="m1_danda-top-servo-v1" solref="0.001 1" solimp="0.9999 0.99999 0.00001" />
+<weld name="m2_loop_Rev6" body1="m2_proxy_Rev6" body2="m2_danda-bottom-servo-v1-v1" solref="0.001 1" solimp="0.9999 0.99999 0.00001" />
+<weld name="m2_loop_Rev10" body1="m2_proxy_Rev10" body2="m2_bottom-diagonal-chintu-v1" solref="0.001 1" solimp="0.9999 0.99999 0.00001" />
+<weld name="m2_loop_Rev14" body1="m2_proxy_Rev14" body2="m2_danda-top-servo-v1" solref="0.001 1" solimp="0.9999 0.99999 0.00001" />
+<weld name="m3_loop_Rev6" body1="m3_proxy_Rev6" body2="m3_danda-bottom-servo-v1-v1" solref="0.001 1" solimp="0.9999 0.99999 0.00001" />
+<weld name="m3_loop_Rev10" body1="m3_proxy_Rev10" body2="m3_bottom-diagonal-chintu-v1" solref="0.001 1" solimp="0.9999 0.99999 0.00001" />
+<weld name="m3_loop_Rev14" body1="m3_proxy_Rev14" body2="m3_danda-top-servo-v1" solref="0.001 1" solimp="0.9999 0.99999 0.00001" />
+<weld name="m4_loop_Rev6" body1="m4_proxy_Rev6" body2="m4_danda-bottom-servo-v1-v1" solref="0.001 1" solimp="0.9999 0.99999 0.00001" />
+<weld name="m4_loop_Rev10" body1="m4_proxy_Rev10" body2="m4_bottom-diagonal-chintu-v1" solref="0.001 1" solimp="0.9999 0.99999 0.00001" />
+<weld name="m4_loop_Rev14" body1="m4_proxy_Rev14" body2="m4_danda-top-servo-v1" solref="0.001 1" solimp="0.9999 0.99999 0.00001" />
+<weld name="m5_loop_Rev6" body1="m5_proxy_Rev6" body2="m5_danda-bottom-servo-v1-v1" solref="0.001 1" solimp="0.9999 0.99999 0.00001" />
+<weld name="m5_loop_Rev10" body1="m5_proxy_Rev10" body2="m5_bottom-diagonal-chintu-v1" solref="0.001 1" solimp="0.9999 0.99999 0.00001" />
+<weld name="m5_loop_Rev14" body1="m5_proxy_Rev14" body2="m5_danda-top-servo-v1" solref="0.001 1" solimp="0.9999 0.99999 0.00001" />
+        <weld name="chain_link_1" body1="battery_1" body2="m2_bottom-base-plate-v1" solref="0.001 1" solimp="0.9999 0.99999 0.00001" />
+        <weld name="chain_link_2" body1="battery_2" body2="m3_bottom-base-plate-v1" solref="0.001 1" solimp="0.9999 0.99999 0.00001" />
+        <weld name="chain_link_3" body1="battery_3" body2="m4_bottom-base-plate-v1" solref="0.001 1" solimp="0.9999 0.99999 0.00001" />
+        <weld name="chain_link_4" body1="battery_4" body2="m5_bottom-base-plate-v1" solref="0.001 1" solimp="0.9999 0.99999 0.00001" />
     </equality>
     <actuator>
-<position name="module_1_servo_bottom" joint="m1_Revolute-15" kp="4.5" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
-<position name="module_1_servo_top" joint="m1_Revolute-16" kp="4.5" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
-<position name="module_2_servo_bottom" joint="m2_Revolute-15" kp="4.5" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
-<position name="module_2_servo_top" joint="m2_Revolute-16" kp="4.5" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
-<position name="module_3_servo_bottom" joint="m3_Revolute-15" kp="4.5" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
-<position name="module_3_servo_top" joint="m3_Revolute-16" kp="4.5" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
-<position name="module_4_servo_bottom" joint="m4_Revolute-15" kp="4.5" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
-<position name="module_4_servo_top" joint="m4_Revolute-16" kp="4.5" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
-<position name="module_5_servo_bottom" joint="m5_Revolute-15" kp="4.5" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
-<position name="module_5_servo_top" joint="m5_Revolute-16" kp="4.5" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_1_servo_bottom" joint="m1_Revolute-15" kp="2.0" kv="0.05" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_1_servo_top" joint="m1_Revolute-16" kp="2.0" kv="0.05" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_2_servo_bottom" joint="m2_Revolute-15" kp="2.0" kv="0.05" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_2_servo_top" joint="m2_Revolute-16" kp="2.0" kv="0.05" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_3_servo_bottom" joint="m3_Revolute-15" kp="2.0" kv="0.05" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_3_servo_top" joint="m3_Revolute-16" kp="2.0" kv="0.05" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_4_servo_bottom" joint="m4_Revolute-15" kp="2.0" kv="0.05" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_4_servo_top" joint="m4_Revolute-16" kp="2.0" kv="0.05" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_5_servo_bottom" joint="m5_Revolute-15" kp="2.0" kv="0.05" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_5_servo_top" joint="m5_Revolute-16" kp="2.0" kv="0.05" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
     </actuator>
     <sensor>
         <gyro name="imu_ang_vel" site="imu" />
