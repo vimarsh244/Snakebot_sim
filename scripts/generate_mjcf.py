@@ -304,13 +304,24 @@ def main() -> None:
         default=Path("robot_desc") / "snakebot.xml",
         help="Output MJCF path.",
     )
+    parser.add_argument(
+        "--chain5",
+        action="store_true",
+        help="Use chain_5 style (real mesh bodies with exact CAD constants).",
+    )
     args = parser.parse_args()
 
     if args.modules < 1:
         raise ValueError("modules must be >= 1")
 
-    cfg = SnakeConfig(num_modules=args.modules)
-    tree = build_model_xml(cfg)
+    if args.chain5:
+        from generate_chain5_style import build_chain5_xml  # type: ignore
+
+        tree = build_chain5_xml(args.modules)
+    else:
+        cfg = SnakeConfig(num_modules=args.modules)
+        tree = build_model_xml(cfg)
+
     args.output.parent.mkdir(parents=True, exist_ok=True)
     tree.write(str(args.output), pretty_print=True, xml_declaration=True, encoding="utf-8")
     print(f"generated {args.output} with {args.modules} modules")

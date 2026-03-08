@@ -1,0 +1,362 @@
+Pages: 85
+--- Page 1 ---
+Reinforcement Learning-Based Model Matching in COBRA, a
+Slithering Snake Robot
+A Thesis Presented
+by
+Harin Kumar Nallaguntla
+to
+The Department of Electrical and Computer Engineering
+in partial fulfillment of the requirements
+for the degree of
+Master of Science
+in
+Robotics
+Northeastern University
+Boston, Massachusetts
+April 2024
+arXiv:2407.10300v1  [cs.RO]  4 May 2024
+
+--- Page 2 ---
+To my mom.
+i
+
+--- Page 3 ---
+Contents
+List of Figures
+iv
+List of Tables
+vi
+Acknowledgments
+viii
+Abstract of the Thesis
+ix
+1
+Introduction
+1
+1.1
+State-Of-The-Art Modeling Tools
+. . . . . . . . . . . . . . . . . . . . . . . . . .
+3
+1.2
+Sim-to-Real Transfer for RL-based Strategies . . . . . . . . . . . . . . . . . . . .
+5
+1.3
+Modeling Frameworks Background
+. . . . . . . . . . . . . . . . . . . . . . . . .
+7
+1.4
+Objectives and Outline of Thesis . . . . . . . . . . . . . . . . . . . . . . . . . . .
+8
+1.5
+Contributions . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+12
+2
+Literature Review
+14
+2.1
+Central Pattern Generators
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+14
+2.2
+Learning-based Strategies for Locomotion Tasks
+. . . . . . . . . . . . . . . . . .
+15
+2.3
+Simulation-to-Reality Transfer of Trained Policies . . . . . . . . . . . . . . . . . .
+16
+2.4
+Research Analysis . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+18
+3
+Simulators and Physics Engines
+20
+3.1
+Physics Engines . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+20
+3.1.1
+Open Dynamics Engine
+. . . . . . . . . . . . . . . . . . . . . . . . . . .
+20
+3.1.2
+Simscape Multibody Dynamics
+. . . . . . . . . . . . . . . . . . . . . . .
+25
+3.2
+Webots Simulator for COBRA . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+28
+4
+Model Matching Framework
+29
+4.1
+COBRA Platform . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+29
+4.2
+Motivation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+31
+4.2.1
+Markov Decision Process
+. . . . . . . . . . . . . . . . . . . . . . . . . .
+31
+4.2.2
+Reinforcement Learning . . . . . . . . . . . . . . . . . . . . . . . . . . .
+32
+4.3
+Methodology
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+34
+4.3.1
+RL Framework . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+34
+ii
+
+--- Page 4 ---
+5
+Loco-manipulation Controller
+39
+5.1
+Motivation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+39
+5.2
+Pure Pursuit Algorithm . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+39
+5.3
+Central Pattern Generators and Kuramoto Model
+. . . . . . . . . . . . . . . . . .
+42
+5.3.1
+Central Pattern Generators . . . . . . . . . . . . . . . . . . . . . . . . . .
+42
+5.3.2
+Modified Kuramoto Model . . . . . . . . . . . . . . . . . . . . . . . . . .
+44
+5.4
+Locomotion Policy . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+45
+5.5
+Methodology
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+46
+6
+Results
+49
+6.1
+Model Matching . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+49
+6.2
+Loco-Manipulation Controller
+. . . . . . . . . . . . . . . . . . . . . . . . . . . .
+55
+7
+Conclusion
+62
+7.1
+Future Work . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+63
+iii
+
+--- Page 5 ---
+List of Figures
+1.1
+Popular Solutions for Solving Sim2real Problem . . . . . . . . . . . . . . . . . . .
+2
+1.2
+Shows successful transfer of an RL-based policy on 1) ANYmal robot [33] 2) & 6)
+Unitree A1 [98] [17] 3) Hexapod [35] 4) Cassie [36] 5) Sirius [17] 7) Mini Cheetah
+[17] 8) 7-DoF Yumi Robot [3] 9) & 13) ANYmal C [45] 10) ANYmal B [65] 11)
+Digit humanoid [54] 12) Soft Snake Robot [39] . . . . . . . . . . . . . . . . . . .
+6
+1.3
+Highlights the sim2real gap oberserved between COBRA and Webots simulator. The
+robot performs sidewinding motion in webots with an untuned simulator model. The
+red ball represents the position attained by the actual robot when executing analogous
+joint trajectories.
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+10
+1.4
+Illustrates sim-to-real gap observed in COBRAÆs head link trajectory while perform-
+ing sidewinding gaits at frequencies of 0.35 Hz, 0.5 Hz, and 0.65 Hz respectively .
+11
+1.5
+Illustrates sim-to-real gap observed in COBRAÆs joint angles while performing
+sidewinding gaits at frequencies of 0.35 Hz, 0.5 Hz, and 0.65 Hz respectively
+. . .
+12
+2.1
+Highlights the shared aspects among the popular solutions to sim2real problem. . .
+18
+3.1
+Illustrates friction cone inside the simulator . . . . . . . . . . . . . . . . . . . . .
+25
+3.2
+Illustrates dynamic forces in multibody models, such as normal and frictional forces.
+These forces influence the behavior of solid blocks in contact [88]. . . . . . . . . .
+26
+3.3
+Illustrates the friction model used inside simscape simulator [27]. . . . . . . . . . .
+27
+4.1
+Illustrates free body diagram of the Crater Observing Bio-inspired Rolling Articulator
+(COBRA) platform . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+29
+4.2
+Reinforcement Learning Problem Setup . . . . . . . . . . . . . . . . . . . . . . .
+33
+4.3
+Model Matching Framework . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+38
+5.1
+Illustrates the look ahead vector and steering angle in pure pursuit algorithm [72]. .
+40
+5.2
+Geometry of the pure pursuit algorithm. . . . . . . . . . . . . . . . . . . . . . . .
+40
+5.3
+Signals generated from a simple sine wave CPG.
+. . . . . . . . . . . . . . . . . .
+43
+5.4
+Snapshot of Locomotion Policy Setup in Simulator . . . . . . . . . . . . . . . . .
+45
+5.5
+Loco-manipulation Controller
+. . . . . . . . . . . . . . . . . . . . . . . . . . . .
+48
+iv
+
+--- Page 6 ---
+6.1
+Shows COBRA in Webots simulator with tuned model (right) and untuned model
+(center) performing the sidewinding motion. The red ball shows the location the
+actual robot achieved when similar joint trajectories were applied.
+. . . . . . . . .
+50
+6.2
+Illustrates a 2D comparison between the head positions in the actual hardware
+platform (red), tuned model (blue) and untuned model (green) for a sidewinding
+trajectory 0.35, 0.5, and 0.65 Hz. . . . . . . . . . . . . . . . . . . . . . . . . . . .
+51
+6.3
+Illustrates a 3D comparison between the head positions in the actual hardware
+platform (red), tuned model (blue) and untuned model (green) for a sidewinding
+trajectory 0.35, 0.5, and 0.65 Hz. . . . . . . . . . . . . . . . . . . . . . . . . . . .
+52
+6.4
+Illustrates a 2D comparison between the head, middle link and tail positions in the
+actual hardware platform and tuned model for a sidewinding trajectory 0.35, 0.5,
+and 0.65 Hz. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+53
+6.5
+Comparison of the Euclidean distance (error metric) between the actual platformÆs
+head position captured by OptiTrack and tuned/untuned models for sidewinding @
+0.35, 0.5, and 0.65 Hz.
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+54
+6.6
+Shows a comparison between the actuator joint responses from the actual hardware
+platform (red), the tuned (blue) and untuned (magenta) models for a sidewinding gait
+at @ 0.5 Hz. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+55
+6.7
+Shows a comparison of average sliding window correlation (obtained by taking
+average of all the 11 correlation curves displayed in the above plot) of yawing joint
+positions for tuned and default simulators with desired signal (for the sidewinding
+gait @ 0.5 Hz). The model matching improved the actuator model in the the simulator
+as seen from the improved average correlation factor between desired and actual
+joint positions. Shaded regions represent the range between min and max correlation
+across all joints. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+56
+6.8
+Shows the training reward curve for tuning the simulator model.
+. . . . . . . . . .
+57
+6.9
+Shows the algorithm performing loco-manipulation inside webots simulator. Red
+dot is the final goal position, red star is robotÆs initial position, blue star is objectÆs
+initial position.
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+58
+6.10 Shows the algorithm performing loco-manipulation with different initial robot and
+object positions inside webots simulator. . . . . . . . . . . . . . . . . . . . . . . .
+59
+6.11 Shows the algorithm performing loco-manipulation with different initial robot and
+object positions inside webots simulator. When the object is not aligned with the
+goal position, the robot adjusts its course by turning while moving the object. This
+realignment ensures that the object moves in a straight line towards the goal position. 60
+6.12 Shows dynamic replanning capabilites of the algorithm. The object is relocated
+within the Webots simulator, shifting from its current position to a randomly chosen
+spot. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+60
+6.13 Shows dynamic replanning capabilites of the algorithm. The robot effectively recal-
+culates its path to reach the relocated object and then proceeds to move it towards
+the desired goal position. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+61
+v
+Traceback (most recent call last):
+  File "<string>", line 10, in <module>
+  File "C:\Users\Vimarsh\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u03b8' in position 1820: character maps to <undefined>
+
+--- Page 7 ---
+List of Tables
+3.1
+Comparison of simulators . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+21
+6.1
+Performance Metrics of Loco-manipulation Algorithm
+. . . . . . . . . . . . . . .
+55
+vi
+
+--- Page 8 ---
+List of Acronyms
+ROS Robot Operating System.
+ODE Open Dynamics Engine.
+AI Artificial Intelligence.
+DRL Deep Reinforcement Learning.
+GPU Graphics Processing Unit.
+PPO Proximal Policy Optimization.
+CPG Central Pattern Generators.
+CFM Constraint Force Mixing.
+ERP Error Reduction Parameter.
+SDR Structured Domain Randomization.
+COBRA Crater Observing Bio-inspired Rolling Articulator.
+SAC Soft Actor Critic.
+MDP Markov Decision Process.
+DQN Deep Q Network.
+vii
+
+--- Page 9 ---
+Acknowledgments
+I am deeply thankful to Dr. Alireza Ramezani, my advisor, for his unwavering support and
+guidance throughout the completion of this thesis. I would also like to extend my gratitude to Dr.
+Gunar Schirner, my co-advisor, whose invaluable insights were crucial in shaping this work. I also
+express my appreciation to my fellow lab mates, including Adarsh, Kruthika, Aditya, and others,
+for their invaluable assistance in conducting physical testing, handling hardware components, and
+contributing to the formulation of solutions to challenges. Finally, I express my gratitude for my
+family, whose unwavering belief in me has been the primary source of motivation throughout my
+journey marked by diligence and commitment.
+viii
+
+--- Page 10 ---
+Abstract of the Thesis
+Reinforcement Learning-Based Model Matching in COBRA, a Slithering
+Snake Robot
+by
+Harin Kumar Nallaguntla
+Master of Science in Robotics
+Northeastern University, April 2024
+Dr. Alireza Ramezani, Advisor
+Dr. Gunar Schirner, Co-advisor
+Dr. Michael Everett, Thesis Reader
+This work employs a reinforcement learning-based model identification method aimed at
+enhancing the accuracy of the dynamics for our snake robot, called COBRA. Leveraging gradient
+information and iterative optimization, the proposed approach refines the parameters of COBRAÆs
+dynamical model such as coefficient of friction and actuator parameters using experimental and
+simulated data. Experimental validation on the hardware platform demonstrates the efficacy of the
+proposed approach, highlighting its potential to address sim-to-real gap in robot implementation.
+ix
+
+--- Page 11 ---

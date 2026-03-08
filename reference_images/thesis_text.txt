@@ -1,0 +1,2515 @@
+=== 2407.10300v1_very-good_and_important_thesis_doc.pdf ===
+Pages: 85
+
+--- Page 1 ---
+Reinforcement Learning-Based Model Matching in COBRA, a
+Slithering Snake Robot
+A Thesis Presented
+by
+Harin Kumar Nallaguntla
+to
+The Department of Electrical and Computer Engineering
+in partial fulfillment of the requirements
+for the degree of
+Master of Science
+in
+Robotics
+Northeastern University
+Boston, Massachusetts
+April 2024
+arXiv:2407.10300v1  [cs.RO]  4 May 2024
+
+--- Page 2 ---
+To my mom.
+i
+
+--- Page 3 ---
+Contents
+List of Figures
+iv
+List of Tables
+vi
+Acknowledgments
+viii
+Abstract of the Thesis
+ix
+1
+Introduction
+1
+1.1
+State-Of-The-Art Modeling Tools
+. . . . . . . . . . . . . . . . . . . . . . . . . .
+3
+1.2
+Sim-to-Real Transfer for RL-based Strategies . . . . . . . . . . . . . . . . . . . .
+5
+1.3
+Modeling Frameworks Background
+. . . . . . . . . . . . . . . . . . . . . . . . .
+7
+1.4
+Objectives and Outline of Thesis . . . . . . . . . . . . . . . . . . . . . . . . . . .
+8
+1.5
+Contributions . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+12
+2
+Literature Review
+14
+2.1
+Central Pattern Generators
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+14
+2.2
+Learning-based Strategies for Locomotion Tasks
+. . . . . . . . . . . . . . . . . .
+15
+2.3
+Simulation-to-Reality Transfer of Trained Policies . . . . . . . . . . . . . . . . . .
+16
+2.4
+Research Analysis . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+18
+3
+Simulators and Physics Engines
+20
+3.1
+Physics Engines . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+20
+3.1.1
+Open Dynamics Engine
+. . . . . . . . . . . . . . . . . . . . . . . . . . .
+20
+3.1.2
+Simscape Multibody Dynamics
+. . . . . . . . . . . . . . . . . . . . . . .
+25
+3.2
+Webots Simulator for COBRA . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+28
+4
+Model Matching Framework
+29
+4.1
+COBRA Platform . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+29
+4.2
+Motivation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+31
+4.2.1
+Markov Decision Process
+. . . . . . . . . . . . . . . . . . . . . . . . . .
+31
+4.2.2
+Reinforcement Learning . . . . . . . . . . . . . . . . . . . . . . . . . . .
+32
+4.3
+Methodology
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+34
+4.3.1
+RL Framework . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+34
+ii
+
+--- Page 4 ---
+5
+Loco-manipulation Controller
+39
+5.1
+Motivation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+39
+5.2
+Pure Pursuit Algorithm . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+39
+5.3
+Central Pattern Generators and Kuramoto Model
+. . . . . . . . . . . . . . . . . .
+42
+5.3.1
+Central Pattern Generators . . . . . . . . . . . . . . . . . . . . . . . . . .
+42
+5.3.2
+Modified Kuramoto Model . . . . . . . . . . . . . . . . . . . . . . . . . .
+44
+5.4
+Locomotion Policy . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+45
+5.5
+Methodology
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+46
+6
+Results
+49
+6.1
+Model Matching . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+49
+6.2
+Loco-Manipulation Controller
+. . . . . . . . . . . . . . . . . . . . . . . . . . . .
+55
+7
+Conclusion
+62
+7.1
+Future Work . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+63
+iii
+
+--- Page 5 ---
+List of Figures
+1.1
+Popular Solutions for Solving Sim2real Problem . . . . . . . . . . . . . . . . . . .
+2
+1.2
+Shows successful transfer of an RL-based policy on 1) ANYmal robot [33] 2) & 6)
+Unitree A1 [98] [17] 3) Hexapod [35] 4) Cassie [36] 5) Sirius [17] 7) Mini Cheetah
+[17] 8) 7-DoF Yumi Robot [3] 9) & 13) ANYmal C [45] 10) ANYmal B [65] 11)
+Digit humanoid [54] 12) Soft Snake Robot [39] . . . . . . . . . . . . . . . . . . .
+6
+1.3
+Highlights the sim2real gap oberserved between COBRA and Webots simulator. The
+robot performs sidewinding motion in webots with an untuned simulator model. The
+red ball represents the position attained by the actual robot when executing analogous
+joint trajectories.
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+10
+1.4
+Illustrates sim-to-real gap observed in COBRA’s head link trajectory while perform-
+ing sidewinding gaits at frequencies of 0.35 Hz, 0.5 Hz, and 0.65 Hz respectively .
+11
+1.5
+Illustrates sim-to-real gap observed in COBRA’s joint angles while performing
+sidewinding gaits at frequencies of 0.35 Hz, 0.5 Hz, and 0.65 Hz respectively
+. . .
+12
+2.1
+Highlights the shared aspects among the popular solutions to sim2real problem. . .
+18
+3.1
+Illustrates friction cone inside the simulator . . . . . . . . . . . . . . . . . . . . .
+25
+3.2
+Illustrates dynamic forces in multibody models, such as normal and frictional forces.
+These forces influence the behavior of solid blocks in contact [88]. . . . . . . . . .
+26
+3.3
+Illustrates the friction model used inside simscape simulator [27]. . . . . . . . . . .
+27
+4.1
+Illustrates free body diagram of the Crater Observing Bio-inspired Rolling Articulator
+(COBRA) platform . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+29
+4.2
+Reinforcement Learning Problem Setup . . . . . . . . . . . . . . . . . . . . . . .
+33
+4.3
+Model Matching Framework . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+38
+5.1
+Illustrates the look ahead vector and steering angle in pure pursuit algorithm [72]. .
+40
+5.2
+Geometry of the pure pursuit algorithm. . . . . . . . . . . . . . . . . . . . . . . .
+40
+5.3
+Signals generated from a simple sine wave CPG.
+. . . . . . . . . . . . . . . . . .
+43
+5.4
+Snapshot of Locomotion Policy Setup in Simulator . . . . . . . . . . . . . . . . .
+45
+5.5
+Loco-manipulation Controller
+. . . . . . . . . . . . . . . . . . . . . . . . . . . .
+48
+iv
+
+--- Page 6 ---
+6.1
+Shows COBRA in Webots simulator with tuned model (right) and untuned model
+(center) performing the sidewinding motion. The red ball shows the location the
+actual robot achieved when similar joint trajectories were applied.
+. . . . . . . . .
+50
+6.2
+Illustrates a 2D comparison between the head positions in the actual hardware
+platform (red), tuned model (blue) and untuned model (green) for a sidewinding
+trajectory 0.35, 0.5, and 0.65 Hz. . . . . . . . . . . . . . . . . . . . . . . . . . . .
+51
+6.3
+Illustrates a 3D comparison between the head positions in the actual hardware
+platform (red), tuned model (blue) and untuned model (green) for a sidewinding
+trajectory 0.35, 0.5, and 0.65 Hz. . . . . . . . . . . . . . . . . . . . . . . . . . . .
+52
+6.4
+Illustrates a 2D comparison between the head, middle link and tail positions in the
+actual hardware platform and tuned model for a sidewinding trajectory 0.35, 0.5,
+and 0.65 Hz. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+53
+6.5
+Comparison of the Euclidean distance (error metric) between the actual platform’s
+head position captured by OptiTrack and tuned/untuned models for sidewinding @
+0.35, 0.5, and 0.65 Hz.
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+54
+6.6
+Shows a comparison between the actuator joint responses from the actual hardware
+platform (red), the tuned (blue) and untuned (magenta) models for a sidewinding gait
+at @ 0.5 Hz. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+55
+6.7
+Shows a comparison of average sliding window correlation (obtained by taking
+average of all the 11 correlation curves displayed in the above plot) of yawing joint
+positions for tuned and default simulators with desired signal (for the sidewinding
+gait @ 0.5 Hz). The model matching improved the actuator model in the the simulator
+as seen from the improved average correlation factor between desired and actual
+joint positions. Shaded regions represent the range between min and max correlation
+across all joints. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+56
+6.8
+Shows the training reward curve for tuning the simulator model.
+. . . . . . . . . .
+57
+6.9
+Shows the algorithm performing loco-manipulation inside webots simulator. Red
+dot is the final goal position, red star is robot’s initial position, blue star is object’s
+initial position.
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+58
+6.10 Shows the algorithm performing loco-manipulation with different initial robot and
+object positions inside webots simulator. . . . . . . . . . . . . . . . . . . . . . . .
+59
+6.11 Shows the algorithm performing loco-manipulation with different initial robot and
+object positions inside webots simulator. When the object is not aligned with the
+goal position, the robot adjusts its course by turning while moving the object. This
+realignment ensures that the object moves in a straight line towards the goal position. 60
+6.12 Shows dynamic replanning capabilites of the algorithm. The object is relocated
+within the Webots simulator, shifting from its current position to a randomly chosen
+spot. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+60
+6.13 Shows dynamic replanning capabilites of the algorithm. The robot effectively recal-
+culates its path to reach the relocated object and then proceeds to move it towards
+the desired goal position. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+61
+v
+
+--- Page 7 ---
+List of Tables
+3.1
+Comparison of simulators . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+21
+6.1
+Performance Metrics of Loco-manipulation Algorithm
+. . . . . . . . . . . . . . .
+55
+vi
+
+--- Page 8 ---
+List of Acronyms
+ROS Robot Operating System.
+ODE Open Dynamics Engine.
+AI Artificial Intelligence.
+DRL Deep Reinforcement Learning.
+GPU Graphics Processing Unit.
+PPO Proximal Policy Optimization.
+CPG Central Pattern Generators.
+CFM Constraint Force Mixing.
+ERP Error Reduction Parameter.
+SDR Structured Domain Randomization.
+COBRA Crater Observing Bio-inspired Rolling Articulator.
+SAC Soft Actor Critic.
+MDP Markov Decision Process.
+DQN Deep Q Network.
+vii
+
+--- Page 9 ---
+Acknowledgments
+I am deeply thankful to Dr. Alireza Ramezani, my advisor, for his unwavering support and
+guidance throughout the completion of this thesis. I would also like to extend my gratitude to Dr.
+Gunar Schirner, my co-advisor, whose invaluable insights were crucial in shaping this work. I also
+express my appreciation to my fellow lab mates, including Adarsh, Kruthika, Aditya, and others,
+for their invaluable assistance in conducting physical testing, handling hardware components, and
+contributing to the formulation of solutions to challenges. Finally, I express my gratitude for my
+family, whose unwavering belief in me has been the primary source of motivation throughout my
+journey marked by diligence and commitment.
+viii
+
+--- Page 10 ---
+Abstract of the Thesis
+Reinforcement Learning-Based Model Matching in COBRA, a Slithering
+Snake Robot
+by
+Harin Kumar Nallaguntla
+Master of Science in Robotics
+Northeastern University, April 2024
+Dr. Alireza Ramezani, Advisor
+Dr. Gunar Schirner, Co-advisor
+Dr. Michael Everett, Thesis Reader
+This work employs a reinforcement learning-based model identification method aimed at
+enhancing the accuracy of the dynamics for our snake robot, called COBRA. Leveraging gradient
+information and iterative optimization, the proposed approach refines the parameters of COBRA’s
+dynamical model such as coefficient of friction and actuator parameters using experimental and
+simulated data. Experimental validation on the hardware platform demonstrates the efficacy of the
+proposed approach, highlighting its potential to address sim-to-real gap in robot implementation.
+ix
+
+--- Page 11 ---
+Chapter 1
+Introduction
+Developing effective locomotion controllers for mobile robots is a challenging task. Recent
+advancements in Deep Reinforcement Learning (DRL) have shown a promising path in automating
+the design of robotic locomotion controllers [97] [54] [33] [40]. However, the amount of training data
+required by most DRL methods is often impractical to obtain in high-risk tasks such as manipulation,
+locomotion or loco-manipulation tasks. While computer simulation offers a safe and efficient
+environment for learning motor skills, policies trained solely in simulation often struggle to transfer
+seamlessly to real hardware due to various modeling discrepancies between the simulated and real
+environments, commonly referred to as the ”Simulation-to-Reality Gap” [99] [53] [16].
+This problem arises due to several factors, including but not limited to differences in fric-
+tional coefficients, inaccuracies in joint dynamics modeling [49], and variations in sensor noise levels
+between simulation environments and real-world scenarios. The simulation-to-reality discrepancies
+hinder the seamless transition of control policies and locomotion strategies from simulation experi-
+ments to practical applications [99], leading to suboptimal performance and limited generalization
+capabilities of robotic systems [40].
+Let S represent the simulated environment, R denote the real-world environment, and P(S)
+and P(R) represent the performance metrics of a given robotic system in simulation and reality,
+respectively [96] [92]. The goal is to minimize the difference or discrepancy between P(S) and
+P(R) to achieve effective transferability of control policies and behaviors from simulation to reality.
+Then, Mathematically, the Sim-to-Real problem can be formulated as an optimization task:
+θmin = arg min
+θ
+D(P(S, θ), P(R))
+(1.1)
+where, θ represents the dynamic parameters that represent the simulation. θmin represents the
+1
+
+--- Page 12 ---
+CHAPTER 1. INTRODUCTION
+Figure 1.1: Popular Solutions for Solving Sim2real Problem
+[96]
+minimum value of the parameter theta (θ) that minimizes the discrepancy. D(P(S, θ), P(R)) is the
+discrepancy measure between the simulated performance (P(S, θ)) and the real-world performance
+(P(R)).
+To address the challenges posed by the Simulation-to-Reality Gap, recent research [4] [66]
+has explored more sophisticated system identification procedures to enhance model accuracy [99],
+training the policy on real-robot while improving accuracy of the simulator (domain adaption) [3],
+and developed robust control policies capable of generalizing across diverse simulated environments
+(domain randomization) [33] [23]. Although these approaches have demonstrated decent transfer-
+ability of learned policy from simulator to real robot, they require training for atleast 1000 hrs in
+simulator and/or hundreds of rollouts on the real robot [3].
+2
+
+--- Page 13 ---
+CHAPTER 1. INTRODUCTION
+1.1
+State-Of-The-Art Modeling Tools
+In this section, we briefly describe state-of-the-art modeling tools applied successfully
+on multi-joint robots. Simulators play a crucial role in the development and testing of DRL-based
+gait design for robots. They provide a virtual environment where researchers and engineers can
+simulate various scenarios, train control policies, and evaluate robot behavior without the need for
+physical hardware. In the context of DRL-based locomotion strategies, simulators such as Webots
+[5], Simscape [27], Gazebo [21], Pybullet [89], MuJoCo [47] and Isaac Sim [28] offer different
+features, capabilities, and trade-offs.
+1. Webots: It is a popular commercial simulator widely used for robotics research and
+development. It offers a user-friendly interface, a diverse library of robot models, and support
+for various programming languages, including Python and C++. Webots [5] excels in providing
+decent physics simulation, realistic sensor models, and visualization tools, making it suitable for
+training RL-based locomotion policies. While Webots offers a user-friendly interface and decent
+physics simulation, it relies on the Open Dynamics Engine (ODE) [49], which has limitations in
+approximating friction and providing robust support for joint damping. These drawbacks can affect
+the accuracy and realism of simulations, especially for complex robotic systems requiring precise
+friction modeling and joint behaviors.
+2. Simscape: It is a part of the MATLAB/Simulink environment, is another simulation
+platform used for modeling and simulating physical systems, including robotic mechanisms. Sim-
+scape offers a modular approach to system modeling, allowing users to design complex robotic
+systems with interconnected components and actuators. It integrates seamlessly with MATLAB
+for control algorithm development, data analysis, and visualization. Simscape [27] utilizes the
+ODE4 equation and smooth stick-slip friction with a spring-damper contact model, providing good
+fidelity in physical modeling. However, it is incompatible with training RL agents directly within the
+simulation environment. Integrating RL algorithms and custom locomotion strategies into Simscape
+simulations may require additional effort due to its emphasis on detailed physics modeling over
+RL-specific functionalities.
+3. Gazebo: It is an open-source simulator widely adopted in the robotics community,
+especially for Robot Operating System (ROS) integration [21]. It provides a highly customizable
+and extensible framework for simulating robotic platforms, sensors, and environments. Gazebo’s
+support for ROS enables seamless integration with RL libraries such as OpenAI Gym and PyBullet,
+facilitating the development of RL-based locomotion strategies. Additionally, Gazebo offers plugins
+3
+
+--- Page 14 ---
+CHAPTER 1. INTRODUCTION
+for sensor simulation, dynamic control, and physics tuning, making it suitable for realistic and
+scalable robotic simulations. However, it also uses the Open Dynamics Engine (ODE) [49], which
+may not provide optimal solutions for friction modeling and joint damping. Users may encounter
+challenges in achieving high-fidelity simulations, particularly when simulating intricate contact
+dynamics and damping effects.
+4. PyBullet: PyBullet is an open-source physics engine and simulation environment
+designed for robotic simulations, physics-based games, and machine learning research [89]. It
+provides a Python interface to the Bullet Physics SDK, offering fast and accurate physics simulation
+for a wide range of robotic systems. PyBullet’s integration with Python and popular machine learning
+libraries such as TensorFlow and PyTorch makes it suitable for developing RL-based locomotion
+strategies. However, PyBullet may have limitations in terms of sensor modeling and visualization
+compared to other simulators and it utilizes the Bullet Physics Engine, which may have limitations in
+accurately simulating scenarios with detailed friction modeling and joint damping. Users may face
+challenges in configuring the solver for optimal performance in scenarios requiring precise control
+over friction forces and joint behaviors.
+5. MuJoCo: MuJoCo (Multi-Joint dynamics with Contact) [47] is a commercial physics
+engine known for its efficient and stable simulation of articulated rigid bodies and contact dynamics.
+It is commonly used in robotics research and reinforcement learning applications due to its fast
+simulation speed and accurate physics modeling. MuJoCo provides a high degree of customization for
+designing robotic systems and environments, making it suitable for simulating complex locomotion
+behaviors. However, its integration with DRL frameworks may require additional development.
+Additionally, MuJoCo’s physics modeling (using ODE), including friction approximation and joints
+modeling, may not always meet the requirements of complex robotic simulations, impacting the
+fidelity of DRL-based locomotion strategies.
+6. Isaac Sim: Isaac Sim is a simulation platform developed by NVIDIA, specifically
+designed for robotics and Artificial Intelligence (AI) research [28]. It offers a comprehensive set
+of tools and libraries for simulating robotic systems, sensor models, and AI algorithms. Isaac
+Sim leverages NVIDIA’s Graphics Processing Unit (GPU)-accelerated physics simulation for fast
+and realistic simulations of complex robotic behaviors. Its integration with NVIDIA’s Isaac SDK
+and Isaac Gym framework enables seamless development and testing of DRL-based locomotion
+strategies. Isaac Sim’s LULA solver offers a good friction model and realistic simulation of complex
+robotic behaviors. However, its reliance on NVIDIA’s GPU-accelerated physics simulation may
+pose challenges for researchers lacking access to compatible hardware with sufficient GPU compute
+4
+
+--- Page 15 ---
+CHAPTER 1. INTRODUCTION
+power. This limitation can hinder the training and testing of RL-based locomotion strategies within
+Isaac Sim, especially for resource-constrained environments.
+1.2
+Sim-to-Real Transfer for RL-based Strategies
+Sim-to-Real transfer in the context of RL-based locomotion strategies represents a critical
+frontier in robotics research, aiming to bridge the gap between simulated environments and real-world
+deployment [31] [18]. The ability to develop locomotion controllers in simulation and transfer them
+seamlessly to physical robots is of paramount importance for practical applications in challenging
+terrains and dynamic environments. This section briefly delves into the advancements in achieving
+effective Sim-to-Real transfer for RL-based locomotion strategies.
+Several notable approaches have been developed by different teams to address the challenge
+of training RL-based locomotion policies in simulation and transferring them to physical robots. In
+the paper [33] introduces a comprehensive framework that integrates a privileged student-teacher
+training setup and domain randomization to tackle the sim2real problem effectively. This approach
+enables the training of locomotion policies in a simulator and their successful transfer to real robots
+by dynamically adjusting simulation parameters to match real-world conditions.
+Another significant contribution comes from the paper [99], which emphasizes the im-
+portance of pre-sysID and post-sysID stages in system identification for simulation. By collecting
+real-world trajectories and using Bayesian Optimization, their method approximates accurate parame-
+ters for simulation, guiding subsequent policy learning for locomotion tasks. This approach enhances
+the adaptability and effectiveness of trained policies by ensuring that the simulation closely reflects
+real-world scenarios, thus improving the transferability of policies from simulation to physical robots.
+Additionally, Qin et al. [53] focuses on gait planning for six-legged robots using DRL
+and Proximal Policy Optimization (PPO). Their approach leverages an Actor-Critic network to
+train the robot’s gait adaptively, incorporating curriculum learning and simulations in a simplified
+environment. This methodology accelerates the training process and demonstrates the reliability of
+DRL-based locomotion strategies for navigating challenging terrains, showcasing the potential for
+practical applications in real-world scenarios with six-legged robots.
+Sim-to-Real transfer is a crucial research area essential for implementing RL-based lo-
+comotion strategies effectively in real-world robotic systems. Researchers are actively developing
+innovative methodologies and leveraging technological advancements to bridge the Reality Gap and
+realize the full potential of RL in dynamic and challenging terrains. However, it’s important to note
+5
+
+--- Page 16 ---
+CHAPTER 1. INTRODUCTION
+Figure 1.2: Shows successful transfer of an RL-based policy on 1) ANYmal robot [33] 2) & 6)
+Unitree A1 [98] [17] 3) Hexapod [35] 4) Cassie [36] 5) Sirius [17] 7) Mini Cheetah [17] 8) 7-DoF
+Yumi Robot [3] 9) & 13) ANYmal C [45] 10) ANYmal B [65] 11) Digit humanoid [54] 12) Soft
+Snake Robot [39]
+6
+
+--- Page 17 ---
+CHAPTER 1. INTRODUCTION
+that many existing methods for Sim-to-Real transfer often demand significant simulator training
+time, utilizing computationally intensive techniques like domain randomization, or necessitate the
+collection of extensive real robot data. There exists a pressing need for a comprehensive framework
+that can overcome these challenges. Such a framework would not rely heavily on domain randomiza-
+tion during simulator training and could build a realistic simulator with only a small amount of real
+robot data, thereby streamlining the Sim-to-Real transfer process and enhancing the scalability and
+applicability of RL-based locomotion strategies in real-world scenarios.
+1.3
+Modeling Frameworks Background
+Drawing inspiration from Silicon Synapse Lab’s modeling frameworks, I have delved into
+the sim2real problem and the intricate interactions of COBRA [68] with its environment. Within
+the lab’s innovative ecosystem, various bio-inspired robots [70] [58] [67] [10] have been developed,
+each paired with specific modeling frameworks [76] designed to address unique control challenges.
+Below, I provide a succinct overview of these robots and the tailored modeling approaches crafted at
+Silicon Synapse Lab.
+Aerobot [82] [57] [24] [60], an innovative bioinspired flapping drone known as Aerobat,
+embodies a groundbreaking actuation framework designed to emulate the intricate flight capabilities
+of flying animals such as bats [78] [56] [26] [25]. Unlike conventional flapping wing designs, Aerobot
+boasts dynamically versatile wing conformations and 14 body joints, omitting a tail for enhanced
+maneuverability. This design presents significant challenges in achieving closed-loop feedback and
+precise actuation [79] [22] [63] [62]. However, by integrating mechanical intelligence and control, the
+framework introduces small yet impactful adjustments through low-power actuators called primers,
+harnessing the computational structures of the robot [80] [87] [59] [41]. This approach enables
+precise regulation of joint motion, contributing to Aerobat’s untethered flight capabilities and paving
+the way for advancements in biomimetic aerial locomotion [1] [83] [91] [14] [34].
+The Husky robot [67] embodies a cutting-edge design inspired by nature’s multi-modal
+locomotion strategies, blending legged and aerial mobility to navigate diverse terrains with remarkable
+flexibility [85] [32]. Developed at Northeastern University, this quadrupedal marvel integrates
+thrusters for aerial stability during dynamic maneuvers, overcoming challenges typical of aerial-
+legged systems. Utilizing a polynomial approximation of its dynamics known as HROM (Husky
+Reduced Model) [42], the robot employs an optimal control framework to tackle narrow paths akin to
+natural animal navigation [61] [71] [76] [11]. Experimental validation and simulations in high-fidelity
+7
+
+--- Page 18 ---
+CHAPTER 1. INTRODUCTION
+Simscape environments showcase the Husky’s prowess in executing open-loop walking gaits, paving
+the way for further advancements in this versatile robotic platform [77] [2].
+Harpy [10], a groundbreaking thruster-assisted bipedal robot developed at Northeastern
+University, is designed to tackle the formidable challenges inherent in dynamic locomotion for
+bipedal walkers [9] [6] [81] [30]. The complexity arises from factors like underactuation, suscepti-
+bility to external disturbances, and the computational demands of full-dynamics and environmental
+interactions [51]. Harpy’s innovative design integrates thrusters strategically placed on its torso,
+alongside eight actuators distributed across its legs. This configuration enables not only frontal
+dynamics stabilization and fast constraint satisfaction but also facilitates agile maneuvers such as
+dodging fallovers and navigating obstacles through controlled jumps [77] [37] [7] [48]. The research
+[52] focuses on optimizing feedback mechanisms for Harpy’s thruster-assisted walking, ensuring
+stability, hybrid invariance, and robustness in gait execution, thus pushing the boundaries of bipedal
+robotics towards enhanced locomotion capabilities [9] [8] [2].
+M4 [86] [84], short for Multi-Modal Mobility Morphobot, represents a leap in robotic
+design inspired by nature’s resilient locomotion strategies. Drawing from animals like Chukars and
+Hoatzins, which adeptly repurpose appendages for diverse movements, M4 embodies unparalleled
+versatility in navigating complex terrains [41] [85]. This robot seamlessly transitions between
+modes such as flying, rolling, crawling, and balancing, utilizing its multi-functional components
+to overcome obstacles and explore unstructured environments with autonomy. The research [55]
+focuses on enhancing M4’s autonomy through advanced perception-navigation pipelines, deep
+learning-based mode transitions, and energy-efficient path planning. By showcasing intelligent mode
+switching, efficient navigation, and reduced energy consumption, this work lays the foundation for
+fully autonomous multi-modal robots, setting the stage for their deployment in exploration and rescue
+missions, and marking a significant stride in the evolution of intelligent and versatile robotic systems.
+1.4
+Objectives and Outline of Thesis
+The top image in Fig. 1.3 shows the COBRA platform sidewinding on a flat ground. The
+sidewinding trajectory is generated by the sine equation Eq. 1.2
+y(t) = A sin(ωt + ϕ)
+(1.2)
+where y(t) represents the lateral position of the COBRA platform at time t, A is the amplitude of the
+sidewinding motion, ω is the angular frequency, and ϕ is the phase angle.
+8
+
+--- Page 19 ---
+CHAPTER 1. INTRODUCTION
+Figure 1.3 hightlights the simulaton-to-reality gap observed in the Webots simulator.
+Experiments were conducted on the physical robot, and data were collected using motion capture
+technology to precisely record the trajectories of the head, tail, and middle links. Additionally, joint
+trajectory data for all eleven joints were recorded. The odd-numbered joints (1, 3, 5, ..., 11 from
+the head) executed pitching motions, while the even-numbered joints (2, 4, ..., 10 from the head)
+executed yawing motions. A sidewinding gait was generated by applying a sinusoidal input signal
+to each joint, serving as a standard input with adjustable parameters to modify the robot’s behavior.
+The input signal followed a sine-wave pattern based on Equation 2, with varying phase differences
+applied to each joint.
+Apitching = 14◦, Ayawing = 60◦
+ϕ = π
+2 [0, 0, 1, 1, 2, 2, 3, 3, 0, 0, 1]
+The identical trajectory is also executed within the Webots simulator, allowing us to observe
+the discrepancy or gap, as shown in Fig. 1.3, between the simulator and the actual robot. This
+simulation-to-reality gap hinders the transfer of any learning-based policies from the simulator to the
+real robot. It is crucial to tackle this issue. The primary objectives of this Master’s Thesis is to:
+• Develop a framework that reduces the simulation-to-reality gap in the webots simulator for
+COBRA. This framework will facilitate smoother transitions of policies from the simulator to
+the actual robot.
+• Design a controller with the ability to utilize COBRA’s locomotion capabilities for manipulat-
+ing objects within the environment.
+This disparity is more evident in Fig. 1.4, where I compare the head trajectories over time
+for three different gait patterns in both the actual robot and the base simulator (untuned model).
+Gait 1 represents a sidewinding motion at 0.35 Hz, Gait 2 is sidewinding at 0.5 Hz, and Gait 3 is a
+sidewinding motion at 0.65 Hz. Additionally, Fig. 1.5 offers insights into how the performance of
+actuator model also contributes to the gap observed between simulation and reality. These disparities
+hinder the seamless transfer of control policies developed in simulation to the real robot, limiting
+the effectiveness of learned behaviors in practical applications. Hence, addressing the sim-to-real
+issue is crucial for ensuring the reliability and robustness of COBRA when deployed in diverse and
+dynamic environments.
+Chapter 2 provides a background on snake robot locomotion principles, Central Pattern
+Generators (CPGs), and RL agents, setting the foundation for understanding the methodologies
+9
+
+--- Page 20 ---
+CHAPTER 1. INTRODUCTION
+Figure 1.3: Highlights the sim2real gap oberserved between COBRA and Webots simulator. The
+robot performs sidewinding motion in webots with an untuned simulator model. The red ball
+represents the position attained by the actual robot when executing analogous joint trajectories.
+10
+
+--- Page 21 ---
+CHAPTER 1. INTRODUCTION
+Figure 1.4: Illustrates sim-to-real gap observed in COBRA’s head link trajectory while performing
+sidewinding gaits at frequencies of 0.35 Hz, 0.5 Hz, and 0.65 Hz respectively
+11
+
+--- Page 22 ---
+CHAPTER 1. INTRODUCTION
+Figure 1.5: Illustrates sim-to-real gap observed in COBRA’s joint angles while performing sidewind-
+ing gaits at frequencies of 0.35 Hz, 0.5 Hz, and 0.65 Hz respectively
+used in subsequent chapters. Chapter 3 delves deeply into the simulation solvers utilized within the
+simulator, providing a comprehensive analysis of their advantages and disadvantages. Chapter 4
+introduces the COBRA (Crater Observing Bio-inspired Rolling Articulator) snake robot platform,
+its history, and motivation and delves into the model matching framework developed to bridge the
+simulation-to-reality gap. This framework utilizes RL agents to accurately tune simulation parameters
+for effective sim-to-real transfer. Chapter 5 introduces the loco-manipulation controller framework
+using a modified pure pursuit algorithm and discusses its integration with trained locomotion policies
+for dynamic manipulation tasks. Experimental validation and results are presented in Chapter 6,
+showcasing the results of the developed methodologies. Chapter 7, talks about conclusions of the
+work along with discussions on future research directions.
+1.5
+Contributions
+My thesis contributes in laying the foundation for solving the challenging sim2real problem
+on the COBRA platform and developing advanced locomotion strategies such as loco-manipualtion.
+The following is a detailed list of my contributions:
+• Created an API for the Webots simulator, allowing access to the simulator model parameters
+for a downstream pipeline.
+12
+
+--- Page 23 ---
+CHAPTER 1. INTRODUCTION
+• Developed a model matching framework using an RL agent to accurately determine simulator
+model parameters, thereby minimizing the simulation-to-reality gap between webots simulator
+and the real robot.
+• Formulated a modified pure pusuit algorithm for the purpose of real-time directed locomotion
+on COBRA.
+• Introduced a framework for loco-manipulation using the modified pure pursuit algorithm,
+showcasing COBRA’s capabilities in performing complex loco-manipulation task seamlessly.
+• Assisted in realizing open-loop gait patterns for the purpose of loco-manipulation on the
+COBRA platform.
+13
+
+--- Page 24 ---
+Chapter 2
+Literature Review
+This chapter provides a comprehensive overview of advancements in robotic control and
+learning strategies, focusing on Central Pattern Generators (CPG), Learning-based Strategies for
+Locomotion Tasks, and Simulation-to-Reality Transfer of Trained Policies. It highlights the versatility
+and robustness of CPG in generating rhythmic behaviors for snake-like and legged robots, as well
+as their integration with deep learning for adaptive control and efficient learning. Additionally,
+the chapter discusses reinforcement learning as a powerful paradigm for developing advanced
+locomotion strategies in various robotic platforms, showcasing improved navigation, adaptability,
+and robustness across different terrains and morphologies. Furthermore, it explores innovative
+approaches to transferring trained policies from simulation to real-world environments, emphasizing
+the evolving landscape of simulation-to-reality transfer in robotics and machine learning.
+2.1
+Central Pattern Generators
+CPG are neural-inspired controllers widely used for generating rhythmic behaviors in
+robotic systems, particularly in those requiring oscillatory motions like snake-type or legged robots.
+The application of CPG is driven by their versatility and robustness to uncertainties, making them
+suitable for real-world tasks. [20] focuses on locomotion control in snake-like robots with cardan
+joints using a CPG approach. The developed CPG model comprises a double chain structure of
+nonlinear oscillators interconnected with diffusive couplings. This model demonstrates stability in
+producing rhythmic patterns for serpentine and sidewinding locomotion. The paper also discusses
+explicit control parameters within the CPG model, such as oscillation frequencies, amplitudes,
+and phase differences between oscillators, allowing for speed and direction adjustments during
+14
+
+--- Page 25 ---
+CHAPTER 2. LITERATURE REVIEW
+locomotion. Simulation and experimental results on real snake robots confirm the successful control
+achieved using the proposed CPG approach.
+Another research effort [13] introduces DeepCPG policies, embedding CPGs into a neural
+network layer for end-to-end learning of locomotion behaviors in multi-legged robots. These
+policies facilitate sample-efficient learning even with high-dimensional sensor spaces, such as
+vision inputs. The study showcases successful locomotion strategies learned through DeepCPG
+policies, emphasizing the potential for scaling these policies in modular robot configurations and
+multiagent setups. Experimental results demonstrate effective sensor-motor integration based on
+biological principles, highlighting the adaptability and complexity achievable through DeepCPG
+approaches. A novel locomotion control method [40] for soft robot snakes combines DRL for
+adaptive goal-tracking behaviors with a CPG system utilizing Matsuoka oscillators. The integrated
+control architecture includes an RL module regulating inputs to the CPG system, which in turn
+translates outputs into pressure inputs for pneumatic actuators. This setup allows for independent
+control of oscillation frequency and amplitude, enhancing learning performance and data efficiency.
+Experimental validation on simulated and real soft snake robots validates the effectiveness of
+the proposed adaptive controller. These studies [93] [100] [43] collectively showcase the diverse
+applications and advancements in CPG-based models for controlling various t ypes of robotic systems,
+emphasizing their adaptability, robustness, and potential for real-world implementations.
+2.2
+Learning-based Strategies for Locomotion Tasks
+Reinforcement Learning [75] [54] has emerged as a powerful paradigm for developing
+advanced robotics strategies, offering solutions that can adapt and learn in complex and dynamic en-
+vironments. This section reviews recent developments in RL-based robotics strategies, encompassing
+various applications and methodologies.
+One study [33] challenges the traditional approach of local navigation for legged robots,
+advocating for an end-to-end policy trained with deep reinforcement learning. By focusing on
+reaching a target position within a specified time rather than continuous path tracking, this approach
+enables the robot to explore a broader solution space and learn more complex behaviors. The
+successful deployment of policies on a real quadrupedal robot demonstrates improved navigation
+across challenging terrains while conserving energy and achieving higher success rates.
+Another framework [17] introduces Generalized Locomotion (GenLoco) controllers for
+quadrupedal robots, aiming to synthesize controllers that can be applied across a range of similar
+15
+
+--- Page 26 ---
+CHAPTER 2. LITERATURE REVIEW
+robot morphologies. By training on a diverse set of simulated robots, these controllers acquire more
+general control strategies, leading to successful transfers to novel robots with varied morphologies in
+both simulated and real-world settings.
+A novel RL framework [97] is proposed for designing feedback control policies for 3D
+bipedal walking, leveraging physical insights and hybrid zero dynamics approaches. This framework
+demonstrates stable limit walking cycles capable of tracking different walking speeds and resisting
+adversarial forces, showcasing robust and efficient bipedal locomotion control. A hierarchical
+framework [50] is presented for goal-oriented locomotion, dividing the problem into learning
+primitive skills and utilizing model-based planning for sequencing these skills. This approach
+improves sample efficiency and generalizability, enabling robots to navigate to arbitrary goals with
+sensory noise, demonstrating efficacy on hardware platforms such as Daisy hexapod.
+A fully learning-based method [54] for real-world humanoid locomotion is introduced,
+utilizing a causal Transformer model trained through large-scale RL on randomized environments.
+This approach eliminates the need for state estimation, trajectory optimization, or pre-computed
+gait libraries, achieving successful deployment on a real robot for full-sized humanoid locomotion.
+A radically robust controller [16] is developed for legged locomotion in challenging natural envi-
+ronments, trained via RL in simulation and exhibiting zero-shot generalization to diverse terrains.
+This controller, based on neural networks and proprioceptive feedback, surpasses previous work in
+robustness and generalizability, showcasing remarkable adaptability in real-world scenarios.
+A training setup using massive parallelism [65] on a single workstation GPU is explored
+for fast policy generation in real-world robotic tasks. The impact of different training algorithm
+components on policy performance and training times is analyzed, achieving significant speedups
+compared to previous methods. A framework for learning reward functions [12] through active learn-
+ing, querying human expert knowledge for a subset of the agent’s rollouts, is proposed. This method
+demonstrates improved reward learning and generalization on tasks such as grasping, addressing
+challenges in defining reward functions manually. These RL-based robotics strategies represent
+advancements in autonomous control, navigation, and adaptability, showcasing the potential of RL
+techniques in enhancing robotic capabilities across various applications and environments.
+2.3
+Simulation-to-Reality Transfer of Trained Policies
+In the realm of robotics and machine learning, the challenge of transferring trained policies
+from simulation environments to the real world has been a persistent hurdle. This literature review
+16
+
+--- Page 27 ---
+CHAPTER 2. LITERATURE REVIEW
+synthesizes and analyzes several papers that address this problem from different angles, shedding
+light on innovative approaches and advancements in the field.
+One significant approach discussed in the literature is the adaptation of simulation parame-
+ter distributions based on real-world roll-outs during policy training. The paper by [3] introduces this
+concept, emphasizing the importance of matching policy behavior between simulation and reality
+through dynamic adjustment of simulation parameters. By leveraging a distribution of simulated
+scenarios and iteratively adapting parameters using real-world data, policies trained with this method
+exhibit reliable transferability to different robots across tasks such as swing-peg-in-hole and opening
+a cabinet drawer. Another critical aspect highlighted in the literature is domain randomization, a tech-
+nique aimed at bridging the gap between simulation and real-world environments. [44] underscores
+the potential of DRL algorithms in controlling real robots by training policies on a diverse distribution
+of environmental conditions in simulation. This diversity enables policies to generalize effectively
+to real-world scenarios, although the optimal design of this distribution remains an open question.
+Furthermore, the literature explores methods for automatically adjusting simulation parameters to
+maximize model accuracy.
+[92] presents a reinforcement learning-based approach that dynamically controls simulator
+parameters to optimize data synthesis for model training. Unlike previous techniques that relied
+on hand-crafted parameter settings, this method autonomously converges to optimal simulation
+parameters, enhancing the accuracy of trained models. A notable contribution in the domain
+of locomotion controllers for bipedal robots is the work by [99], which introduces a model-free
+reinforcement learning framework combined with domain randomization for sim-to-real transfer. By
+encouraging policies to learn robust behaviors across varied system dynamics, this approach achieves
+versatile walking behaviors on real bipedal robots, surpassing traditional controllers’ robustness.
+[53] adopts an end-to-end approach using an Actor-Critic network with PPO to train six-
+legged robots in simulation and successfully transfer learned models to real hardware. Curriculum
+learning is employed to accelerate and optimize training, showcasing the potential of DRL in
+enhancing locomotion for legged robots. Moreover, the concept of Structured Domain Randomization
+(SDR) is introduced by , focusing on context-aware placement of objects and distractors in simulated
+scenes. This approach enhances neural network performance for tasks like 2D bounding box
+car detection, outperforming other synthetic data generation methods and even real-world data in
+certain scenarios. The reviewed literature underscores the evolving landscape of simulation-to-
+reality transfer for trained policies in robotics and machine learning. From adaptive simulation
+parameter distributions to domain randomization and structured data generation, these approaches
+17
+
+--- Page 28 ---
+CHAPTER 2. LITERATURE REVIEW
+Figure 2.1: Highlights the shared aspects among the popular solutions to sim2real problem.
+collectively contribute to overcoming challenges and advancing the capabilities of models in real-
+world applications.
+2.4
+Research Analysis
+While significant progress has been made in the domain of simulation-to-reality transfer
+for trained policies in locomotion tasks, several research gaps and challenges remain unaddressed.
+This section outlines key areas where further investigation and development are needed to advance
+the field.
+One prominent research gap pertains to the need for a framework that bridges the simulation-
+to-reality gap specifically for locomotion tasks that do not require heavy computation or vast amounts
+of real-world rollouts to tune simulation model parameters. Existing approaches such as domain
+randomization and simulation parameter adaptation often rely on computationally intensive processes
+or extensive data collection on real robots. This limitation hinders their scalability and applicability
+18
+
+--- Page 29 ---
+CHAPTER 2. LITERATURE REVIEW
+to scenarios where computational resources or real-world data are limited. Furthermore, there is
+a gap in developing efficient and scalable methods for sim-to-real transfer in locomotion tasks
+across diverse robot morphologies and environments. Many current approaches focus on specific
+robot types or controlled environments, lacking generalizability to varied real-world conditions. A
+comprehensive framework that can adapt to different robot platforms, terrains, and uncertainties
+while maintaining transferability and performance is crucial for broader deployment and adoption in
+real-world applications.
+Another research gap lies in the integration of domain knowledge and physical insights
+into sim-to-real transfer frameworks. While data-driven approaches like reinforcement learning have
+shown promise, incorporating domain expertise and leveraging physical principles can enhance the
+robustness and efficiency of transfer learning algorithms. Developing hybrid approaches that combine
+data-driven techniques with domain knowledge can lead to more effective sim-to-real transfer
+strategies for locomotion tasks. Additionally, there is a need for benchmarking and standardization in
+evaluating sim-to-real transfer methods for locomotion. Currently, the assessment of transferability
+and generalization often lacks standardized metrics and evaluation protocols, making it challenging
+to compare different approaches objectively. Establishing benchmark datasets, evaluation criteria,
+and performance metrics tailored specifically for locomotion tasks can facilitate fair comparisons
+and drive innovation in sim-to-real transfer research.
+The research gaps identified emphasize the necessity for a framework that addresses
+the sim-to-real gap in locomotion tasks efficiently, scalably, and with consideration for diverse
+robot morphologies, environments, and domain knowledge integration. By addressing these gaps,
+researchers can pave the way for more robust, adaptable, and widely applicable sim-to-real transfer
+solutions in the field of robotics and machine learning.
+19
+
+--- Page 30 ---
+Chapter 3
+Simulators and Physics Engines
+This chapter delves into the critical role of simulation environments in the development and
+evaluation of DRL-based gait design for robots. Simulators play a pivotal role by providing a virtual
+arena where researchers and engineers can explore different scenarios, train control policies, and
+assess robot behavior without the need for physical hardware. This chapter explores several prominent
+simulators used in robotics research, including Webots, Simscape, Gazebo, PyBullet, MuJoCo, and
+Isaac Sim. Each simulator utilizes distinct simulation solvers, such as the ODE in Webots, Simscape’s
+ODE4 equation and stick-slip friction model, Gazebo’s integration with ODE, PyBullet’s Bullet
+Physics SDK, MuJoCo’s custom physics engine based on ODE, and Isaac Sim’s LULA solver
+leveraging NVIDIA’s GPU-accelerated physics simulation. Understanding these solvers’ features,
+capabilities, and limitations is crucial for selecting the most suitable simulator for specific research
+goals and ensuring accurate and realistic RL-based locomotion strategy development.
+3.1
+Physics Engines
+3.1.1
+Open Dynamics Engine
+ODE excels in simulating articulated rigid body structures, where rigid bodies are con-
+nected by various joints, such as those found in ground vehicles (like wheels to the chassis), legged
+creatures (like legs to the body), or stacks of objects. It is specifically tailored for interactive or real-
+time simulations, making it ideal for dynamic virtual reality environments with changing conditions.
+Its strengths lie in being fast, robust, and stable, allowing users the flexibility to modify the system’s
+structure during simulation.
+20
+
+--- Page 31 ---
+CHAPTER 3. SIMULATORS AND PHYSICS ENGINES
+Table 3.1: Comparison of simulators
+Simulator
+Physics Engine
+Pros
+Cons
+Simscape
+Multibody dynamics
+High-fidelity simulations
+Incompatible
+with
+RL
+agent training
+Webots
+Open dynamics engine
+Compatible with RL agent
+training
+Accuracy of simulations
+PyBullet
+Bullet physics SDK
+Ease of integration with
+deep learning frameworks
+Limitations
+in
+friction
+modeling
+MuJoCo
+Open dynamics engine
+Popular
+for
+training
+locomotion-based policies
+Accuracy of simulations
+Gazebo
+Open dynamics engine
+Tight
+integration
+with
+ROS
+Limitations in modeling
+contact dynamics
+Isaac Sim
+PhysX
+Massive parallelization in
+RL training
+Requires access to compat-
+ible hardware
+One of ODE’s key features is its use of a highly stable integrator, preventing simulation
+errors from spiraling out of control and avoiding sudden system ”explosions” that can occur in other
+simulators. ODE prioritizes speed and stability over absolute physical accuracy, making it well-suited
+for applications where real-time performance is crucial.
+ODE implements hard contacts, employing non-penetration constraints when bodies
+collide, unlike other simulators that may rely on virtual springs for contact representation, a method
+prone to errors. Additionally, ODE includes a built-in collision detection system with primitives
+such as spheres, boxes, cylinders, capsules, planes, rays, and triangular meshes, allowing for fast
+identification of potential intersections using collision ”spaces.”
+Key features of ODE include support for:
+• Rigid bodies with customizable mass distribution.
+• Various joint types like ball-and-socket, hinge, slider (prismatic), hinge-2, fixed, angular motor,
+linear motor, and universal joints.
+• Collision primitives including spheres, boxes, cylinders, capsules, planes, rays, triangular
+meshes, and convex shapes.
+21
+
+--- Page 32 ---
+CHAPTER 3. SIMULATORS AND PHYSICS ENGINES
+• Different collision spaces like Quad trees, hash spaces, and simple spaces for efficient collision
+detection.
+• Simulation methods based on Lagrange multiplier velocity models by Trinkle/Stewart and
+Anitescu/Potra, using a first-order integrator (higher-order integrators planned for future
+updates).
+• Choice of time stepping methods such as the standard ”big matrix” method or the newer
+iterative QuickStep method.
+• Contact and friction models based on the Dantzig LCP solver, providing a faster approximation
+of the Coulomb friction model.
+• Native C interface with additional C++ interfaces for ease of use and integration.
+• Extensive unit testing and platform-specific optimizations for enhanced performance.
+Additionally, ODE incorporates constraint parameters that play a crucial role in simulating
+realistic interactions between objects. Parameters like Constraint Force Mixing (CFM) and Error
+Reduction Parameter (ERP) influence how constraints are enforced and how joint errors are handled
+during simulation steps. These parameters allow users to control the stability and accuracy of
+simulations, especially in scenarios with intermittent contacts or complex interactions. Overall,
+understanding and manipulating these inner workings of the ODE engine enable users to create more
+realistic and effective simulations for various applications in robotics and virtual environments.
+3.1.1.1
+Constraint Force Mixing
+A joint group serves as a specialized container within the ODE framework that holds joints
+within a world. Joints can be assigned to a group, and when the joints are no longer needed, the
+entire group can be swiftly destroyed with a single function call. However, individual joints within a
+group cannot be removed until the entire group is emptied. This feature is particularly advantageous
+in scenarios involving contact joints, where groups of joints are added and removed from the world
+during each time step.
+In the context of joint error and the ERP, when a joint connects two bodies, these bodies
+must maintain specific positions and orientations relative to each other. Joint error can occur due
+to two main reasons: improper setting of one body’s position/orientation without corresponding
+adjustments to the other body, or errors introduced during simulation leading to deviations from the
+22
+
+--- Page 33 ---
+CHAPTER 3. SIMULATORS AND PHYSICS ENGINES
+required positions. To mitigate joint error, ODE applies a special force during each simulation step to
+realign the bodies, controlled by the ERP, which ranges from 0 to 1. ERP determines the proportion
+of joint error corrected in the next time step, with values closer to 1 attempting to fix all error but
+not recommended due to practical approximations, while values between 0.1 and 0.8 are commonly
+used.
+The distinction between hard and soft constraints is crucial in ODE’s constraint handling.
+While most constraints are inherently ”hard,” meaning they must never be violated (e.g., a ball always
+remains in a socket), soft constraints allow controlled violations, simulating softer materials. CFM
+parameter plays a key role in this distinction. CFM mixes the resulting constraint force with the
+original constraint equation, allowing controlled violations proportional to CFM times the restoring
+force needed to enforce the constraint. Positive CFM values enable soft constraints, while negative
+values are discouraged due to potential instability.
+ERP and CFM can be independently adjusted in various joints to control their stiffness
+and compliance. For instance, higher CFM values introduce more ”softness” to the constraint, while
+adjusting ERP and CFM allows simulating spring-like or spongy behaviors. Increasing global CFM
+can enhance simulation stability and reduce numerical errors, especially in near-singular systems.
+Additionally, collision handling in ODE involves pre-simulation collision detection to identify contact
+points, creation of specialized contact joints, grouping these joints for efficient management, and
+removal of contact joints post-simulation.
+Mathematically, the relationship between ERP, CFM, and the desired spring and damper
+constants can be expressed as:
+ERP =
+h · kp
+h · kp + kd
+CFM =
+1
+h · kp + kd
+(3.1)
+where h represents the step size, kp is the spring constant, and kd is the damping constant,
+ensuring equivalence between ODE’s parameters and those of a spring-and-damper system simulated
+using implicit first-order integration.
+Traditionally, the constraint equation for every joint has the form
+Jv = c
+(3.2)
+where v is a velocity vector for the bodies involved, J is a ”Jacobian” matrix with one row
+for every degree of freedom the joint removes from the system, and c is a right-hand side vector. At
+23
+
+--- Page 34 ---
+CHAPTER 3. SIMULATORS AND PHYSICS ENGINES
+the next time step, a vector λ is calculated (of the same size as c) such that the forces applied to the
+bodies to preserve the joint constraint are:
+Fc = JT λ
+(3.3)
+ODE adds a new twist. ODE’s constraint equation has the form
+Jv = c + CFMλ
+(3.4)
+where CFM is a square diagonal matrix. CFM mixes the resulting constraint force in with
+the constraint that produces it. A nonzero (positive) value of CFM allows the original constraint
+equation to be violated by an amount proportional to CFM times the restoring force λ that is needed
+to enforce the constraint. Solving for λ gives
+(JM−1JT + 1
+hCFM)λ = 1
+hc
+(3.5)
+Thus, CFM simply adds to the diagonal of the original system matrix. Using a positive
+value of CFM has the additional benefit of taking the system away from any singularity and thus
+improving the factorizer accuracy.
+3.1.1.2
+Friction Approximation
+The Coulomb friction model offers a straightforward yet efficient approach to depicting
+friction at contact points. It establishes a relationship between normal and tangential forces at a
+contact point, denoted as FT and FN respectively, with µ representing the friction coefficient (usually
+around 1.0). The model is defined by the inequality |FT| ≤µ|FN|, creating a ”friction cone”
+visualization where FN serves as the cone’s axis and the contact point as its vertex. When the total
+friction force vector aligns within this cone, the contact remains in ”sticking mode,” preventing
+relative movement between surfaces. Conversely, if the force vector lies on the cone’s surface, the
+contact transitions to ”sliding mode,” allowing sliding between surfaces. The parameter µ dictates
+the maximum ratio of tangential to normal force.
+ODE’s friction models are approximations of this friction cone, primarily for efficiency
+purposes. Two main approximations are available:
+• Altering µ to denote the maximum tangential force at a contact in either tangential direction,
+independent of the normal force. Although somewhat non-physical as it disregards normal
+24
+
+--- Page 35 ---
+CHAPTER 3. SIMULATORS AND PHYSICS ENGINES
+Figure 3.1: Illustrates friction cone inside the simulator
+force, it is computationally economical and allows for a force limit suitable for simulation
+purposes.
+• Approximating the friction cone with a friction pyramid aligned along the first and second
+friction directions. This method first computes normal forces assuming frictionless contacts,
+calculates maximum limits for tangential forces (Fm = µ|FN|), and then solves the system
+using these limits. While not a true friction pyramid, this approximation is easier to implement
+as µ remains unit-less and can be set as a constant around 1.0 without specific simulation
+considerations.
+3.1.2
+Simscape Multibody Dynamics
+Simscape facilitates the swift creation of models for physical systems within the Simulink
+environment. Through Simscape, users construct physical component models utilizing direct physical
+connections that seamlessly integrate with block diagrams and other modeling approaches. These
+models encompass various systems like electric motors, bridge rectifiers, hydraulic actuators, and re-
+frigeration systems, constructed by assembling fundamental components into a schematic. Additional
+Simscape add-on products offer more intricate components and analysis functionalities.
+Simscape aids in the development of control systems and the assessment of system-level
+25
+
+--- Page 36 ---
+CHAPTER 3. SIMULATORS AND PHYSICS ENGINES
+Figure 3.2: Illustrates dynamic forces in multibody models, such as normal and frictional forces.
+These forces influence the behavior of solid blocks in contact [88].
+performance. Users can craft custom component models using the MATLAB-based Simscape
+language, allowing for text-based creation of physical modeling components, domains, and libraries.
+Models can be parameterized using MATLAB variables and expressions, and control systems can
+be designed within Simulink for the physical system. Simscape also supports C-code generation to
+deploy models to other simulation environments, including hardware-in-the-loop (HIL) systems.
+When simulating interactions between solid blocks in contact, the influence of contact
+forces becomes crucial in determining their behaviors. Both the normal force (fn) and the frictional
+force (ff) can significantly impact the dynamic responses of a multibody model. Contact forces are
+particularly relevant in various modeling scenarios, including package conveyors, robotic movement,
+and race car dynamics. The Spatial Contact Force block in multibody dynamics simulation represents
+forces between solid bodies’ base and follower frames. This block applies equal and opposite forces
+along a shared contact plane when two solid blocks are linked, adhering to Newton’s Third Law.
+The normal force is calculated based on penetration depth and velocity, while the frictional force, if
+applied, depends on the normal force and relative velocities at the contact point.
+The Spatial Contact Force block features three expandable nodes for setting its properties:
+Normal Force, Frictional Force, and Sensing. We utilize these properties when employing the Spatial
+Contact Force block to model contact forces between two solid bodies.
+Normal Force: The parameters within the Normal Force section determine the normal
+force (fn) exerted by the two solid bodies on each other. You can define the Stiffness, Damping, and
+26
+
+--- Page 37 ---
+CHAPTER 3. SIMULATORS AND PHYSICS ENGINES
+Figure 3.3: Illustrates the friction model used inside simscape simulator [27].
+Transition Region Width.
+Frictional Force: The parameters within the Frictional Force section determine the
+frictional force (ff) exerted by the two solid bodies on each other. If you select the Smooth Stick-Slip
+Method, you can specify the Coefficient of Static Friction, Coefficient of Dynamic Friction, and
+Critical Velocity. Note that these options are not available when the Method is set to None.
+The Translational Friction block represents friction occurring between moving bodies,
+with the friction force being a function of their relative velocity. It includes Stribeck, Coulomb,
+and viscous components, as depicted in the accompanying figure. Stribeck friction (FS) exhibits
+a negatively sloped characteristic at low velocities, while Coulomb friction (FC) remains constant
+regardless of velocity. Viscous friction (FV) opposes motion proportionally to the relative velocity.
+Near zero velocity, the sum of Coulomb and Stribeck frictions is termed breakaway friction (Fbrk).
+The friction can be approximated using the following equations:
+F =
+v
+u
+u
+t2e(Fbrk −FC) · exp
+ 
+−
+ v
+vSt
+2!
+· v
+vSt
++ FC · tanh
+
+v
+vCoul
+
++ fv
+(3.6)
+27
+
+--- Page 38 ---
+CHAPTER 3. SIMULATORS AND PHYSICS ENGINES
+vSt = vbrk
+√
+2
+vCoul = vbrk
+10
+v = vR −vC
+(3.7)
+where F is the friction force, FC is Coulomb friction, Fbrk is breakaway friction, vbrk is
+breakaway friction velocity, vSt is Stribeck velocity threshold, vCoul is Coulomb velocity threshold,
+v is relative velocity, fv is the viscous friction coefficient.
+The exponential function in the Stribeck portion ensures continuity and decays for velocities
+greater than breakaway friction velocity. The hyperbolic tangent function in the Coulomb portion
+maintains smoothness and continuity at zero velocity but quickly reaches its full value at nonzero
+velocities. The block’s positive direction, from port R to port C, implies force transmission from R to
+C when port R’s velocity exceeds that of port C.
+3.2
+Webots Simulator for COBRA
+I chose the Webots simulator as the ideal platform for bridging the sim2real gap in training
+reinforcement learning (RL) agents for the COBRA platform due to its seamless integration capabil-
+ities with RL agent training and its extensive resources for developing locomotion, manipulation,
+and navigation controllers/policies. Webots offers a user-friendly interface and supports various pro-
+gramming languages like Python and C++, making it easy to implement and integrate RL algorithms.
+Its diverse library of robot models, realistic physics simulation, and visualization tools provide a
+conducive environment for training RL-based locomotion policies. Additionally, Webots provides
+resources and tools for developing controllers and policies for various tasks, including locomotion,
+manipulation, and navigation, which are essential for the COBRA platform’s functionalities. Overall,
+Webots’ compatibility with RL training and its comprehensive resources make it an excellent choice
+for addressing the sim2real gap in developing efficient controllers for the COBRA platform.
+28
+
+--- Page 39 ---
+Chapter 4
+Model Matching Framework
+4.1
+COBRA Platform
+COBRA, an acronym for Crater Observing Bio-inspired Rolling Articulator, is a snake
+robot designed after the intricate locomotion of serpentine creatures [68] [64] [46]. This robot is
+specifically engineered to navigate and endure rugged terrains and environments, such as craters,
+where traditional wheeled or legged robots may struggle. Figure 4.1 shows a free body diagram
+of the COBRA platform and the ground coefficients of friction. With 11 joints and 12 links, the
+COBRA platform exhibits a complex mechanical structure that allows for versatile movements and
+functionalities. The presence of 6 yawing joints and 5 pitching joints enables the platform to achieve
+a wide range of orientations and configurations, making it suitable for diverse applications in robotics
+and engineering.
+The free body diagram provides a detailed representation of the forces and moments acting
+Figure 4.1: Illustrates free body diagram of the COBRA platform
+29
+
+--- Page 40 ---
+CHAPTER 4. MODEL MATCHING FRAMEWORK
+on the COBRA platform as it interacts with the ground. The coefficients of friction play a crucial
+role in analyzing the stability and motion dynamics of the platform during various maneuvers.
+
+DH
+DHa
+DaH
+Da
+
+
+
+¨qH
+¨qa
+
++
+
+HH
+Ha
+
+=
+
+0
+Ba
+
+u+
++
+
+J⊤
+H
+J⊤
+a
+
+FGRF
+(4.1)
+where Di, Hi, Bi, and Ji are partitioned model parameters corresponding to the head ’H’ and
+actuated ’a’ joints. FGRF denotes the ground reaction forces. u embodies the joint actuation torques.
+The actuator parameters include: transmission inertia, internal damping, and dc motor constant. The
+reference trajectories used in the actuator models are generated by
+The sidewinding motion depicted in Fig. 1.3 demonstrates the platform’s capability to
+traverse terrain with varying obstacles and inclines. By utilizing a sine-based trajectory, the COBRA
+platform can adapt its movement to navigate through complex environments while maintaining
+stability and efficiency. The parameters A, ω, and ϕ in the sine equation allow for precise control
+over the sidewinding motion, enabling the platform to adjust its speed, direction, and curvature as
+needed. This flexibility is crucial for applications such as search and rescue missions, exploration of
+uneven terrains, and inspection tasks in challenging environments.
+The ground model used in our simulations is given by
+FGRF =
+
+
+
+
+
+0 if pC,z > 0
+[FGRF,x, FGRF,y, FGRF,z]⊤else
+(4.2)
+where pC,i, i = x, y, z are the x −y −z positions of the contact point; FGRF,i, i = x, y, z are the
+x −y −z components of the ground reaction force assuming a contact takes place between the robot
+and the ground substrate. In Eq. 4.2, the force terms are given by
+FGRF,z = −k1pC,z −k2 ˙pC,z,
+(4.3)
+FGRF,i = −siFGRF,z sgn( ˙pC,i) −µv ˙pC,i if i = x, y
+(4.4)
+In Eqs. 4.3 and 4.4, k1 and k2 are the spring and damping coefficients of the compliant surface model.
+In Eq. 4.4, the term si is given by
+si =
+
+µc −(µc −µs)exp
+ −| ˙pC,i|2/v2
+s
+ 
+(4.5)
+30
+
+--- Page 41 ---
+CHAPTER 4. MODEL MATCHING FRAMEWORK
+where µc, µs, and µv are the Coulomb, static, and viscous friction coefficients; and, vs > 0 is
+the Stribeck velocity. Specifically speaking, from Eqs. 4.1 and 4.2, the following parameters are
+unknown to us: actuator models parameters and Stribeck terms [38].
+4.2
+Motivation
+My strategy to address the sim2real gap involves employing the Reinforcement Learning-
+based Model Matching approach. This method aims to identify the accurate parameters of COBRA’s
+dynamic model within the simulation environment, thus bridging the gap between simulation and
+reality. By leveraging these precise parameters, we can develop and train advanced locomotion and
+manipulation strategies using learning-based techniques. These strategies can then be effectively
+transferred and implemented on the real robot, enhancing its performance and capabilities. It is
+crucial to highlight that the parameters referenced in Fig. 1.3 were determined through a human
+trial-and-error approach. It is imperative not to rely on simplistic linear search or extensive trial-and-
+error methods for model tuning. These methods are computationally demanding and unsuitable for
+addressing the sim2real gap across various platforms. What we need is a modular solution capable of
+tuning the model based on its past interactions and applicable to solving sim2real challenges across
+diverse robotic platforms. This is where the Model Matching Framework becomes invaluable. The
+Model Matching Framework is designed to tune the dynamic model and identify accurate parameters
+that minimize the disparity between simulation and reality using a reinforcement learning-based
+method.
+4.2.1
+Markov Decision Process
+A Markov Decision Process (MDP) is a mathematical framework used to model decision-
+making problems in environments with uncertainty and sequential actions. It is widely applied in
+fields like artificial intelligence, operations research, and economics to formulate and solve problems
+involving decision making under uncertainty.
+At the core of an MDP are several key components:
+• States (S): A set of states representing all possible configurations of the environment. Denoted
+as S = {s1, s2, ..., sn}, where n is the total number of states.
+• Actions (A): A set of actions available to an agent in each state. Denoted as A = {a1, a2, ..., am},
+where m is the total number of actions.
+31
+
+--- Page 42 ---
+CHAPTER 4. MODEL MATCHING FRAMEWORK
+• Transition Probabilities (T): The probabilities of transitioning from one state to another after
+taking a specific action. Represented as T(s, a, s′), where s is the current state, a is the action
+taken, and s′ is the resulting state.
+• Rewards (R): Immediate rewards received by the agent upon transitioning from one state to
+another. Denoted as R(s, a, s′), where s is the current state, a is the action taken, and s′ is the
+resulting state.
+• Policy (π): A strategy or set of rules that guides the agent’s decision-making process. It defines
+which action to take in each state. Denoted as π(s), representing the action chosen in state s
+according to the policy.
+The dynamics of an MDP can be illustrated using a diagram called a Markov Decision
+Process diagram. This diagram typically consists of circles representing states, arrows indicating
+possible transitions between states based on actions, and associated probabilities and rewards.
+Mathematically, the MDP framework can be defined using the Bellman equation, which expresses
+the value of a state in terms of the expected immediate reward and the value of the next state:
+V (s) = max
+a∈A
+ 
+R(s, a) + γ
+X
+s′∈S
+T(s, a, s′) · V (s′)
+!
+Here, V (s) represents the value of state s, R(s, a) is the immediate reward for taking action
+a in state s, γ is the discount factor that determines the importance of future rewards, T(s, a, s′)
+is the transition probability from state s to state s′ after taking action a, and maxa∈A denotes the
+maximum over all possible actions.
+4.2.2
+Reinforcement Learning
+RL is a machine learning paradigm where an agent learns to make decisions by interacting
+with an environment to maximize cumulative rewards [73] [95]. RL is based on the concept of trial
+and error, where the agent takes actions in the environment, receives feedback in the form of rewards,
+and adjusts its strategy over time to achieve optimal outcomes [94].
+At the core of DRL is the MDP, which formalizes the DRL framework. An MDP consists
+of a set of states S, a set of actions A, transition probabilities T, immediate rewards R, and a policy
+π. Mathematically, an MDP can be represented as (S, A, T, R, π). The agent interacts with the
+environment by following a policy π, which determines the action to take in each state. The goal of
+32
+
+--- Page 43 ---
+CHAPTER 4. MODEL MATCHING FRAMEWORK
+Figure 4.2: Reinforcement Learning Problem Setup
+the agent is to learn an optimal policy π∗that maximizes the expected cumulative reward over time
+[94]. The optimal policy is often denoted as π∗(s), where s is the current state.
+The agent learns to make decisions through trial and error using the following key compo-
+nents:
+• Value Function: The value function estimates the long-term desirability of states or state-
+action pairs. There are two types of value functions: the state value function V (s), which
+estimates the value of being in a particular state, and the action value function Q(s, a), which
+estimates the value of taking a specific action in a given state.
+V (s) = E[Rt+1 + γRt+2 + γ2Rt+3 + . . . |St = s]
+Q(s, a) = E[Rt+1 + γRt+2 + γ2Rt+3 + . . . |St = s, At = a]
+Here, γ is the discount factor that determines the importance of future rewards.
+• Policy Evaluation and Improvement: The agent evaluates the current policy by estimating
+the value of states or state-action pairs and then improves the policy based on the value
+estimates. This process continues iteratively until convergence to the optimal policy.
+• Exploration vs. Exploitation: RL involves a trade-off between exploration (trying new
+actions to gather information) and exploitation (using known actions to maximize rewards).
+Strategies such as epsilon-greedy and softmax exploration are commonly used to balance
+exploration and exploitation.
+33
+
+--- Page 44 ---
+CHAPTER 4. MODEL MATCHING FRAMEWORK
+RL algorithms, such as Q-learning, SARSA, and Deep Q Network (DQN), implement
+these concepts to enable agents to learn optimal policies in complex environments. Diagrams, such as
+state transition diagrams and value function diagrams, can visually represent the RL process, aiding
+in understanding how agents learn to make decisions through interaction with the environment.
+4.3
+Methodology
+We approach the sim2real gap challenge by framing it as a Model Matching problem
+leveraging DRL, depicted in Fig. 4.3. Our methodology involved executing a predetermined
+sidewinding trajectory (operating at 0.5 Hz) denoted as D on both the physical robot and the Webots
+simulator. A sidewinding trajectory command qr is employed to guide both the real COBRA robot
+and its virtual model through identical movements. The performance analysis occurs in two separate
+domains as suggested by the partitioned model in Eq. 4.1:
+• Underactuated dynamics: The imposition of qr leads to the head translations ¨qH, which are
+underactuated. Comparing the head’s position and orientation provides a clear performance
+metric for discerning contact force discrepancies (friction coefficients) between the physical
+robot and the simulation while completely excluding actuator dynamics.
+• Actuated dynamics: In addition to matching passive dynamics models, we also address actuated
+dynamics, specifically the joint angle trajectories ¨qa in Eq. 4.1. Aligning actuator models
+is crucial for evaluating the precision of the robot’s movements. This comparison can be
+accomplished by calculating the norm distance of output joint motions between the physical
+robot and the simulated model.
+Subsequently, we gathered positional data for the head, middle link, and tail, along with joint
+positions data throughout the sidewinding gait duration on both platforms. The alignment between
+simulation and reality was quantified using a reward function denoted as R. An RL agent was
+deployed to adjust the model parameters in a manner that maximizes the reward function’s value,
+ultimately aiming to minimize the sim2real gap.
+4.3.1
+RL Framework
+The PPO algorithm is used to iteratively refine the model parameters. This is done with the
+aim of minimizing the observed discrepancies in the underactuated and actuated dynamics between
+34
+
+--- Page 45 ---
+CHAPTER 4. MODEL MATCHING FRAMEWORK
+the model and the actual robot. Below, we explain the state, action, and reward function defined for
+the PPO algorithm. I selected the PPO algorithm for addressing the sim2real gap for several reasons:
+• Stability: PPO is known for its stability during training compared to other RL algorithms like
+DQN or A3C. It uses a clipped objective function that prevents large policy updates, leading to
+more stable learning.
+• Sample Efficiency: PPO tends to be more sample-efficient, meaning it requires fewer interac-
+tions with the environment to achieve good results compared to some other algorithms. This is
+advantageous when dealing with real-world robots where data collection can be costly and
+time-consuming.
+• Adaptability to Continuous Actions: PPO naturally handles continuous action spaces, which
+is often the case in robotics tasks where actions like joint angles or velocities need to be
+controlled smoothly and precisely.
+• Balance Between Exploration and Exploitation: PPO strikes a good balance between
+exploration (trying out new actions to discover better strategies) and exploitation (leveraging
+known good strategies). This balance is crucial for learning effective policies without getting
+stuck in suboptimal solutions.
+• Ease of Implementation: PPO has a relatively simple implementation compared to some
+other advanced RL algorithms. It has fewer hyperparameters to tune, making it easier to
+experiment with and deploy in practical scenarios.
+• Robustness to Hyperparameters: PPO is robust to changes in hyperparameters, meaning
+small variations in hyperparameter settings often do not lead to drastic changes in performance.
+This robustness simplifies the tuning process.
+Overall, the combination of stability, sample efficiency, adaptability to continuous actions,
+balanced exploration-exploitation trade-off, ease of implementation, and robustness to hyperparame-
+ters made PPO a suitable choice for addressing the sim2real gap using RL methods.
+4.3.1.1
+State, Action, and Reward Definition
+The state St encapsulates the actuator parameters for internal tuning as well as Steibek
+terms for external tuning. The actions At are the modifications applied to these simulation parameters.
+35
+
+--- Page 46 ---
+CHAPTER 4. MODEL MATCHING FRAMEWORK
+The reward function R = Rint + Rext is given by
+Rexternal = −
+p
+((xdes −xactual)2 + (ydes −yactual)2)
+(4.6)
+where xdes and ydes denote desired x- and y-positions of the head module, respectively. xactual and
+yactual are the OptiTrack data. And, Rinternal is given by
+Rinternal = −(ϕdes −ϕactual)2 −(ωdes −ωactual)2
+−(Ades −Aactual)2
+(4.7)
+where ϕ, ω, and A are CPG variables. These reward functions are crafted to penalize the deviation in
+both passive dynamics and actuated dynamics. They are defined as the sum of the L2-norm of the
+joint angle trajectory differences and the L2-norm of the final head position differences.
+4.3.1.2
+Policy Updates
+The policy search recruited here operates in a cycle of simulation runs and updates. During
+simulation runs, the algorithms collects data on state transitions and rewards, which are aggregated
+into sequences (St, At, Rt, St+1) and stored in a replay memory. The training phase involves
+updating the policy network with this data, where PPO adjusts the policy in a manner that maximizes
+the cumulative reward while maintaining a degree of similarity to the previous policy, using a
+mechanism known as clipping to avoid drastic policy changes [75].
+Through these iterative training cycles, PPO tunes the model parameters to align the model
+performance with the actual COBRA robot, following a predefined sidewinding trajectory. The
+process continues until a convergence is reached. The following is a line-by-line breakdown of the
+search approach as reported in [75]:
+a) Input: The algorithm starts with initial policy parameters θ0 and initial value function
+parameters ϕ0. These parameters are what the algorithm will learn to adjust as it interacts with the
+environment to improve its policy.
+b) Collect Trajectories: A set of trajectories Dk is collected by running the current policy
+π(θk) in the environment. A trajectory is a sequence of states, actions, and rewards experienced by
+the agent.
+c) Compute rewards-to-go: For each time step t, compute the total expected rewards from
+that time step until the end of the trajectory, denoted as Rt. This is used to estimate how good it is to
+be in a particular state.
+36
+
+--- Page 47 ---
+CHAPTER 4. MODEL MATCHING FRAMEWORK
+d) Compute advantage estimates: The advantage At indicates how much better or worse an
+action is compared to the average action in a given state. This is calculated using the value function
+Vϕ and the rewards-to-go.
+e) Update the Policy: First, we calculate the probability ratio, which is a fraction where
+the numerator is the probability of taking action at in state st under the new policy πθ, and the
+denominator is the probability of taking action at in state st under the old policy πθold:
+ratio(θ) = πθ(at|st)
+πθold(at|st)
+This ratio measures how the new policy differs from the old policy in terms of the likelihood of
+taking the same actions.
+We then clip this ratio to be within a range of [1 −ϵ, 1 + ϵ], where ϵ is a hyperparameter
+typically set to a small value like 0.1 or 0.2. This clipping limits the amount by which the new policy
+can differ from the old one, regardless of the advantage estimate:
+clipped(θ) = clip(ratio(θ), 1 −ϵ, 1 + ϵ)
+The objective function incorporates the clipped ratio and the advantage function At. It takes the
+minimum of the unclipped and clipped objectives, ensuring that the final objective doesn’t take too
+large of a step (hence, ”clipping”):
+L(θ) = min (ratio(θ)At, clipped(θ)At)
+The expectation of this objective function over all timesteps and all trajectories is what the algorithm
+seeks to maximize. This expectation is approximated by averaging over a finite batch of timesteps
+and trajectories:
+θk+1 = arg max
+θ
+
+
+1
+|Dk| T
+X
+τ∈Dk
+T
+X
+t=0
+L(θ)
+
+
+Finally, the parameters of the policy θ are updated using stochastic gradient ascent. This means we
+compute gradients of the objective function with respect to the policy parameters and adjust the
+parameters in the direction that increases the objective:
+θnew ←θold + α∇θ
+
+
+1
+|Dk| T
+X
+τ∈Dk
+T
+X
+t=0
+L(θ)
+
+
+where α is the learning rate. The Adam optimizer is often used for this step because it adapts the
+learning rate for each parameter, helps in converging faster, and is more robust to the choice of
+hyperparameters.
+37
+
+--- Page 48 ---
+CHAPTER 4. MODEL MATCHING FRAMEWORK
+Figure 4.3: Model Matching Framework
+By maximizing this objective, PPO-Clip seeks to improve the policy by making sure that
+the actions that would increase the expected return are taken more frequently, while ensuring that the
+policy does not change too drastically, which could lead to poor performance due to overfitting to the
+current batch of data. The results of the tuning procedure are presented in Chapter 6.
+38
+
+--- Page 49 ---
+Chapter 5
+Loco-manipulation Controller
+5.1
+Motivation
+The tuned model derived from the Model Matching framework offers valuable capabilities
+for developing sophisticated locomotion strategies that can be transferred to the real robot. Among
+these strategies is Loco-manipulation [74] [15], a technique that involves manipulating objects in
+the vicinity of the robot during locomotion tasks. This aspect is particularly significant for the
+COBRA platform as it leverages its distinctive design to augment dexterity and precision in object
+manipulation scenarios [69] [70]. By integrating locomotion and manipulation seamlessly, COBRA
+can enhance its functionality and adaptability across a range of tasks, contributing to its overall
+efficiency and versatility. In the subsequent sections, I introduce the Loco-manipulation controller,
+detailing its design and functionality. While the Loco-manipulation controller effectively addresses
+the specified problem, it’s crucial to highlight that the current controller version cannot be directly
+transferred to the real robot. This limitation arises from the fact that the locomotion policy utilized in
+this controller was trained using an untuned model. The primary objective of this chapter is to delve
+into the algorithms behind the said Loco-manipulation controller.
+5.2
+Pure Pursuit Algorithm
+The loco-manipulation controller is based on a classical robotics navigation algorithm
+called ”Pure Pursuit Algorithm”. The Pure Pursuit algorithm is a path-tracking algorithm widely
+used in robotics and autonomous vehicle navigation. It is particularly effective for systems with
+differential steering, such as cars or robots with two-wheel drive systems. The main idea behind
+39
+
+--- Page 50 ---
+CHAPTER 5. LOCO-MANIPULATION CONTROLLER
+Figure 5.1: Illustrates the look ahead vector and steering angle in pure pursuit algorithm [72].
+Figure 5.2: Geometry of the pure pursuit algorithm.
+the Pure Pursuit algorithm is to guide the vehicle or robot to follow a desired path or trajectory by
+continuously adjusting its steering angle based on the current position and orientation relative to the
+path.
+The algorithm operates by calculating the look-ahead point on the path that the vehicle
+should aim for. This look-ahead point is determined based on the vehicle’s current position and
+orientation. A circle with a fixed radius, called the look-ahead distance L, is defined around the
+vehicle. The look-ahead point is then selected as the point on the path that intersects with this circle,
+typically chosen as the point closest to the circle’s circumference.
+Consider the illustration provided in Fig. 5.2, depicting the vehicle along with its coordinate
+system axes. The vehicle’s X-axis aligns with the rear axle, as detailed by Shin[2], demonstrating
+that the propulsion and steering mechanisms become geometrically independent when the vehicle’s
+40
+
+--- Page 51 ---
+CHAPTER 5. LOCO-MANIPULATION CONTROLLER
+coordinate system is positioned at the rear differential with the x-axis aligned to the rear axle.
+Additionally, the diagram includes the point (x,y), located at a distance of one lookahead distance
+from the origin and constrained to lie on the path. The primary objective is to compute the curvature
+of the arc connecting the origin to (x,y) while maintaining a chord length of 1.
+The subsequent pair of equations are as follows. The first equation is derived from the
+geometry observed in the smaller right triangle within Fig. 5.2, while the second equation results
+from summing the line segments along the x-axis:
+x + y = I
+(2.1)
+x + d = r
+(2.2)
+Equation (2.1) delineates the circle with a radius of 1 around the origin, representing
+the locus of possible goal points for the vehicle. On the other hand, Equation (2.2) defines the
+relationship between the radius of the arc connecting the origin and the goal point, along with the x
+offset of the goal point from the vehicle. This equation essentially states that the radius of the arc and
+the x offset are independent and differ by d.
+Subsequent equations in the series establish the relationship between the curvature of the
+arc and the lookahead distance. The algebraic manipulations involved are straightforward and do not
+necessitate further elaboration.
+d = x −r
+(r −x)2 + y2 = r2
+r2 −2rx + x2 + y2 = r2
+2rx = l2
+r = l2
+2x
+γ = 2x
+l2
+The curvature has been linked to the x-offset of the goal point from the origin using the
+inverse square of the lookahead distance. This relationship shares a similar form with a proportional
+controller, where the gain is twice the inverse square of the lookahead distance. However, in this
+context, the ”error” refers to the x-offset of a point positioned ahead of the vehicle.
+41
+
+--- Page 52 ---
+CHAPTER 5. LOCO-MANIPULATION CONTROLLER
+The implementation of the pure pursuit algorithm is relatively straightforward and can be
+outlined as follows:
+1) Determine the current location of the vehicle: The vehicle’s central controller provides
+functions that report its current position as (x, y, heading) with respect to the global reference frame
+established at initialization.
+2) Find the path point closest to the vehicle: As mentioned in the geometric derivation,
+the goal point is within one lookahead distance from the vehicle. If there are multiple points at this
+distance, the vehicle steers toward the closest one.
+3) Find the goal point: Move along the path to calculate the distance between each path
+point and the vehicle’s current location in global coordinates.
+4) Transform the goal point to vehicle coordinates: Convert the goal point from global
+coordinates to the vehicle’s local coordinates.
+5) Calculate the curvature: Use the curvature equation derived earlier to calculate the
+desired curvature for the vehicle, which is then translated into steering wheel angle by the vehicle’s
+controller.
+6) Update the vehicle’s position: During simulation or real-time operation, update the
+vehicle’s position based on its calculated trajectory and curvature commands.
+5.3
+Central Pattern Generators and Kuramoto Model
+5.3.1
+Central Pattern Generators
+CPG are neural networks found in the spinal cord and brainstem of vertebrates, including
+humans. They are responsible for generating rhythmic patterns of neural activity that coordinate and
+control repetitive motor movements, such as walking, swimming, and breathing, without requiring
+continuous input from higher brain centers. CPG play a crucial role in generating and controlling
+locomotion and other rhythmic behaviors, making them a fundamental component of the neural
+circuitry underlying motor control.
+One key characteristic of CPGs is their ability to produce rhythmic patterns of neural
+activity even in the absence of sensory feedback or external stimuli. This autonomous rhythmicity
+allows organisms to perform rhythmic movements automatically and adaptively, without the need for
+constant conscious control. For example, during walking, CPGs generate the alternating patterns
+of muscle activation and relaxation in the legs that produce the coordinated movement of stepping
+42
+
+--- Page 53 ---
+CHAPTER 5. LOCO-MANIPULATION CONTROLLER
+Figure 5.3: Signals generated from a simple sine wave CPG.
+forward. Figure 5.3 represents typical wave forms of the spiking-bursting behaviour generated by the
+Rulkov map for two different sets of parameters
+CPGs operate through complex interactions between excitatory and inhibitory neurons
+within the network. These interactions give rise to oscillatory patterns of neural activity, with
+specific groups of neurons firing in coordinated sequences to produce rhythmic motor output. The
+exact organization and connectivity of CPGs can vary across species and types of movements but
+generally involve interconnected neural circuits that regulate the timing and coordination of muscle
+contractions.
+In research and robotics applications, CPGs have been studied extensively due to their
+potential for biomimetic control of locomotion and other rhythmic behaviors in artificial systems.
+By modeling the principles of CPGs in artificial neural networks, researchers can develop control
+systems that mimic the robust and adaptive rhythmicity seen in biological organisms. These artificial
+CPGs can then be integrated into robotic systems to control locomotion, navigation, and other motor
+functions autonomously and efficiently.
+Furthermore, studying CPGs provides insights into the underlying mechanisms of motor
+control and coordination in living organisms. Understanding how CPGs generate and regulate
+rhythmic patterns of activity can inform research in neuroscience, rehabilitation engineering, and
+robotics, leading to advancements in prosthetics, assistive devices, and autonomous robotic systems
+capable of complex locomotion and manipulation tasks.
+43
+
+--- Page 54 ---
+CHAPTER 5. LOCO-MANIPULATION CONTROLLER
+5.3.2
+Modified Kuramoto Model
+The Kuramoto CPG model is a mathematical framework used to describe the rhythmic
+oscillatory behavior observed in biological systems, particularly in the context of locomotion control
+in robots. It is based on the Kuramoto model from physics, which represents a network of coupled
+phase oscillators. In the CPG context, each oscillator corresponds to a motor unit or joint, and
+their interactions generate rhythmic patterns resembling biological locomotion. The Kuramoto CPG
+model allows for the synchronization and coordination of these oscillators, enabling the generation
+of complex locomotion patterns such as walking, crawling, or swimming in robotic systems. We
+used a modified version of the original Kuramoto Model. The dynamics of Modified Kuramoto CPG
+Model are shown below:
+˙φ = ω + A · φ + B · θ
+¨r = a · [a
+4 · (R −r) −˙r]
+x = r · sin(φ) + δ
+A =
+
+
+−µ1
+µ1
+µ2
+−2µ2
+µ2
+...
+µn−1
+−2µn−1
+µn−1
+µn
+−µn
+
+
+B =
+
+
+1
+−1
+1
+−1
+...
+...
+1
+−1
+1
+−1
+
+
+Where φ ∈Rn and r ∈Rn are the internal states of CPG, n is the number of output
+channels (usually equal to the number of robot joints), a and µi are hyperparameters controlling the
+44
+
+--- Page 55 ---
+CHAPTER 5. LOCO-MANIPULATION CONTROLLER
+Figure 5.4: Snapshot of Locomotion Policy Setup in Simulator
+convergence rate, R ∈Rn, ω ∈Rn, θ ∈Rn−1, δ ∈Rn are inputs controlling the desired amplitude,
+frequency, phase shift, and offset, and x ∈Rn is the output sinusoidal waves of n channels.
+5.4
+Locomotion Policy
+The loco-manipulation controller is derived from a pre-existing locomotion policy, which
+was trained using an untuned simulator model [29] [29]. It’s crucial to note that this controller cannot
+be directly applied to the real robot at this stage. A detailed explanation of the training process for
+this locomotion policy is provided in the subsequent paragraphs.
+Agent training was conducted across a varied range of randomly generated curriculum
+terrains. In each agent, a CPG module is incorporated, and the parameters of the corresponding
+CPG module are fine-tuned by the actor’s outputs. Through this CPG parameter adjustment process,
+optimized gaits suitable for their designated curriculum terrains are developed by agents. The training
+landscapes, created using Perlin noise with dimensions of 16m × 16m, prompt the robot to navigate
+and reach a random goal pose from any starting location in each training episode. The associated
+45
+
+--- Page 56 ---
+CHAPTER 5. LOCO-MANIPULATION CONTROLLER
+MDP is delineated in the following manner [90] [19].
+The state space encompasses the robot’s state components and tactile sensor readings. This
+includes joint positions Rn, IMU readings R3, spatial translation between robot and goal frames R3,
+and relative rotation parameterized by axis-angle system R4, totaling 21 dimensions. Utilizing only
+ego-centric observations from the robot streamlines the system’s practicality in outdoor environments,
+eliminating the need for a motion capture setup as seen in previous works. The action space dictates
+the CPG parameters, encompassing desired amplitude R, frequency ω, phase shift θ, and offset δ.
+The reward function incentivizes the robot to reach the goal swiftly. It comprises two components:
+r1 =
+1
+0.1+dt encourages proximity to the goal, while r2 = d−1
+t
+−dt promotes higher velocities.
+These terms complement each other, with r1 approaching 0 when the robot is distant from the goal
+and r2 nearing 0 when the robot is close to the goal. Our system utilizes Soft Actor Critic (SAC) as
+the core reinforcement learning algorithm.
+5.5
+Methodology
+Figure 5.5 shows the hierarchical framework used for developing the loco-manipulation
+controller. The hierarchical structure helps in breaking down the problem in two parts and it is
+explained step-by-step in Algorithm 1.
+The high-level manipulation path planner described in Fig. 5.5 (the first two steps in
+Algorithm 1) is responsible for planning the trajectory from the robot’s head position to designated
+goal positions. This trajectory is designed such that the robot’s body can effectively manipulate an
+object, moving it from its initial location to the specified goal position. The manipulation planner
+creates waypoints along this path and transmits them to the low-level locomotion controller detailed
+in Fig. 5.5 (steps 3 and 4 in Algorithm 1). The role of the low-level locomotion controller is
+to receive these waypoints and execute them using the locomotion policy that has been trained
+using Reinforcement Learning. This locomotion policy generates CPG parameters for the Modified
+Kuramoto CPG Model, which in turn determines the joint positions necessary for the robot’s
+movements. The results and analysis for the Loco-manipulation controller are presented in Chapter
+6.
+46
+
+--- Page 57 ---
+CHAPTER 5. LOCO-MANIPULATION CONTROLLER
+Algorithm 1 Modified Pure Pursuit Algorithm for Loco-manipulation
+1: Given: head coordinates (headx, heady), box coordinates (boxx, boxy), goal coordinates
+(goalx, goaly)
+2: Initialize: Thresholds δhb and δbg, step length L, waypoints count n, width W
+3: procedure NAVIGATETOTARGET
+4:
+Step 1: Select the target based on distance
+5:
+if L2(head, box) < δhb then
+6:
+target ←box
+7:
+else
+8:
+target ←goal
+9:
+end if
+10:
+Step 2: Generate n waypoints between head and target
+11:
+for i ←1 to n do
+12:
+xi ←headx +
+i
+n+1(targetx −headx)
+13:
+yi ←heady +
+i
+n+1(targety −heady)
+14:
+end for
+15:
+Step 3: Take one step in the direction of the look ahead vector using the RL-based locomotion
+policy
+16:
+⃗Plookahead ←⃗Pcurrent + L· ⃗H
+∥⃗H∥
+17:
+α ←arctan
+
+2LW
+L2(head,target)
+
+18:
+Step 4: Repeat until the box is close to the goal
+19:
+while L2(box, goal) ≥δbg do
+20:
+Go back to Step 1
+21:
+end while
+22: end procedure
+47
+
+--- Page 58 ---
+CHAPTER 5. LOCO-MANIPULATION CONTROLLER
+Figure 5.5: Loco-manipulation Controller
+48
+
+--- Page 59 ---
+Chapter 6
+Results
+This chapter showcases the results obtained through both the Model Matching framework
+and the Loco-Manipulation controller. Subsequent sections delve into the specific results stemming
+from my contributions.
+6.1
+Model Matching
+In Section 4.3, the Model Matching framework details our strategy of leveraging an RL
+agent to finely adjust the dynamic model parameters within the simulator. Illustrating this approach,
+Fig. 6.1 provides a visual representation of the robot executing a sidewinding gait at a frequency of
+0.5 Hz, showcasing the effect of tuning the model. Notably, the red dot denotes the stopping position
+of the real robot post-gait execution. A direct comparison with the previous image (Fig. 1.3) reveals
+a substantial enhancement in gait execution, signaling a step in the right direction towards addressing
+the sim2real problem.
+Figure 6.2 presents a comparative analysis in 2D of three gaits—sidewinding gaits at
+frequencies of 0.35 Hz (gait 1), 0.5 Hz (gait 2), and 0.65 Hz (gait 3)—executed on both the real robot
+and on models that are untuned and tuned. It’s worth noting that I exclusively trained the framework
+on gait 2 for parameter tuning, resulting in a noticeable alignment between the trajectory of the
+real robot and the tuned model, in contrast to the disparity seen with the untuned model. However,
+this alignment is also evident in the execution of gaits 1 and 3, showcasing the model’s ability
+to generalize effectively through the model matching framework. Figure 6.3 shows the trajectoy
+comparsion in 3D for all three gaits.
+49
+
+--- Page 60 ---
+CHAPTER 6. RESULTS
+Figure 6.1: Shows COBRA in Webots simulator with tuned model (right) and untuned model (center)
+performing the sidewinding motion. The red ball shows the location the actual robot achieved when
+similar joint trajectories were applied.
+50
+
+--- Page 61 ---
+CHAPTER 6. RESULTS
+Figure 6.2: Illustrates a 2D comparison between the head positions in the actual hardware platform
+(red), tuned model (blue) and untuned model (green) for a sidewinding trajectory 0.35, 0.5, and 0.65
+Hz.
+51
+
+--- Page 62 ---
+CHAPTER 6. RESULTS
+Figure 6.3: Illustrates a 3D comparison between the head positions in the actual hardware platform
+(red), tuned model (blue) and untuned model (green) for a sidewinding trajectory 0.35, 0.5, and 0.65
+Hz.
+52
+
+--- Page 63 ---
+CHAPTER 6. RESULTS
+Figure 6.4: Illustrates a 2D comparison between the head, middle link and tail positions in the actual
+hardware platform and tuned model for a sidewinding trajectory 0.35, 0.5, and 0.65 Hz.
+In Fig. 6.4, the alignment is also evident in the trajectories of the middle (sixth link of
+the robot’s body) and tail links while executing the three gaits. Figure 6.5 presents a quantitative
+comparison between the tuned and untuned models using the Euclidean distance metric. This metric
+measures the distance between the real robot’s head module position and the robot’s head module
+position in the simulator during gait execution. The reduction in error is notable after fine-tuning the
+model through the Model Matching framework, particularly noticeable in gait 2 and gait 3. Given
+that gait 1 operates at a lower frequency of 0.35 Hz, resulting in minimal robot movement, the
+performance of the untuned model is comparable to that of the tuned model.
+Figure 6.6 illustrates the joint angle comparison for joints 5 and 6 during the execution
+of the sidewinding gait at a frequency of 0.5 Hz. Notably, there’s a noticeable improvement in
+agreement between the real robot and the simulator model post-tuning with the Model Matching
+framework. This improvement is further substantiated by Fig. 6.7, which presents the comparison
+of average sliding window correlation across all 11 joints of the robot in the simulator and the real
+robot, considering both tuned and untuned models. The tuned model exhibits a correlation factor
+close to 1.0, indicating a strong alignment, whereas the untuned model’s correlation factor hovers
+around 0.35, showcasing a significant disparity in performance.
+53
+
+--- Page 64 ---
+CHAPTER 6. RESULTS
+Figure 6.5: Comparison of the Euclidean distance (error metric) between the actual platform’s head
+position captured by OptiTrack and tuned/untuned models for sidewinding @ 0.35, 0.5, and 0.65 Hz.
+54
+
+--- Page 65 ---
+CHAPTER 6. RESULTS
+Figure 6.6: Shows a comparison between the actuator joint responses from the actual hardware
+platform (red), the tuned (blue) and untuned (magenta) models for a sidewinding gait at @ 0.5 Hz.
+6.2
+Loco-Manipulation Controller
+Figure 6.9 depicts the successful execution of the proposed algorithm in performing loco-
+manipulation within the Webots simulator. Both the robot and object are initially placed at random
+positions in the simulated environment, with the algorithm tasked to move the object from its starting
+point to a predetermined final goal position. Figures 6.10 and 6.11 showcase instances where the
+proposed algorithm conducts loco-manipulation with varying configurations of robot, object, and
+goal positions. In cases where the object veers off the alignment with the goal position, the robot
+adjusts its trajectory by executing turns while simultaneously moving the object. This corrective
+action ensures that the object maintains a direct path towards the specified goal position.
+Table 6.1: Performance Metrics of Loco-manipulation Algorithm
+Average
+Success
+Rate
+Average Number
+of Steps
+94.3%
+536.02
+Figures 6.12 and 6.13 illustrate the algorithm’s execution of loco-manipulation within a
+dynamic environment. Initially, the algorithm guides the object towards the intended goal. However,
+during the simulation, the object’s position is altered, prompting the algorithm to reevaluate and
+55
+
+--- Page 66 ---
+CHAPTER 6. RESULTS
+Figure 6.7: Shows a comparison of average sliding window correlation (obtained by taking average
+of all the 11 correlation curves displayed in the above plot) of yawing joint positions for tuned and
+default simulators with desired signal (for the sidewinding gait @ 0.5 Hz). The model matching
+improved the actuator model in the the simulator as seen from the improved average correlation
+factor between desired and actual joint positions. Shaded regions represent the range between min
+and max correlation across all joints.
+56
+
+--- Page 67 ---
+CHAPTER 6. RESULTS
+Figure 6.8: Shows the training reward curve for tuning the simulator model.
+adjust its path accordingly. Despite this change, the algorithm successfully navigates towards the
+relocated object and ultimately guides it to the desired goal position.
+An episode qualifies as successful when the robot manages to transport the object to the
+goal within 700 steps or fewer. After executing the algorithm across 200 episodes, I computed the
+average success rate and the average number of steps taken by the algorithm. These results are
+presented in Table 6.1. An episode qualifies as successful when the robot manages to transport the
+object to the goal within 700 steps or fewer. After executing the algorithm across 200 episodes, I
+computed the average success rate and the average number of steps taken by the algorithm. These
+results are presented in Table 6.1.
+57
+
+--- Page 68 ---
+CHAPTER 6. RESULTS
+Figure 6.9: Shows the algorithm performing loco-manipulation inside webots simulator. Red dot is
+the final goal position, red star is robot’s initial position, blue star is object’s initial position.
+58
+
+--- Page 69 ---
+CHAPTER 6. RESULTS
+Figure 6.10: Shows the algorithm performing loco-manipulation with different initial robot and
+object positions inside webots simulator.
+59
+
+--- Page 70 ---
+CHAPTER 6. RESULTS
+Figure 6.11: Shows the algorithm performing loco-manipulation with different initial robot and
+object positions inside webots simulator. When the object is not aligned with the goal position, the
+robot adjusts its course by turning while moving the object. This realignment ensures that the object
+moves in a straight line towards the goal position.
+Figure 6.12: Shows dynamic replanning capabilites of the algorithm. The object is relocated within
+the Webots simulator, shifting from its current position to a randomly chosen spot.
+60
+
+--- Page 71 ---
+CHAPTER 6. RESULTS
+Figure 6.13: Shows dynamic replanning capabilites of the algorithm. The robot effectively recal-
+culates its path to reach the relocated object and then proceeds to move it towards the desired goal
+position.
+61
+
+--- Page 72 ---
+Chapter 7
+Conclusion
+My work represents a significant step forward in addressing the sim-to-real problem within
+the COBRA platform. Through the development of a robust model matching framework, I have
+successfully narrowed the gap between the behavior of the COBRA robot in the Webots simulator
+and its real-world counterpart across a range of gaits. This achievement is particularly noteworthy
+due to the framework’s high degree of data efficiency, requiring minimal tuning efforts to achieve
+substantial improvements in simulation accuracy.
+One of the key advantages of the proposed model matching framework is its scalability.
+This means that beyond the initial tuning efforts, additional parameters of the simulator can be fine-
+tuned as needed, offering a flexible and adaptable approach to sim-to-real alignment. Moreover, the
+framework’s modularity enables its application to a wide range of robotic morphologies, extending
+its utility beyond the COBRA platform to address sim-to-real challenges in other robot types, such
+as quadrupeds or bipeds. The impact of this framework extends beyond just improving simulation
+accuracy. By reducing the reliance on extensive real-world testing, the framework minimizes wear
+and tear on the physical robot platform, leading to cost savings and prolonged operational lifespan.
+Additionally, the development of comprehensive evaluation metrics ensures a thorough assessment
+of the tuned model’s success, providing quantitative insights into its performance across different
+scenarios and gait types.
+In essence, the model matching framework not only contributes to enhancing the reliability
+and efficiency of robot simulation but also paves the way for more advanced and effective sim-to-real
+transfer strategies in the field of robotics. These advancements are crucial for accelerating the
+development and deployment of robotic systems in real-world applications, ultimately leading to
+more capable and reliable robotic platforms.
+62
+
+--- Page 73 ---
+CHAPTER 7. CONCLUSION
+The versatility of the loco-manipulation algorithm extends to a wide range of use cases,
+making it a valuable asset for various applications. For instance, in disaster response scenarios, the
+algorithm can assist in clearing debris or relocating objects to facilitate rescue operations. Similarly,
+in outer-space exploration missions, where precise object manipulation is crucial, the algorithm can
+play a vital role in tasks such as assembling structures or handling equipment.
+The high success rate of 94.3% underscores the algorithm’s robustness and reliability in
+accomplishing its intended objectives. This level of performance instills confidence in its ability to
+consistently and effectively manipulate objects in diverse environments and under different conditions.
+Furthermore, the algorithm’s reliability contributes to improved efficiency and productivity, as tasks
+can be completed with minimal errors and interruptions.
+By leveraging the loco-manipulation algorithm, COBRA can enhance its capabilities
+and contribute significantly to various fields, including disaster response, space exploration, and
+industrial automation. Its versatility, combined with a high success rate, positions the algorithm as a
+valuable tool for addressing complex challenges and advancing the capabilities of robotic systems in
+real-world scenarios.
+7.1
+Future Work
+The accomplishments and insights derived from this thesis form a robust groundwork for
+addressing the sim-to-real problem and implementing advanced locomotion strategies. Expanding
+on the results and approaches outlined in this work, several promising avenues emerge, presenting
+compelling opportunities for future research and development:
+• Enhanced simulator model accuracy: Extending the tuning of the model matching frame-
+work to include additional gaits like s-shape rolling, j-shape rolling, and tumbling can yield a
+more precise simulator model. This refinement further reduces the sim-to-real disparity.
+• Training locomotion policy with a tuned model: The locomotion policy employed in this
+study was trained using an untuned simulator model. Training this policy with a tuned simulator
+model allows for deployment on the real robot, facilitating directed locomotion tasks.
+• Integration of loco-manipulation algorithm on the real robot: Leveraging a locomotion
+policy trained on a tuned model enables seamless integration of the proposed loco-manipulation
+algorithm onto the actual robot platform.
+63
+
+--- Page 74 ---
+CHAPTER 7. CONCLUSION
+• Semantic understanding and object interaction: Integrating semantic understanding capa-
+bilities into the loco-manipulation algorithm can enable the robot to interpret and interact with
+objects based on their semantic attributes. This can lead to more context-aware and intelligent
+manipulation behaviors.
+• Real-time adaptation to varying task requirements: Developing mechanisms for the loco-
+manipulation algorithm to adapt in real-time to changing task requirements, such as different
+object shapes or weights, can improve its versatility and efficiency in handling diverse manipu-
+lation tasks.
+64
+
+--- Page 75 ---
+Bibliography
+[1]
+An Integrated Mechanical Intelligence and Control Approach Towards Flight Control of
+Aerobat — IEEE Conference Publication — IEEE Xplore. URL: https://ieeexplore.
+ieee.org/abstract/document/9482643 (visited on 04/27/2024).
+[2]
+Brian G. Buss et al. “Preliminary walking experiments with underactuated 3D bipedal robot
+MARLO”. In: 2014 IEEE/RSJ International Conference on Intelligent Robots and Systems.
+Chicago, IL, USA: IEEE, Sept. 2014, pp. 2529–2536. DOI: 10.1109/IROS.2014.
+6942907.
+[3]
+Yevgen Chebotar et al. Closing the Sim-to-Real Loop: Adapting Simulation Randomization
+with Real World Experience. arXiv:1810.05687 [cs]. Mar. 2019. URL: http://arxiv.
+org/abs/1810.05687 (visited on 03/20/2024).
+[4]
+Ekin D. Cubuk et al. AutoAugment: Learning Augmentation Policies from Data. arXiv:1805.09501
+[cs, stat]. Apr. 2019. DOI: 10.48550/arXiv.1805.09501. URL: http://arxiv.
+org/abs/1805.09501 (visited on 03/20/2024).
+[5]
+Cyberbotics: Robotics simulation with Webots. URL: https://cyberbotics.com/
+(visited on 03/20/2024).
+[6]
+Pravin Dangol and Alireza Ramezani. “Feedback design for Harpy: a test bed to inspect
+thruster-assisted legged locomotion”. In: Unmanned Systems Technology XXII. Vol. 11425.
+SPIE, May 2020, pp. 49–55. DOI: 10.1117/12.2558284.
+[7]
+Pravin Dangol and Alireza Ramezani. Reduced-Order-Model-Based Feedback Design for
+Thruster-Assisted Legged Locomotion. arXiv:2105.10082 [cs]. May 2021. DOI: 10.48550/
+arXiv.2105.10082. URL: http://arxiv.org/abs/2105.10082 (visited on
+04/26/2024).
+65
+
+--- Page 76 ---
+BIBLIOGRAPHY
+[8]
+Pravin Dangol and Alireza Ramezani. “Towards thruster-assisted bipedal locomotion for
+enhanced efficiency and robustness”. In: IFAC-PapersOnLine. 21st IFAC World Congress
+53.2 (Jan. 2020), pp. 10019–10024. DOI: 10.1016/j.ifacol.2020.12.2721.
+[9]
+Pravin Dangol, Alireza Ramezani, and Nader Jalili. Performance satisfaction in Harpy, a
+thruster-assisted bipedal robot. arXiv:2004.14337 [cs, eess]. Apr. 2020. DOI: 10.48550/
+arXiv.2004.14337. URL: http://arxiv.org/abs/2004.14337 (visited on
+04/27/2024).
+[10]
+Pravin Dangol, Eric Sihite, and Alireza Ramezani. “Control of Thruster-Assisted, Bipedal
+Legged Locomotion of the Harpy Robot”. In: Frontiers in Robotics and AI 8 (Dec. 2021).
+DOI: 10.3389/frobt.2021.770514.
+[11]
+Pravin Dangol et al. “A HZD-based Framework for the Real-time, Optimization-free Enforce-
+ment of Gait Feasibility Constraints”. In: 2020 IEEE-RAS 20th International Conference
+on Humanoid Robots (Humanoids). Munich, Germany: IEEE, July 2021, pp. 156–162. DOI:
+10.1109/HUMANOIDS47582.2021.9555786.
+[12]
+Christian Daniel et al. “Active Reward Learning”. In: July 2014. DOI: 10.15607/RSS.
+2014.X.031.
+[13]
+Aditya M. Deshpande et al. “DeepCPG Policies for Robot Locomotion”. In: IEEE Trans-
+actions on Cognitive and Developmental Systems (2023), pp. 1–1. DOI: 10.1109/TCDS.
+2023.3250393.
+[14]
+M. Di Luca et al. “Bioinspired morphing wings for extended flight envelope and roll control
+of small drones”. In: Interface Focus 7.1 (Feb. 2017), p. 20160092. DOI: 10.1098/rsfs.
+2016.0092.
+[15]
+Alessandra Duz et al. Robotic Autonomous Loco-Manipulation For Logistics In Industrial
+Plants. Oct. 2022. DOI: 10.5281/zenodo.7531364.
+[16]
+Alejandro Escontrela et al. Zero-Shot Terrain Generalization for Visual Locomotion Policies.
+en. arXiv:2011.05513 [cs]. Nov. 2020. URL: http://arxiv.org/abs/2011.05513
+(visited on 07/05/2023).
+[17]
+Gilbert Feng et al. GenLoco: Generalized Locomotion Controllers for Quadrupedal Robots.
+arXiv:2209.05309 [cs]. Sept. 2022. URL: http://arxiv.org/abs/2209.05309
+(visited on 07/03/2023).
+66
+
+--- Page 77 ---
+BIBLIOGRAPHY
+[18]
+Jonas Frey et al. Locomotion Policy Guided Traversability Learning using Volumetric Rep-
+resentations of Complex Environments. arXiv:2203.15854 [cs]. Aug. 2022. URL: http:
+//arxiv.org/abs/2203.15854 (visited on 01/13/2023).
+[19]
+Scott Fujimoto, Herke van Hoof, and David Meger. Addressing Function Approximation
+Error in Actor-Critic Methods. arXiv:1802.09477 [cs, stat]. Oct. 2018. DOI: 10.48550/
+arXiv.1802.09477. URL: http://arxiv.org/abs/1802.09477 (visited on
+04/24/2024).
+[20]
+Carlos Garcia-Saura. Central Pattern Generators for the control of robotic systems. arXiv:1509.02417
+[cs]. Sept. 2015. URL: http://arxiv.org/abs/1509.02417 (visited on 07/03/2023).
+[21]
+Gazebo. URL: https://gazebosim.org/home (visited on 03/20/2024).
+[22]
+J. H. Gillula et al. “Design of guaranteed safe maneuvers using reachable sets: Autonomous
+quadrotor aerobatics in theory and practice”. In: 2010 IEEE International Conference on
+Robotics and Automation. May 2010, pp. 1649–1654. DOI: 10.1109/ROBOT.2010.
+5509627.
+[23]
+David Hoeller et al. ANYmal Parkour: Learning Agile Navigation for Quadrupedal Robots.
+en. arXiv:2306.14874 [cs]. June 2023. URL: http://arxiv.org/abs/2306.14874
+(visited on 09/07/2023).
+[24]
+Jonathan Hoff et al. “Reducing Versatile Bat Wing Conformations to a 1-DoF Machine”. In:
+Biomimetic and Biohybrid Systems. Cham: Springer International Publishing, 2017, pp. 181–
+192. DOI: 10.1007/978-3-319-63537-8_16.
+[25]
+Jonathan Hoff et al. “Synergistic Design of a Bio-Inspired Micro Aerial Vehicle with Ar-
+ticulated Wings”. In: Robotics: Science and Systems XII. Robotics: Science and Systems
+Foundation, 2016. DOI: 10.15607/RSS.2016.XII.009.
+[26]
+Jonathan Hoff et al. “Trajectory planning for a bat-like flapping wing robot”. In: 2019
+IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS). Macau, China:
+IEEE, Nov. 2019, pp. 6800–6805. DOI: 10.1109/IROS40897.2019.8968450.
+[27]
+https://www.mathworks.com/products/simscape.html. URL: https://www.mathworks.
+com/products/simscape.html (visited on 03/20/2024).
+[28]
+Isaac Sim - Robotics Simulation and Synthetic Data — NVIDIA Developer. URL: https:
+//developer.nvidia.com/isaac-sim (visited on 03/20/2024).
+67
+
+--- Page 78 ---
+BIBLIOGRAPHY
+[29]
+Shuo Jiang et al. Hierarchical RL-Guided Large-scale Navigation of a Snake Robot. arXiv:2312.03223
+[cs, eess]. Dec. 2023. DOI: 10.48550/arXiv.2312.03223. URL: http://arxiv.
+org/abs/2312.03223 (visited on 04/24/2024).
+[30]
+Kyunam Kim et al. “A bipedal walking robot that can fly, slackline, and skateboard”. In:
+Science Robotics 6.59 (Oct. 2021), eabf8136. DOI: 10.1126/scirobotics.abf8136.
+[31]
+Hendrik Kolvenbach et al. “Traversing Steep and Granular Martian Analog Slopes With a
+Dynamic Quadrupedal Robot”. In: arXiv:2106.01974 [cs] (June 2021).
+[32]
+Kaushik Venkatesh Krishnamurthy. “Towards dynamic narrow path walking on NU’s Husky”.
+In: ().
+[33]
+Joonho Lee et al. “Learning Quadrupedal Locomotion over Challenging Terrain”. In: Science
+Robotics 5.47 (Oct. 2020), eabc5986. DOI: 10.1126/scirobotics.abc5986.
+[34]
+Andrew Lessieur et al. Mechanical design and fabrication of a kinetic sculpture with ap-
+plication to bioinspired drone design. en. arXiv:2103.15948 [cs, eess]. Mar. 2021. URL:
+http://arxiv.org/abs/2103.15948 (visited on 04/26/2024).
+[35]
+Tianyu Li et al. “Learning Generalizable Locomotion Skills with Hierarchical Reinforcement
+Learning”. In: 2020 IEEE International Conference on Robotics and Automation (ICRA).
+May 2020, pp. 413–419. DOI: 10.1109/ICRA40945.2020.9196642.
+[36]
+Zhongyu Li et al. Reinforcement Learning for Robust Parameterized Locomotion Control
+of Bipedal Robots. arXiv:2103.14295 [cs, eess]. Mar. 2021. URL: http://arxiv.org/
+abs/2103.14295 (visited on 07/03/2023).
+[37]
+Kaier Liang et al. “Rough-Terrain Locomotion and Unilateral Contact Force Regulations
+With a Multi-Modal Legged Robot”. In: 2021 American Control Conference (ACC). May
+2021, pp. 1762–1769. DOI: 10.23919/ACC50511.2021.9483189.
+[38]
+Pal Liljeback et al. “A simplified model of planar snake robot locomotion”. In: 2010
+IEEE/RSJ International Conference on Intelligent Robots and Systems. Taipei: IEEE, Oct.
+2010, pp. 2868–2875. DOI: 10.1109/IROS.2010.5649110.
+[39]
+Xuan Liu, Cagdas Onal, and Jie Fu. “Reinforcement Learning of CPG-regulated Locomotion
+Controller for a Soft Snake Robot”. In: IEEE Transactions on Robotics 39.5 (Oct. 2023),
+pp. 3382–3401. DOI: 10.1109/TRO.2023.3286046.
+68
+
+--- Page 79 ---
+BIBLIOGRAPHY
+[40]
+Xuan Liu et al. Learning to Locomote with Deep Neural-Network and CPG-based Control in
+a Soft Snake Robot. en. arXiv:2001.04059 [cs, math]. Mar. 2020. URL: http://arxiv.
+org/abs/2001.04059 (visited on 07/21/2023).
+[41]
+Ioannis Mandralis et al. “Minimum Time Trajectory Generation for Bounding Flight: Com-
+bining Posture Control and Thrust Vectoring”. In: 2023 European Control Conference (ECC).
+June 2023, pp. 1–7. DOI: 10.23919/ECC57647.2023.10178360.
+[42]
+Shoghair Manjikian. “Towards event-based foot placement for Northeastern University’s
+multi-modal aerial and legged locomotion platform: Husky Carbon.” In: (2022).
+[43]
+Sajjad Manzoor, Uzair Khan, and Ihsan Ullah. “Serpentine and Rectilinear Motion Generation
+in Snake Robot Using Central Pattern Generator with Gait Transition”. In: Iranian Journal of
+Science and Technology, Transactions of Electrical Engineering 44.3 (Sept. 2020), pp. 1093–
+1103. DOI: 10.1007/s40998-019-00301-8.
+[44]
+Bhairav Mehta et al. Active Domain Randomization. arXiv:1904.04762 [cs]. July 2019. DOI:
+10.48550/arXiv.1904.04762. URL: http://arxiv.org/abs/1904.04762
+(visited on 03/20/2024).
+[45]
+Takahiro Miki et al. “Learning robust perceptive locomotion for quadrupedal robots in the
+wild”. In: Science Robotics 7.62 (Jan. 2022), eabk2822. DOI: 10.1126/scirobotics.
+abk2822.
+[46]
+Takeshi Mori et al. “Reinforcement Learning for a CPG-driven Biped Robot”. In: ().
+[47]
+MuJoCo — Advanced Physics Simulation. URL: https://mujoco.org/ (visited on
+03/20/2024).
+[48]
+Arthur C. B. de Oliveira and Alireza Ramezani. “Thruster-assisted Center Manifold Shap-
+ing in Bipedal Legged Locomotion”. In: 2020 IEEE/ASME International Conference on
+Advanced Intelligent Mechatronics (AIM). July 2020, pp. 508–513. DOI: 10 . 1109 /
+AIM43001.2020.9158967.
+[49]
+Open Dynamics Engine. URL: https://www.ode.org/ (visited on 03/20/2024).
+[50]
+Wenjuan Ouyang et al. “Adaptive Locomotion Control of a Hexapod Robot via Bio-Inspired
+Learning”. In: Frontiers in Neurorobotics 15 (Jan. 2021). DOI: 10.3389/fnbot.2021.
+627157.
+69
+
+--- Page 80 ---
+BIBLIOGRAPHY
+[51]
+Hae-Won Park, Alireza Ramezani, and J. W. Grizzle. “A Finite-State Machine for Accom-
+modating Unexpected Large Ground-Height Variations in Bipedal Robot Walking”. In: IEEE
+Transactions on Robotics 29.2 (Apr. 2013), pp. 331–345. DOI: 10.1109/TRO.2012.
+2230992.
+[52]
+Shreyansh Pitroda. “Dynamic Multimodal Locomotion: A Quick Overview of Hardware
+and Control”. English. ISBN: 9798380156141. MA thesis. United States – Massachusetts:
+Northeastern University, 2023. URL: https://www.proquest.com/docview/
+2859376203/abstract/A276BA2F301345E1PQ/1 (visited on 04/26/2024).
+[53]
+Bangyu Qin, Yue Gao, and Yi Bai. “Sim-to-real: Six-legged Robot Control with Deep
+Reinforcement Learning and Curriculum Learning”. In: 2019 4th International Conference
+on Robotics and Automation Engineering (ICRAE). Nov. 2019, pp. 1–5. DOI: 10.1109/
+ICRAE48301.2019.9043822.
+[54]
+Ilija Radosavovic et al. Learning Humanoid Locomotion with Transformers. arXiv:2303.03381
+[cs]. Mar. 2023. URL: http://arxiv.org/abs/2303.03381 (visited on 07/03/2023).
+[55]
+Rohit Hiraman Rajput. Towards Autonomous Multi-Modal Mobility Morphobot (M4) Robot:
+Traversability Estimation and 3D Path Planning. arXiv:2308.13972 [cs, eess]. Aug. 2023.
+DOI: 10.48550/arXiv.2308.13972. URL: http://arxiv.org/abs/2308.
+13972 (visited on 04/27/2024).
+[56]
+Alireza Ramezani. “Towards biomimicry of a bat-style perching maneuver on structures: the
+manipulation of inertial dynamics”. In: 2020 IEEE International Conference on Robotics
+and Automation (ICRA). Paris, France: IEEE, May 2020, pp. 7015–7021. DOI: 10.1109/
+ICRA40945.2020.9197376.
+[57]
+Alireza Ramezani, Soon-Jo Chung, and Seth Hutchinson. “A biomimetic robotic platform
+to study flight specializations of bats”. In: Science Robotics 2.3 (Feb. 2017), eaal2505. DOI:
+10.1126/scirobotics.aal2505.
+[58]
+Alireza Ramezani and Eric Sihite. Aerobat, A Bioinspired Drone to Test High-DOF Ac-
+tuation and Embodied Aerial Locomotion. arXiv:2212.05361 [cs, eess]. Dec. 2022. DOI:
+10.48550/arXiv.2212.05361. URL: http://arxiv.org/abs/2212.05361
+(visited on 04/27/2024).
+[59]
+Alireza Ramezani et al. “Bat Bot (B2), an Articulated-Winged Bat Robot”. In: ().
+70
+
+--- Page 81 ---
+BIBLIOGRAPHY
+[60]
+Alireza Ramezani et al. “Describing Robotic Bat Flight with Stable Periodic Orbits”. In:
+Biomimetic and Biohybrid Systems. Lecture Notes in Computer Science. Cham: Springer
+International Publishing, 2017, pp. 394–405. DOI: 10.1007/978-3-319-63537-
+8_33.
+[61]
+Alireza Ramezani et al. “Generative Design of NU’s Husky Carbon, A Morpho-Functional,
+Legged Robot”. In: 2021 IEEE International Conference on Robotics and Automation (ICRA).
+May 2021, pp. 4040–4046. DOI: 10.1109/ICRA48506.2021.9561196.
+[62]
+Alireza Ramezani et al. “Lagrangian modeling and flight control of articulated-winged bat
+robot”. In: 2015 IEEE/RSJ International Conference on Intelligent Robots and Systems
+(IROS). Hamburg, Germany: IEEE, Sept. 2015, pp. 2867–2874. DOI: 10.1109/IROS.
+2015.7353772.
+[63]
+Alireza Ramezani et al. “Nonlinear Flight Controller Synthesis of a Bat-Inspired Micro
+Aerial Vehicle”. In: AIAA Guidance, Navigation, and Control Conference. American Institute
+of Aeronautics and Astronautics. DOI: 10.2514/6.2016-1376.
+[64]
+David Rollinson and Howie Choset. “Gait-based compliant control for snake robots”. In:
+2013 IEEE International Conference on Robotics and Automation. May 2013, pp. 5138–5143.
+DOI: 10.1109/ICRA.2013.6631311.
+[65]
+Nikita Rudin et al. Learning to Walk in Minutes Using Massively Parallel Deep Reinforcement
+Learning. en. arXiv:2109.11978 [cs]. Aug. 2022. URL: http://arxiv.org/abs/
+2109.11978 (visited on 07/18/2023).
+[66]
+Nataniel Ruiz, Samuel Schulter, and Manmohan Chandraker. Learning To Simulate. arXiv:1810.02513
+[cs, stat]. May 2019. DOI: 10.48550/arXiv.1810.02513. URL: http://arxiv.
+org/abs/1810.02513 (visited on 03/20/2024).
+[67]
+Adarsh Salagame et al. A Letter on Progress Made on Husky Carbon: A Legged-Aerial,
+Multi-modal Platform. arXiv:2207.12254 [cs, eess]. July 2022. URL: http://arxiv.
+org/abs/2207.12254 (visited on 08/21/2023).
+[68]
+Adarsh Salagame et al. How Strong a Kick Should be to Topple Northeastern’s Tumbling
+Robot? arXiv:2311.14878 [cs, eess]. Nov. 2023. URL: http://arxiv.org/abs/2311.
+14878 (visited on 03/20/2024).
+71
+
+--- Page 82 ---
+BIBLIOGRAPHY
+[69]
+Adarsh Salagame et al. Loco-Manipulation with Nonimpulsive Contact-Implicit Planning in a
+Slithering Robot. arXiv:2404.08174 [cs, eess]. Apr. 2024. DOI: 10.48550/arXiv.2404.
+08174. URL: http://arxiv.org/abs/2404.08174 (visited on 04/24/2024).
+[70]
+Adarsh Salagame et al. Non-impulsive Contact-Implicit Motion Planning for Morpho-
+functional Loco-manipulation. arXiv:2404.08714 [cs, eess]. Apr. 2024. DOI: 10.48550/
+arXiv.2404.08714. URL: http://arxiv.org/abs/2404.08714 (visited on
+04/24/2024).
+[71]
+Adarsh Salagame et al. Quadrupedal Locomotion Control On Inclined Surfaces Using Collo-
+cation Method. arXiv:2312.08621 [cs, eess]. Dec. 2023. DOI: 10.48550/arXiv.2312.
+08621. URL: http://arxiv.org/abs/2312.08621 (visited on 04/26/2024).
+[72]
+Moveh Samuel et al. “Control of Autonomous Vehicle Using Path Tracking: A Review”. In:
+Advanced Science Letters 24 (June 2018), pp. 3877–3879. DOI: 10.1166/asl.2018.
+11502.
+[73]
+Tom Schaul et al. Prioritized Experience Replay. arXiv:1511.05952 [cs]. Feb. 2016. DOI:
+10.48550/arXiv.1511.05952. URL: http://arxiv.org/abs/1511.05952
+(visited on 04/24/2024).
+[74]
+Stephanie Schneider et al. ReachBot: A Small Robot for Large Mobile Manipulation Tasks.
+arXiv:2110.10829 [cs, eess]. Oct. 2021. URL: http://arxiv.org/abs/2110.10829
+(visited on 03/27/2024).
+[75]
+John Schulman et al. Proximal Policy Optimization Algorithms. arXiv:1707.06347 [cs]. Aug.
+2017. DOI: 10.48550/arXiv.1707.06347. URL: http://arxiv.org/abs/
+1707.06347 (visited on 03/09/2024).
+[76]
+Eric Sihite, Pravin Dangol, and Alireza Ramezani. “Optimization-free Ground Contact Force
+Constraint Satisfaction in Quadrupedal Locomotion”. In: 2021 60th IEEE Conference on
+Decision and Control (CDC). Dec. 2021, pp. 713–719. DOI: 10.1109/CDC45484.2021.
+9683155.
+[77]
+Eric Sihite, Pravin Dangol, and Alireza Ramezani. “Unilateral Ground Contact Force Reg-
+ulations in Thruster-Assisted Legged Locomotion”. In: 2021 IEEE/ASME International
+Conference on Advanced Intelligent Mechatronics (AIM). July 2021, pp. 389–395. DOI:
+10.1109/AIM46487.2021.9517648.
+72
+
+--- Page 83 ---
+BIBLIOGRAPHY
+[78]
+Eric Sihite, Peter Kelly, and Alireza Ramezani. “Computational Structure Design of a Bio-
+Inspired Armwing Mechanism”. In: IEEE Robotics and Automation Letters 5.4 (Oct. 2020),
+pp. 5929–5936. DOI: 10.1109/LRA.2020.3010217.
+[79]
+Eric Sihite and Alireza Ramezani. “Enforcing nonholonomic constraints in Aerobat, a
+roosting flapping wing model”. In: 2020 59th IEEE Conference on Decision and Control
+(CDC). Dec. 2020, pp. 5321–5327. DOI: 10.1109/CDC42340.2020.9304158.
+[80]
+Eric Sihite and Alireza Ramezani. Wake-Based Locomotion Gait Design for Aerobat. arXiv:2212.05359
+[cs, eess]. Dec. 2022. DOI: 10.48550/arXiv.2212.05359. URL: http://arxiv.
+org/abs/2212.05359 (visited on 04/27/2024).
+[81]
+Eric Sihite, Alireza Ramezani, and Morteza Gharib. Dynamic modeling of wing-assisted
+inclined running with a morphing multi-modal robot. arXiv:2311.09963 [cs, eess]. Nov. 2023.
+DOI: 10.48550/arXiv.2311.09963. URL: http://arxiv.org/abs/2311.
+09963 (visited on 04/27/2024).
+[82]
+Eric Sihite et al. “An Integrated Mechanical Intelligence and Control Approach Towards
+Flight Control of Aerobat”. In: 2021 American Control Conference (ACC). May 2021, pp. 84–
+91. DOI: 10.23919/ACC50511.2021.9482643.
+[83]
+Eric Sihite et al. Bang-Bang Control Of A Tail-less Morphing Wing Flight. arXiv:2205.06395
+[cs, eess]. May 2022. DOI: 10.48550/arXiv.2205.06395. URL: http://arxiv.
+org/abs/2205.06395 (visited on 04/26/2024).
+[84]
+Eric Sihite et al. “Demonstrating Autonomous 3D Path Planning on a Novel Scalable UGV-
+UAV Morphing Robot”. In: 2023 IEEE/RSJ International Conference on Intelligent Robots
+and Systems (IROS). Oct. 2023, pp. 3064–3069. DOI: 10.1109/IROS55552.2023.
+10342189.
+[85]
+Eric Sihite et al. “Efficient Path Planning and Tracking for Multi-Modal Legged-Aerial
+Locomotion Using Integrated Probabilistic Road Maps (PRM) and Reference Governors
+(RG)”. In: 2022 IEEE 61st Conference on Decision and Control (CDC). Dec. 2022, pp. 764–
+770. DOI: 10.1109/CDC51059.2022.9992754.
+[86]
+Eric Sihite et al. “Multi-Modal Mobility Morphobot (M4) with appendage repurposing for
+locomotion plasticity enhancement”. In: Nature Communications 14.1 (June 2023), p. 3323.
+DOI: 10.1038/s41467-023-39018-y.
+73
+
+--- Page 84 ---
+BIBLIOGRAPHY
+[87]
+Eric Sihite et al. “Unsteady aerodynamic modeling of Aerobat using lifting line theory
+and Wagner’s function”. In: 2022 IEEE/RSJ International Conference on Intelligent Robots
+and Systems (IROS). Oct. 2022, pp. 10493–10500. DOI: 10.1109/IROS47612.2022.
+9982125.
+[88]
+Simscape. en. URL: https://www.mathworks.com/products/simscape.
+html (visited on 03/20/2024).
+[89]
+Solvers in bullet - Real-Time Physics Simulation Forum. URL: https://pybullet.
+org/Bullet/phpBB3/viewtopic.php?t=1883 (visited on 03/20/2024).
+[90]
+Richard S Sutton et al. “Policy Gradient Methods for Reinforcement Learning with Function
+Approximation”. In: Advances in Neural Information Processing Systems. Vol. 12. MIT
+Press, 1999.
+[91]
+Usman A. Syed et al. “From Rousettus aegyptiacus (bat) landing to robotic landing: Reg-
+ulation of CG-CP distance using a nonlinear closed-loop feedback”. In: 2017 IEEE Inter-
+national Conference on Robotics and Automation (ICRA). May 2017, pp. 3560–3567. DOI:
+10.1109/ICRA.2017.7989408.
+[92]
+Quan Vuong et al. How to pick the domain randomization parameters for sim-to-real
+transfer of reinforcement learning policies? arXiv:1903.11774 [cs, stat]. Mar. 2019. DOI:
+10.48550/arXiv.1903.11774. URL: http://arxiv.org/abs/1903.11774
+(visited on 03/20/2024).
+[93]
+Zhelong Wang, Qin Gao, and Hongyu Zhao. “CPG-Inspired Locomotion Control for a Snake
+Robot Basing on Nonlinear Oscillators”. In: Journal of Intelligent & Robotic Systems 85.2
+(Feb. 2017), pp. 209–227. DOI: 10.1007/s10846-016-0373-9.
+[94]
+Ziyu Wang et al. Dueling Network Architectures for Deep Reinforcement Learning. arXiv:1511.06581
+[cs]. Apr. 2016. DOI: 10.48550/arXiv.1511.06581. URL: http://arxiv.org/
+abs/1511.06581 (visited on 04/24/2024).
+[95]
+Ziyu Wang et al. Sample Efficient Actor-Critic with Experience Replay. arXiv:1611.01224
+[cs]. July 2017. DOI: 10.48550/arXiv.1611.01224. URL: http://arxiv.org/
+abs/1611.01224 (visited on 04/24/2024).
+[96]
+Lilian Weng. Domain Randomization for Sim2Real Transfer. en. Section: posts. May 2019.
+URL: https://lilianweng.github.io/posts/2019- 05- 05- domain-
+randomization/ (visited on 03/20/2024).
+74
+
+--- Page 85 ---
+BIBLIOGRAPHY
+[97]
+Zhaoming Xie et al. “Feedback Control For Cassie With Deep Reinforcement Learning”. In:
+2018 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS). Oct.
+2018, pp. 1241–1246. DOI: 10.1109/IROS.2018.8593722.
+[98]
+Ruihan Yang et al. Learning Vision-Guided Quadrupedal Locomotion End-to-End with
+Cross-Modal Transformers. en. arXiv:2107.03996 [cs]. May 2022. URL: http://arxiv.
+org/abs/2107.03996 (visited on 07/05/2023).
+[99]
+Wenhao Yu et al. Sim-to-Real Transfer for Biped Locomotion. arXiv:1903.01390 [cs]. Aug.
+2019. URL: http://arxiv.org/abs/1903.01390 (visited on 07/03/2023).
+[100]
+Zhenli Lu et al. “Serpentine locomotion of a snake-like robot controlled by cyclic inhibitory
+CPG model”. In: 2005 IEEE/RSJ International Conference on Intelligent Robots and Sys-
+tems. Edmonton, Alta., Canada: IEEE, 2005, pp. 96–101. DOI: 10.1109/IROS.2005.
+1545435.
+75
+

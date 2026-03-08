@@ -61,13 +61,13 @@ def compute_angles(num_segments=5):
     x_sine_wave, y_sine_wave, z_wave : 3-D sine-wave path arrays
     R, approximation_circle_dist     : geometry constants
     """
-    req_length        = 1.14
-    req_amplitude_z   = 0.6
-    req_amplitude_y   = 0.3
+    req_length        = 1.35
+    req_amplitude_z   = 0.8
+    req_amplitude_y   = 0.0
     R                 = req_length / 2
     approximation_circle_dist = 0.17
     accuracylevel     = 100_000
-    frequency         = 1.5
+    frequency         = 2.0
 
     # Path spline
     path_points_x = [0, 3, 4, 6]
@@ -149,6 +149,16 @@ def compute_angles(num_segments=5):
 
         offset += int(accuracylevel / 150)
         answers_per_iteration.append([x_sine_wave[offset], y_sine_wave[offset], z_wave[offset]])
+
+    # Overwrite all angles with the first module's angles for every frame
+    # if angles_real:
+    #     for frame in angles_real:
+    #         if frame:
+    #             first_angle = frame[0]
+    #             for i in range(len(frame)):
+    #                 # Add small random noise to each angle (in degrees)
+    #                 noise = np.random.uniform(-3, 3, size=2)  # e.g., ±2 degrees noise
+    #                 frame[i] = (first_angle[0] + noise[0], first_angle[1] + noise[1])
 
     return (angles_real, answers,
             x_new, y_new, x_sine_wave, y_sine_wave, z_wave,
