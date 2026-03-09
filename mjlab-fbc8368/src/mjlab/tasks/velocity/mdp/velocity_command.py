@@ -113,6 +113,11 @@ class UniformVelocityCommand(CommandTerm):
     base_mat_ws = matrix_from_quat(base_quat_w).cpu().numpy()
     lin_vel_bs = self.robot.data.root_link_lin_vel_b.cpu().numpy()
     ang_vel_bs = self.robot.data.root_link_ang_vel_b.cpu().numpy()
+    # World-frame velocities for world_frame_viz mode
+    lin_vel_ws = (
+        self.robot.data.root_link_lin_vel_w.cpu().numpy()
+        if self.cfg.viz.world_frame_viz else None
+    )
 
     scale = self.cfg.viz.scale
     z_offset = self.cfg.viz.z_offset
@@ -126,6 +131,19 @@ class UniformVelocityCommand(CommandTerm):
 
       # Skip if robot appears uninitialized (at origin).
       if np.linalg.norm(base_pos_w) < 1e-6:
+        continue
+
+      # World-frame visualization for robots where body-frame X doesn't
+      # point forward (e.g. snakebot body X points downward).
+      if self.cfg.viz.world_frame_viz:
+        origin = base_pos_w + np.array([0.0, 0.0, z_offset * scale])
+        # Command velocity arrow (blue) — world-frame XY
+        cmd_to = origin + np.array([cmd[0], cmd[1], 0.0]) * scale
+        visualizer.add_arrow(origin, cmd_to, color=(0.2, 0.2, 0.6, 0.6), width=0.015)
+        # Actual velocity arrow (cyan) — world-frame XY
+        lv_w = lin_vel_ws[batch]
+        act_to = origin + np.array([lv_w[0], lv_w[1], 0.0]) * scale
+        visualizer.add_arrow(origin, act_to, color=(0.0, 0.6, 1.0, 0.7), width=0.015)
         continue
 
       # Helper to transform local to world coordinates.
@@ -193,6 +211,7 @@ class UniformVelocityCommandCfg(CommandTermCfg):
   class VizCfg:
     z_offset: float = 0.2
     scale: float = 0.5
+    world_frame_viz: bool = False  # draw arrows in world frame (non-standard body frames)
 
   viz: VizCfg = field(default_factory=VizCfg)
 

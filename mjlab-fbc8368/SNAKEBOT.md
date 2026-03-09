@@ -14,8 +14,20 @@ This document describes how to set up, train, and visualize the 5-module snakebo
 
 Forward velocity tracking task. The robot learns to follow velocity commands.
 
-**Actor** (~44 dim): Phase clock (2), actuated joint pos/vel (20), last action (10), velocity commands (3), root IMU (9)
+**Actor** (~44 dim): Phase clock (2), actuated joint pos/vel (20), last action (10), velocity commands (3), root IMU (9)  
 **Critic** (~99 dim): Actor obs + per-module pos/vel/ang-vel (45) + joint efforts (10)
+
+**Rewards** (literature: Bing 2020, Shi 2020, Qiu 2021, Singh 2022):
+| Term | Weight | Purpose |
+|---|---|---|
+| `forward_velocity` | +6.0 | World +X CoM velocity (primary drive) |
+| `alive_bonus` | +0.5 | Keep-alive baseline |
+| `lateral_velocity` | -0.05 | Penalise Y drift |
+| `vertical_velocity` | -0.05 | Penalise vertical bounce |
+| `yaw_rate` | -0.02 | Penalise spin-in-place |
+| `action_smoothness` | -0.01 | Smooth gait → hardware transfer |
+| `control_cost` | -0.005 | Energy efficiency |
+| `dof_pos_limits` | -0.002 | Soft joint-limit regularisation |
 
 ### 2. `Mjlab-Locomotion-Flat-Snakebot` — Goal-Reaching
 
@@ -31,19 +43,45 @@ Navigate to a random XY goal 0.3–0.8 m away. Reward design informed by 5 resea
 **Critic** (~91 dim, privileged):
 - All actor obs + per-module positions/velocities/angular-vel (45) + joint efforts (10)
 
-**Rewards**:
+**Rewards** (COBRA thesis, snakebot-gym, Naish/EELS, Zhang 2024):
 | Term | Weight | Purpose |
 |---|---|---|
-| `progress_reward` | +15.0 | Δ distance to goal (KEY signal) |
-| `heading_alignment` | +3.0 | Face the goal (cos similarity) |
-| `goal_reached_bonus` | +200.0 | Sparse bonus on arrival (<25 cm) |
-| `distance_penalty` | +0.1 | Gentle pull toward goal |
-| `alive_bonus` | +0.05 | Small keep-alive baseline |
-| `control_cost` | -0.002 | Tiny energy term |
-| `action_smoothness` | -0.001 | Tiny smoothness term |
-| `dof_pos_limits` | -0.1 | Soft joint-limit guard |
+| `progress_reward` | +25.0 | Δ distance to goal (KEY signal) |
+| `heading_alignment` | +0.5 | Face the goal (cosine, Naish/EELS) |
+| `goal_reached_bonus` | +40.0 | Sparse bonus on arrival (<25 cm) |
+| `distance_penalty` | +3.0 | Dense proximity shaping (higher when closer) |
+| `alive_bonus` | +0.3 | Keep-alive baseline |
+| `action_smoothness` | -0.01 | Smooth gait → hardware transfer |
+| `control_cost` | -0.005 | Energy efficiency |
+| `dof_pos_limits` | -0.002 | Soft joint-limit regularisation |
 
-**Episode**: 30 s max (300 steps at 10 Hz). Terminates early on goal reach.
+**Episode**: 90 s max (1800 steps at 10 Hz). Terminates early on goal reach.
+
+## Spawning and Physics
+
+### Spawning orientation
+
+The snake's MJCF wraps all bodies in `<frame euler="0 1.5707963267948966 0">` — a 90° rotation about world Y — so 
+the chain lies flat along world +X with skin geoms contacting the ground plane. `INIT_STATE.rot` in 
+`snakebot_constants.py` must encode this same rotation as a quaternion `(0.7071068, 0.0, 0.7071068, 0.0)`. 
+Without it `reset_root_state_uniform` rewrites the root quaternion to identity and the snake spawns vertically 
+(chain axis along world +Z).
+
+### Solver settings
+
+The snake uses equality-weld closed kinematic chains which require a stiff Newton solver. Both tasks 
+override the base factory's defaults:
+
+| Parameter | Base default | Snakebot override |
+|---|---|---|
+| `timestep` | 0.005 s | 0.005 s (same) |
+| `iterations` | 10 | **50** |
+| `ls_iterations` | 20 | **30** |
+| `impratio` | 1.0 | **10.0** |
+| `decimation` | 4 | **20** (→ 10 Hz RL) |
+
+For initial learning stability, interval perturbation events (`push_robot`, external wrench pulses) are
+disabled in both snake tasks and only moderate reset/startup domain randomization is applied.
 
 ## Setup
 

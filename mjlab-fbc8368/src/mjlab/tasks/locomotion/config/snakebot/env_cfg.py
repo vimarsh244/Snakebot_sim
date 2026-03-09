@@ -17,10 +17,10 @@ import math
 import torch
 
 from mjlab.asset_zoo.robots import (
-    SNAKEBOT_ACTION_SCALE,
     get_snakebot_robot_cfg,
 )
 from mjlab.envs import ManagerBasedRlEnvCfg
+from mjlab.envs import mdp as envs_mdp
 from mjlab.envs.mdp.actions import JointPositionActionCfg
 from mjlab.envs.mdp.observations import (
     joint_pos_rel,
@@ -33,6 +33,7 @@ from mjlab.managers.observation_manager import ObservationGroupCfg, ObservationT
 from mjlab.managers.reward_manager import RewardTermCfg
 from mjlab.managers.scene_entity_config import SceneEntityCfg
 from mjlab.managers.termination_manager import TerminationTermCfg
+from mjlab.sim import MujocoCfg
 from mjlab.tasks.velocity.velocity_env_cfg import make_velocity_env_cfg
 from mjlab.utils.noise import UniformNoiseCfg as Unoise
 
@@ -44,33 +45,35 @@ _MODULE_BODIES = "m[1-5]_bottom-base-plate-v1"
 _ACTUATED_JOINTS = (".*Revolute-15", ".*Revolute-16")
 
 # ── Goal parameters ───────────────────────────────────────────────────────────
-GOAL_RADIUS_MIN = 0.3   # metres — close goals the snake can actually reach
-GOAL_RADIUS_MAX = 0.8
-GOAL_REACH_THRESHOLD = 0.25  # metres — relaxed threshold for easier success
+# Forward goals: always along world +X, close enough to reach
+GOAL_RADIUS_MIN = 0.20
+GOAL_RADIUS_MAX = 0.45
+GOAL_REACH_THRESHOLD = 0.15
 
 
 # ── Goal sampling reset callback ──────────────────────────────────────────────
 def _sample_goals(env, env_ids, **kwargs):
-    """Sample random goals 0.3–0.8 m from the robot's reset position.
+    """Sample goals along world +X direction, slightly randomized in Y.
 
-    Called as a reset event. Stores _loco_goal_pos (B,2) and
-    _loco_prev_dist (B,) on the env for use by MDP functions.
+    Ultra-simple: goals are placed 0.3-0.8m ahead in world +X direction
+    with small Y offset (±0.15m). The snake starts facing roughly +X,
+    so this places goals ahead of it.
     """
     device = env.device
     n = len(env_ids)
 
-    # Random angle and radius
-    angle = torch.rand(n, device=device) * 2 * math.pi
-    radius = GOAL_RADIUS_MIN + torch.rand(n, device=device) * (GOAL_RADIUS_MAX - GOAL_RADIUS_MIN)
-
-    # Robot's current XY position (after reset)
     robot = env.scene["robot"]
     root_pos = robot.data.root_link_pos_w[env_ids, :2]
 
-    # Goal = robot_pos + polar offset
+    # Goal offset: mostly +X, small Y variation
+    x_offset = GOAL_RADIUS_MIN + torch.rand(n, device=device) * (
+        GOAL_RADIUS_MAX - GOAL_RADIUS_MIN
+    )
+    y_offset = (torch.rand(n, device=device) * 2 - 1) * 0.08
+
     goal_xy = root_pos.clone()
-    goal_xy[:, 0] += radius * torch.cos(angle)
-    goal_xy[:, 1] += radius * torch.sin(angle)
+    goal_xy[:, 0] += x_offset
+    goal_xy[:, 1] += y_offset
 
     # Initialise storage on first call
     if not hasattr(env, "_loco_goal_pos"):
@@ -98,18 +101,18 @@ def _update_prev_distance(env, env_ids=None, **kwargs):
 def snakebot_locomotion_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     """Create Snakebot flat terrain goal-reaching locomotion configuration.
 
-    Reward design — progress dominates, penalties minimal:
-    ┌──────────────────────────┬────────┬──────────────────────────────────────┐
-    │ Term                     │ Weight │ Purpose                              │
-    ├──────────────────────────┼────────┼──────────────────────────────────────┤
-    │ progress_reward          │ +15.0  │ Δ distance — KEY shaped signal       │
-    │ heading_alignment        │  +3.0  │ Face the goal                        │
-    │ goal_reached_bonus       │+200.0  │ Sparse big bonus on arrival          │
-    │ distance_penalty         │  +0.1  │ Gentle pull toward goal              │
-    │ alive_bonus              │  +0.05 │ Small keep-alive baseline            │
-    │ control_cost             │ -0.002 │ Tiny energy term                     │
-    │ action_smoothness        │ -0.001 │ Tiny smoothness term                 │
-    │ dof_pos_limits           │  -0.1  │ Soft joint-limit guard               │
+    Reward design — literature-grounded (COBRA, snakebot-gym, Naish/EELS, Zhang 2024):
+    ┌──────────────────────────┬────────┬──────────────────────────────────────────┐
+    │ Term                     │ Weight │ Purpose                                  │
+    ├──────────────────────────┼────────┼──────────────────────────────────────────┤
+    │ progress_reward          │ +10.0  │ Δ distance to goal (primary signal)      │
+    │ heading_alignment        │  +2.0  │ Face the goal (cosine, Naish/EELS)       │
+    │ goal_reached_bonus       │ +50.0  │ Sparse bonus on arrival (<25 cm)         │
+    │ distance_penalty         │  -1.0  │ Persistent pull toward goal              │
+    │ alive_bonus              │  +0.2  │ Keep-alive baseline                      │
+    │ action_smoothness        │  -0.05 │ Smooth gait → hardware transfer          │
+    │ control_cost             │  -0.02 │ Energy efficiency                        │
+    │ dof_pos_limits           │  -0.5  │ Soft joint-limit guard                   │
     └──────────────────────────┴────────┴──────────────────────────────────────┘
     """
     cfg = make_velocity_env_cfg()
@@ -128,11 +131,24 @@ def snakebot_locomotion_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         s for s in (cfg.scene.sensors or ()) if s.name != "terrain_scan"
     )
 
-    # ── 10 Hz control frequency ────────────────────────────────────────────
+    # ── Solver: override base factory for closed-chain weld constraints ────────
+    # See velocity env_cfgs.py comment for rationale.
+    cfg.sim.mujoco = MujocoCfg(
+        timestep=0.0025,
+        iterations=100,
+        ls_iterations=30,
+        impratio=10.0,
+        solver="newton",
+        integrator="implicitfast",
+        ccd_iterations=100,
+    )
+
+    # ── 20 Hz control frequency ─────────────────────────────────────────
+    # 0.0025 s × 20 = 0.05 s / step
     cfg.decimation = 20
 
     # ── Episode ────────────────────────────────────────────────────────────
-    cfg.episode_length_s = 40.0  # 400 steps at 10 Hz
+    cfg.episode_length_s = 30.0
 
     # ── Observations ──────────────────────────────────────────────────────────
     _module_body_cfg = SceneEntityCfg("robot", body_names=(_MODULE_BODIES,))
@@ -144,21 +160,21 @@ def snakebot_locomotion_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         ),
         "goal_vector": ObservationTermCfg(
             func=locomotion_mdp.goal_vector_body_frame,
-            noise=Unoise(n_min=-0.05, n_max=0.05),
+            noise=Unoise(n_min=-0.02, n_max=0.02),
         ),
         "heading_to_goal": ObservationTermCfg(
             func=locomotion_mdp.heading_to_goal,
-            noise=Unoise(n_min=-0.05, n_max=0.05),
+            noise=Unoise(n_min=-0.02, n_max=0.02),
         ),
         "joint_pos": ObservationTermCfg(
             func=joint_pos_rel,
             params={"asset_cfg": _actuated_joint_cfg},
-            noise=Unoise(n_min=-0.06, n_max=0.06),
+            noise=Unoise(n_min=-0.03, n_max=0.03),
         ),
         "joint_vel": ObservationTermCfg(
             func=joint_vel_rel,
             params={"asset_cfg": _actuated_joint_cfg},
-            noise=Unoise(n_min=-4.0, n_max=4.0),
+            noise=Unoise(n_min=-1.0, n_max=1.0),
         ),
         "actions": ObservationTermCfg(func=last_action),
     }
@@ -199,7 +215,10 @@ def snakebot_locomotion_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     # ── Actions ──────────────────────────────────────────────────────────────
     joint_pos_action = cfg.actions["joint_pos"]
     assert isinstance(joint_pos_action, JointPositionActionCfg)
-    joint_pos_action.scale = SNAKEBOT_ACTION_SCALE
+    joint_pos_action.scale = {
+        ".*Revolute-15": 0.08,
+        ".*Revolute-16": 0.08,
+    }
 
     # ── Commands: NONE (goal is the command, stored as env attributes) ──────
     cfg.commands = {}
@@ -210,59 +229,61 @@ def snakebot_locomotion_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         func=_sample_goals,
         mode="reset",
     )
-    # Domain randomisation — reduced for initial learning
-    cfg.events["base_com"].params["asset_cfg"].body_names = (SNAKE_ROOT_BODY,)
-    cfg.events["base_com"].params["ranges"] = {
-        0: (-0.03, 0.03),
-        1: (-0.03, 0.03),
-        2: (-0.02, 0.02),
-    }
+    # Domain randomisation is disabled for early curriculum so the snake first
+    # learns a stable gait before transfer-focused perturbations are added.
+    cfg.events.pop("base_com", None)
     cfg.events.pop("encoder_bias", None)
-    cfg.events["push_robot"].params["velocity_range"] = {
-        "x": (-0.15, 0.15),
-        "y": (-0.15, 0.15),
-        "z": (-0.1, 0.1),
-        "roll": (-0.15, 0.15),
-        "pitch": (-0.15, 0.15),
-        "yaw": (-0.1, 0.1),
-    }
+    cfg.events.pop("push_robot", None)
     cfg.events.pop("foot_friction", None)
+    # Use full-scene default reset for this closed-chain model.
+    # It restores all free-joint and hinge states coherently before each episode.
+    cfg.events["reset_base"].func = envs_mdp.reset_scene_to_default
+    cfg.events["reset_base"].params = {}
+    cfg.events.pop("reset_robot_joints", None)
 
-    # ── Rewards — progress dominates, penalties near-zero ─────────────────────
+    # ── Rewards — literature-grounded goal-reaching ──────────────────────────
+    # Based on COBRA thesis, snakebot-gym, Naish/EELS, Zhang 2024.
     cfg.rewards = {
+        # === Primary shaped navigation signal ===
+        # Positive when snake reduces distance to goal (most important)
         "progress_reward": RewardTermCfg(
             func=locomotion_mdp.progress_reward,
-            weight=15.0,
+            weight=25.0,
         ),
+        # Cosine alignment — face the goal to move toward it (Naish/EELS style)
         "heading_alignment": RewardTermCfg(
             func=locomotion_mdp.heading_alignment_reward,
-            weight=2.0,
+            weight=0.5,
         ),
+        # Sparse terminal bonus on reaching the goal (strong incentive)
         "goal_reached_bonus": RewardTermCfg(
             func=locomotion_mdp.goal_reached_bonus,
             params={"threshold": GOAL_REACH_THRESHOLD},
-            weight=200.0,
+            weight=40.0,
         ),
+        # Persistent pull: keeps pressure even when progress is slow
         "distance_penalty": RewardTermCfg(
             func=locomotion_mdp.distance_penalty,
-            weight=0.1,
+            weight=3.0,
         ),
+        # === Keep-alive ===
         "alive_bonus": RewardTermCfg(
             func=locomotion_mdp.alive_bonus,
-            weight=0.05,
+            weight=0.2,
+        ),
+        # === Regularisation ===
+        "action_smoothness": RewardTermCfg(
+            func=locomotion_mdp.action_smoothness_penalty,
+            weight=-0.002,
         ),
         "control_cost": RewardTermCfg(
             func=locomotion_mdp.control_cost,
-            weight=-0.002,
-        ),
-        "action_smoothness": RewardTermCfg(
-            func=locomotion_mdp.action_smoothness_penalty,
             weight=-0.001,
         ),
         "dof_pos_limits": RewardTermCfg(
             func=joint_pos_limits,
             params={"asset_cfg": _actuated_joint_cfg},
-            weight=-0.1,
+            weight=0.0,
         ),
     }
 
@@ -279,7 +300,7 @@ def snakebot_locomotion_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     cfg.terminations.pop("fell_over", None)
     cfg.terminations["too_high"] = TerminationTermCfg(
         func=locomotion_mdp.root_too_high,
-        params={"max_height": 0.35},
+        params={"max_height": 4.0},
     )
 
     # ── Curriculum ────────────────────────────────────────────────────────────

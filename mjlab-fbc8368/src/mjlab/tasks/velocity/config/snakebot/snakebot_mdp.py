@@ -34,6 +34,10 @@ if TYPE_CHECKING:
 # gait period in env steps (15 steps * 0.1s = 1.5s cycle at 10 Hz)
 GAIT_PERIOD_STEPS = 15
 
+# Grace period: ignore rewards for the first N env steps after each reset
+# so the weld constraints can converge and the snake can settle on the ground.
+SETTLE_GRACE_STEPS = 10
+
 
 # ---------------------------------------------------------------------------
 # Module body regex — one representative body per snake module (5 total)
@@ -101,8 +105,35 @@ def phase_clock(env: ManagerBasedRlEnv) -> torch.Tensor:
 
 
 # ---------------------------------------------------------------------------
-# Reward functions (literature-grounded for wheelless serpentine locomotion)
+# Helper: grace period mask (1.0 after settling, 0.0 during)
 # ---------------------------------------------------------------------------
+
+def _grace_mask(env: ManagerBasedRlEnv) -> torch.Tensor:
+    """Return 1.0 for envs past the settle grace period, 0.0 otherwise."""
+    return (env.episode_length_buf >= SETTLE_GRACE_STEPS).float()
+
+
+# ---------------------------------------------------------------------------
+# Reward functions (ultra-simple for robust learning)
+# ---------------------------------------------------------------------------
+
+def forward_velocity_reward(
+    env: ManagerBasedRlEnv,
+    max_vel: float = 0.05,
+    asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
+) -> torch.Tensor:
+    """Reward world-X velocity directly, normalized to [0, 1].
+
+    Ultra-simple: just reward moving forward in world +X direction.
+    No command tracking, no exp/gaussian - just linear reward for velocity.
+    Zeroed during the settle grace period to prevent rewarding launch forces.
+    """
+    asset: Entity = env.scene[asset_cfg.name]
+    vx = asset.data.root_link_lin_vel_w[:, 0]  # world X velocity
+    # Clamp and normalize to [0, 1]
+    reward = (vx / max_vel).clamp(0.0, 1.0)
+    return reward * _grace_mask(env)
+
 
 def track_forward_velocity_command(
     env: ManagerBasedRlEnv,
@@ -119,10 +150,10 @@ def track_forward_velocity_command(
     asset: Entity = env.scene[asset_cfg.name]
     command = env.command_manager.get_command(command_name)
     assert command is not None, f"Command '{command_name}' not found."
-    target_vx = command[:, 0].clamp(0.0, 0.4)
-    actual_vx = asset.data.root_link_lin_vel_w[:, 0].clamp(-1.0, 1.0)
+    target_vx = command[:, 0].clamp(0.0, 0.10)
+    actual_vx = asset.data.root_link_lin_vel_w[:, 0].clamp(-0.5, 0.5)
     error = target_vx - actual_vx
-    return torch.exp(-torch.square(error) / (std**2))
+    return torch.exp(-torch.square(error) / (std**2)) * _grace_mask(env)
 
 
 def lateral_velocity_penalty(
@@ -136,7 +167,7 @@ def lateral_velocity_penalty(
     """
     asset: Entity = env.scene[asset_cfg.name]
     v_lat = asset.data.root_link_lin_vel_w[:, 1].clamp(-3.0, 3.0)
-    return torch.square(v_lat)   # (B,)  max penalty = 9 per step
+    return torch.square(v_lat) * _grace_mask(env)   # (B,)  max penalty = 9 per step
 
 
 def yaw_rate_penalty(
@@ -152,7 +183,7 @@ def yaw_rate_penalty(
     """
     asset: Entity = env.scene[asset_cfg.name]
     omega_z = asset.data.root_link_ang_vel_w[:, 2].clamp(-5.0, 5.0)
-    return torch.square(omega_z)   # (B,)  max penalty = 25 per step
+    return torch.square(omega_z) * _grace_mask(env)   # (B,)  max penalty = 25 per step
 
 
 def vertical_velocity_penalty(
@@ -166,7 +197,7 @@ def vertical_velocity_penalty(
     """
     asset: Entity = env.scene[asset_cfg.name]
     v_z = asset.data.root_link_lin_vel_w[:, 2].clamp(-3.0, 3.0)
-    return torch.square(v_z)   # (B,)
+    return torch.square(v_z) * _grace_mask(env)   # (B,)
 
 
 def action_smoothness_penalty(env: ManagerBasedRlEnv) -> torch.Tensor:
@@ -176,7 +207,7 @@ def action_smoothness_penalty(env: ManagerBasedRlEnv) -> torch.Tensor:
     hardware.  Complements `action_rate_l2` which is already in the base mdp.
     """
     delta = env.action_manager.action - env.action_manager.prev_action
-    return torch.sum(torch.square(delta), dim=1)   # (B,)
+    return torch.sum(torch.square(delta), dim=1) * _grace_mask(env)   # (B,)
 
 
 def alive_bonus(env: ManagerBasedRlEnv) -> torch.Tensor:
@@ -196,8 +227,9 @@ def control_cost(
 
     Prevents the policy from using excessive joint forces as a degenerate
     shortcut (e.g. 'launch' behaviour).  Equivalent to an L2 action penalty.
+    Zeroed during settle grace period.
     """
-    return torch.sum(torch.square(env.action_manager.action), dim=1)   # (B,)
+    return torch.sum(torch.square(env.action_manager.action), dim=1) * _grace_mask(env)   # (B,)
 
 
 # ---------------------------------------------------------------------------
@@ -206,14 +238,19 @@ def control_cost(
 
 def root_too_high(
     env: ManagerBasedRlEnv,
-    max_height: float = 0.3,
+    max_height: float = 0.5,
     asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
 ) -> torch.Tensor:
     """Terminate if the root body rises above max_height.
 
     A snake doing serpentine locomotion stays near z=0.08 (its initial height).
     If z exceeds max_height the snake has been launched and further simulation
-    is wasted compute.
+    is wasted compute.  Disabled during the settle grace period to allow
+    transient constraint forces to dissipate.
     """
     asset: Entity = env.scene[asset_cfg.name]
-    return asset.data.root_link_pos_w[:, 2] > max_height
+    above = asset.data.root_link_pos_w[:, 2] > max_height
+    # Don't terminate during the grace period — constraint transients can
+    # briefly push the snake upward after a reset.
+    settled = env.episode_length_buf >= SETTLE_GRACE_STEPS
+    return above & settled
