@@ -521,6 +521,9 @@ class Entity:
       device=device,
     ).repeat(nworld, 1)
 
+    default_free_joint_pos = data.qpos[:, indexing.free_joint_q_adr].clone()
+    default_free_joint_vel = data.qvel[:, indexing.free_joint_v_adr].clone()
+
     # Joint state.
     if self.is_articulated:
       if self.cfg.init_state.joint_pos is None:
@@ -641,6 +644,8 @@ class Entity:
       model=model,
       device=device,
       default_root_state=default_root_state,
+      default_free_joint_pos=default_free_joint_pos,
+      default_free_joint_vel=default_free_joint_vel,
       default_joint_pos=default_joint_pos,
       default_joint_vel=default_joint_vel,
       default_joint_pos_limits=default_joint_pos_limits,

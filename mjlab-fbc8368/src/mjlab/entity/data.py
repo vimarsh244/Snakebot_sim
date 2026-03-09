@@ -47,6 +47,8 @@ class EntityData:
   device: str
 
   default_root_state: torch.Tensor
+  default_free_joint_pos: torch.Tensor
+  default_free_joint_vel: torch.Tensor
   default_joint_pos: torch.Tensor
   default_joint_vel: torch.Tensor
 
@@ -91,6 +93,43 @@ class EntityData:
 
     self.write_root_pose(root_state[:, : self.ROOT_POSE_DIM], env_ids)
     self.write_root_velocity(root_state[:, self.ROOT_POSE_DIM :], env_ids)
+
+  def write_default_free_joint_state(
+    self,
+    env_origins: torch.Tensor | None = None,
+    env_ids: torch.Tensor | slice | None = None,
+  ) -> None:
+    if self.is_fixed_base:
+      raise ValueError("Cannot write free joint state for fixed-base entity.")
+
+    env_ids = self._resolve_env_ids(env_ids)
+    if isinstance(env_ids, torch.Tensor) and env_ids.ndim > 1:
+      env_ids = env_ids.reshape(-1)
+
+    if env_origins is not None:
+      if env_origins.ndim == 1:
+        env_origins = env_origins.unsqueeze(0)
+      elif env_origins.ndim > 2:
+        env_origins = env_origins.reshape(-1, self.POS_DIM)
+
+    free_qpos = self.default_free_joint_pos[env_ids].clone()
+    free_qvel = self.default_free_joint_vel[env_ids].clone()
+
+    if env_origins is not None and free_qpos.numel() > 0:
+      num_free_joints = free_qpos.shape[1] // self.ROOT_POSE_DIM
+      for joint_index in range(num_free_joints):
+        q_start = joint_index * self.ROOT_POSE_DIM
+        free_qpos[:, q_start : q_start + self.POS_DIM] += env_origins
+
+    if isinstance(env_ids, slice):
+      self.data.qpos[env_ids, self.indexing.free_joint_q_adr] = free_qpos
+      self.data.qvel[env_ids, self.indexing.free_joint_v_adr] = free_qvel
+    else:
+      env_grid = env_ids[:, None]
+      q_grid = self.indexing.free_joint_q_adr[None, :]
+      v_grid = self.indexing.free_joint_v_adr[None, :]
+      self.data.qpos[env_grid, q_grid] = free_qpos
+      self.data.qvel[env_grid, v_grid] = free_qvel
 
   def write_root_pose(
     self, pose: torch.Tensor, env_ids: torch.Tensor | slice | None = None

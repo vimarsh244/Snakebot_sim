@@ -154,6 +154,85 @@ def phase_clock(env: ManagerBasedRlEnv) -> torch.Tensor:
     return torch.stack([torch.sin(phase), torch.cos(phase)], dim=1)
 
 
+def joint_pos_action_history(
+    env: ManagerBasedRlEnv,
+    asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
+) -> torch.Tensor:
+    """Three-frame history for actor input, shape (B, 60).
+
+    Returns [joint_pos_rel, action] for the current frame and previous 2 frames:
+    [t, t-1, t-2]. History shifting is guarded so repeated calls in the same
+    env step do not shift twice (important when both actor/critic request it).
+    """
+    asset: Entity = env.scene[asset_cfg.name]
+    default_joint_pos = asset.data.default_joint_pos
+    assert default_joint_pos is not None
+    jnt_ids = asset_cfg.joint_ids
+
+    joint_pos_rel = asset.data.joint_pos[:, jnt_ids] - default_joint_pos[:, jnt_ids]
+    joint_pos_rel = torch.nan_to_num(joint_pos_rel, nan=0.0, posinf=0.0, neginf=0.0)
+    action = torch.nan_to_num(
+        env.action_manager.action, nan=0.0, posinf=0.0, neginf=0.0
+    )
+
+    env_any = cast(Any, env)
+    num_envs = env.num_envs
+    pos_dim = int(joint_pos_rel.shape[1])
+    act_dim = int(action.shape[1])
+    hist_shape_pos = (num_envs, 3, pos_dim)
+    hist_shape_act = (num_envs, 3, act_dim)
+
+    if (
+        not hasattr(env_any, "_joint_pos_hist")
+        or env_any._joint_pos_hist.shape != hist_shape_pos
+    ):
+        env_any._joint_pos_hist = torch.zeros(
+            hist_shape_pos, device=env.device, dtype=joint_pos_rel.dtype
+        )
+    if (
+        not hasattr(env_any, "_action_hist")
+        or env_any._action_hist.shape != hist_shape_act
+    ):
+        env_any._action_hist = torch.zeros(
+            hist_shape_act, device=env.device, dtype=action.dtype
+        )
+    if not hasattr(env_any, "_joint_pos_action_hist_last_step"):
+        env_any._joint_pos_action_hist_last_step = -1
+
+    reset_mask = env.episode_length_buf == 0
+    if torch.any(reset_mask):
+        # clear stale history on env reset; current frame is written below.
+        env_any._joint_pos_hist[reset_mask] = 0.0
+        env_any._action_hist[reset_mask] = 0.0
+
+    step = int(env.common_step_counter)
+    if env_any._joint_pos_action_hist_last_step != step:
+        non_reset = ~reset_mask
+        if torch.any(non_reset):
+            env_any._joint_pos_hist[non_reset, 2] = env_any._joint_pos_hist[
+                non_reset, 1
+            ]
+            env_any._joint_pos_hist[non_reset, 1] = env_any._joint_pos_hist[
+                non_reset, 0
+            ]
+            env_any._action_hist[non_reset, 2] = env_any._action_hist[non_reset, 1]
+            env_any._action_hist[non_reset, 1] = env_any._action_hist[non_reset, 0]
+        env_any._joint_pos_action_hist_last_step = step
+
+    env_any._joint_pos_hist[:, 0] = joint_pos_rel
+    env_any._action_hist[:, 0] = action
+
+    history = torch.cat(
+        [
+            torch.cat([env_any._joint_pos_hist[:, 0], env_any._action_hist[:, 0]], dim=1),
+            torch.cat([env_any._joint_pos_hist[:, 1], env_any._action_hist[:, 1]], dim=1),
+            torch.cat([env_any._joint_pos_hist[:, 2], env_any._action_hist[:, 2]], dim=1),
+        ],
+        dim=1,
+    )
+    return torch.nan_to_num(history, nan=0.0, posinf=0.0, neginf=0.0)
+
+
 # ---------------------------------------------------------------------------
 # Critic-only observation functions (privileged state)
 # ---------------------------------------------------------------------------

@@ -204,7 +204,19 @@ class SceneEntityCfg:
     found_ids, _ = find_method(names, preserve_order=self.preserve_order)
     computed_names = [entity_all_names[i] for i in ids]
 
-    if found_ids != ids or computed_names != names:
+    # Regex patterns are valid inputs for names. In that case, exact equality
+    # between provided names (patterns) and computed names (resolved literals)
+    # is not expected, so only index consistency should be enforced.
+    has_pattern_name = any(name not in entity_all_names for name in names)
+
+    if found_ids != ids:
+      raise ValueError(
+        f"Inconsistent {kind_label} names and indices. "
+        f"Names {names} resolved to indices {found_ids}, "
+        f"but indices {ids} (mapping to names {computed_names}) were provided."
+      )
+
+    if not has_pattern_name and computed_names != names:
       raise ValueError(
         f"Inconsistent {kind_label} names and indices. "
         f"Names {names} resolved to indices {found_ids}, "

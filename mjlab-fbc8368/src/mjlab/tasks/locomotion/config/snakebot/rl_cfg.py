@@ -14,7 +14,7 @@ from mjlab.rl import (
 def snakebot_locomotion_ppo_cfg() -> RslRlOnPolicyRunnerCfg:
     """Create RL runner configuration for Snakebot locomotion task."""
     return RslRlOnPolicyRunnerCfg(
-        # Actor: ~36 dim obs (added phase_clock) → larger network for better capacity
+        # Actor: larger history-augmented obs (~76 dim) → larger network for capacity
         actor=RslRlModelCfg(
             hidden_dims=(512, 256, 128),
             activation="elu",

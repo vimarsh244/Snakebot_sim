@@ -61,10 +61,12 @@ def reset_scene_to_default(
       mocap_pose[:, 3:7] = default_root_state[:, 3:7]
       entity.write_mocap_pose_to_sim(mocap_pose, env_ids=env_ids)
     elif not entity.is_fixed_base:
-      # Floating-base entity - reset root state with env_origins.
-      default_root_state = entity.data.default_root_state[env_ids].clone()
-      default_root_state[:, 0:3] += env.scene.env_origins[env_ids]
-      entity.write_root_state_to_sim(default_root_state, env_ids=env_ids)
+      # Floating-base entity - reset all free joints coherently, applying the
+      # environment origin translation to each free-joint position block.
+      entity.data.write_default_free_joint_state(
+        env_origins=env.scene.env_origins[env_ids],
+        env_ids=env_ids,
+      )
 
     # Reset joint state for articulated entities.
     if entity.is_articulated:

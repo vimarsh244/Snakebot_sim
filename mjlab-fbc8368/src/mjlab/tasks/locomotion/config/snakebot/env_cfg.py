@@ -22,11 +22,7 @@ from mjlab.asset_zoo.robots import (
 from mjlab.envs import ManagerBasedRlEnvCfg
 from mjlab.envs import mdp as envs_mdp
 from mjlab.envs.mdp.actions import JointPositionActionCfg
-from mjlab.envs.mdp.observations import (
-    joint_pos_rel,
-    joint_vel_rel,
-    last_action,
-)
+from mjlab.envs.mdp.observations import joint_vel_rel
 from mjlab.envs.mdp.rewards import joint_pos_limits
 from mjlab.managers.event_manager import EventTermCfg
 from mjlab.managers.observation_manager import ObservationGroupCfg, ObservationTermCfg
@@ -166,17 +162,15 @@ def snakebot_locomotion_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
             func=locomotion_mdp.heading_to_goal,
             noise=Unoise(n_min=-0.02, n_max=0.02),
         ),
-        "joint_pos": ObservationTermCfg(
-            func=joint_pos_rel,
+        "joint_pos_action_hist": ObservationTermCfg(
+            func=locomotion_mdp.joint_pos_action_history,
             params={"asset_cfg": _actuated_joint_cfg},
-            noise=Unoise(n_min=-0.03, n_max=0.03),
         ),
         "joint_vel": ObservationTermCfg(
             func=joint_vel_rel,
             params={"asset_cfg": _actuated_joint_cfg},
             noise=Unoise(n_min=-1.0, n_max=1.0),
         ),
-        "actions": ObservationTermCfg(func=last_action),
     }
 
     critic_terms: dict = {
