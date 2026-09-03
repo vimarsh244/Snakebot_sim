@@ -1,0 +1,226 @@
+Friction sweep  |  18 friction settings x 11 configs = 198 runs  |  duration=15s  |  saving -> friction_sweep_results.csv
+======================================================================
+  [  1/198] isotropic    mu_fl=0.20 mu_bd=0.20  serp_0.4_0.4_2.5 ...  sim=0.892  real=0.930  err=4.1%
+  [  2/198] isotropic    mu_fl=0.20 mu_bd=0.20  serp_0.4_0.4_3.0 ...  sim=0.562  real=0.700  err=19.7%
+  [  3/198] isotropic    mu_fl=0.20 mu_bd=0.20  serp_0.4_0.6_3.0 ...  sim=0.652  real=1.460  err=55.3%
+  [  4/198] isotropic    mu_fl=0.20 mu_bd=0.20  serp_0.6_0.4_3.0 ...  sim=1.097  real=0.650  err=68.7%
+  [  5/198] isotropic    mu_fl=0.20 mu_bd=0.20  serp_0.6_0.6_3.0 ...  sim=0.701  real=1.600  err=56.2%
+  [  6/198] isotropic    mu_fl=0.20 mu_bd=0.20  carp_0.4_2.0 ...  sim=0.848  real=0.620  err=36.7%
+  [  7/198] isotropic    mu_fl=0.20 mu_bd=0.20  carp_0.4_2.5 ...  sim=1.060  real=0.720  err=47.2%
+  [  8/198] isotropic    mu_fl=0.20 mu_bd=0.20  carp_0.4_3.0 ...  sim=0.383  real=0.270  err=41.8%
+  [  9/198] isotropic    mu_fl=0.20 mu_bd=0.20  carp_0.6_2.0 ...  sim=0.851  real=0.470  err=81.1%
+  [ 10/198] isotropic    mu_fl=0.20 mu_bd=0.20  carp_0.6_2.5 ...  sim=0.919  real=1.420  err=35.3%
+  [ 11/198] isotropic    mu_fl=0.20 mu_bd=0.20  carp_0.6_3.0 ...  sim=0.809  real=0.970  err=16.6%
+  [ 12/198] floor_only   mu_fl=0.20 mu_bd=0.30  serp_0.4_0.4_2.5 ...  sim=0.844  real=0.930  err=9.2%
+  [ 13/198] floor_only   mu_fl=0.20 mu_bd=0.30  serp_0.4_0.4_3.0 ...  sim=0.527  real=0.700  err=24.7%
+  [ 14/198] floor_only   mu_fl=0.20 mu_bd=0.30  serp_0.4_0.6_3.0 ...  sim=0.719  real=1.460  err=50.7%
+  [ 15/198] floor_only   mu_fl=0.20 mu_bd=0.30  serp_0.6_0.4_3.0 ...  sim=1.189  real=0.650  err=82.9%
+  [ 16/198] floor_only   mu_fl=0.20 mu_bd=0.30  serp_0.6_0.6_3.0 ...  sim=0.887  real=1.600  err=44.5%
+  [ 17/198] floor_only   mu_fl=0.20 mu_bd=0.30  carp_0.4_2.0 ...  sim=0.860  real=0.620  err=38.7%
+  [ 18/198] floor_only   mu_fl=0.20 mu_bd=0.30  carp_0.4_2.5 ...  sim=1.099  real=0.720  err=52.7%
+  [ 19/198] floor_only   mu_fl=0.20 mu_bd=0.30  carp_0.4_3.0 ...  sim=0.373  real=0.270  err=38.0%
+  [ 20/198] floor_only   mu_fl=0.20 mu_bd=0.30  carp_0.6_2.0 ...  sim=0.878  real=0.470  err=86.9%
+  [ 21/198] floor_only   mu_fl=0.20 mu_bd=0.30  carp_0.6_2.5 ...  sim=0.908  real=1.420  err=36.1%
+  [ 22/198] floor_only   mu_fl=0.20 mu_bd=0.30  carp_0.6_3.0 ...  sim=0.784  real=0.970  err=19.2%
+  [ 23/198] isotropic    mu_fl=0.30 mu_bd=0.30  serp_0.4_0.4_2.5 ...  sim=0.844  real=0.930  err=9.2%
+  [ 24/198] isotropic    mu_fl=0.30 mu_bd=0.30  serp_0.4_0.4_3.0 ...  sim=0.527  real=0.700  err=24.7%
+  [ 25/198] isotropic    mu_fl=0.30 mu_bd=0.30  serp_0.4_0.6_3.0 ...  sim=0.719  real=1.460  err=50.7%
+  [ 26/198] isotropic    mu_fl=0.30 mu_bd=0.30  serp_0.6_0.4_3.0 ...  sim=1.189  real=0.650  err=82.9%
+  [ 27/198] isotropic    mu_fl=0.30 mu_bd=0.30  serp_0.6_0.6_3.0 ...  sim=0.887  real=1.600  err=44.5%
+  [ 28/198] isotropic    mu_fl=0.30 mu_bd=0.30  carp_0.4_2.0 ...  sim=0.860  real=0.620  err=38.7%
+  [ 29/198] isotropic    mu_fl=0.30 mu_bd=0.30  carp_0.4_2.5 ...  sim=1.099  real=0.720  err=52.7%
+  [ 30/198] isotropic    mu_fl=0.30 mu_bd=0.30  carp_0.4_3.0 ...  sim=0.373  real=0.270  err=38.0%
+  [ 31/198] isotropic    mu_fl=0.30 mu_bd=0.30  carp_0.6_2.0 ...  sim=0.878  real=0.470  err=86.9%
+  [ 32/198] isotropic    mu_fl=0.30 mu_bd=0.30  carp_0.6_2.5 ...  sim=0.908  real=1.420  err=36.1%
+  [ 33/198] isotropic    mu_fl=0.30 mu_bd=0.30  carp_0.6_3.0 ...  sim=0.784  real=0.970  err=19.2%
+  [ 34/198] floor_only   mu_fl=0.30 mu_bd=0.30  serp_0.4_0.4_2.5 ...  sim=0.844  real=0.930  err=9.2%
+  [ 35/198] floor_only   mu_fl=0.30 mu_bd=0.30  serp_0.4_0.4_3.0 ...  sim=0.527  real=0.700  err=24.7%
+  [ 36/198] floor_only   mu_fl=0.30 mu_bd=0.30  serp_0.4_0.6_3.0 ...  sim=0.719  real=1.460  err=50.7%
+  [ 37/198] floor_only   mu_fl=0.30 mu_bd=0.30  serp_0.6_0.4_3.0 ...  sim=1.189  real=0.650  err=82.9%
+  [ 38/198] floor_only   mu_fl=0.30 mu_bd=0.30  serp_0.6_0.6_3.0 ...  sim=0.887  real=1.600  err=44.5%
+  [ 39/198] floor_only   mu_fl=0.30 mu_bd=0.30  carp_0.4_2.0 ...  sim=0.860  real=0.620  err=38.7%
+  [ 40/198] floor_only   mu_fl=0.30 mu_bd=0.30  carp_0.4_2.5 ...  sim=1.099  real=0.720  err=52.7%
+  [ 41/198] floor_only   mu_fl=0.30 mu_bd=0.30  carp_0.4_3.0 ...  sim=0.373  real=0.270  err=38.0%
+  [ 42/198] floor_only   mu_fl=0.30 mu_bd=0.30  carp_0.6_2.0 ...  sim=0.878  real=0.470  err=86.9%
+  [ 43/198] floor_only   mu_fl=0.30 mu_bd=0.30  carp_0.6_2.5 ...  sim=0.908  real=1.420  err=36.1%
+  [ 44/198] floor_only   mu_fl=0.30 mu_bd=0.30  carp_0.6_3.0 ...  sim=0.784  real=0.970  err=19.2%
+  [ 45/198] isotropic    mu_fl=0.45 mu_bd=0.45  serp_0.4_0.4_2.5 ...  sim=0.816  real=0.930  err=12.3%
+  [ 46/198] isotropic    mu_fl=0.45 mu_bd=0.45  serp_0.4_0.4_3.0 ...  sim=0.552  real=0.700  err=21.1%
+  [ 47/198] isotropic    mu_fl=0.45 mu_bd=0.45  serp_0.4_0.6_3.0 ...  sim=0.833  real=1.460  err=42.9%
+  [ 48/198] isotropic    mu_fl=0.45 mu_bd=0.45  serp_0.6_0.4_3.0 ...  sim=1.195  real=0.650  err=83.9%
+  [ 49/198] isotropic    mu_fl=0.45 mu_bd=0.45  serp_0.6_0.6_3.0 ...  sim=1.085  real=1.600  err=32.2%
+  [ 50/198] isotropic    mu_fl=0.45 mu_bd=0.45  carp_0.4_2.0 ...  sim=0.751  real=0.620  err=21.1%
+  [ 51/198] isotropic    mu_fl=0.45 mu_bd=0.45  carp_0.4_2.5 ...  sim=1.142  real=0.720  err=58.7%
+  [ 52/198] isotropic    mu_fl=0.45 mu_bd=0.45  carp_0.4_3.0 ...  sim=0.357  real=0.270  err=32.2%
+  [ 53/198] isotropic    mu_fl=0.45 mu_bd=0.45  carp_0.6_2.0 ...  sim=0.784  real=0.470  err=66.9%
+  [ 54/198] isotropic    mu_fl=0.45 mu_bd=0.45  carp_0.6_2.5 ...  sim=1.001  real=1.420  err=29.5%
+  [ 55/198] isotropic    mu_fl=0.45 mu_bd=0.45  carp_0.6_3.0 ...  sim=0.716  real=0.970  err=26.1%
+  [ 56/198] floor_only   mu_fl=0.45 mu_bd=0.30  serp_0.4_0.4_2.5 ...  sim=0.829  real=0.930  err=10.8%
+  [ 57/198] floor_only   mu_fl=0.45 mu_bd=0.30  serp_0.4_0.4_3.0 ...  sim=0.558  real=0.700  err=20.3%
+  [ 58/198] floor_only   mu_fl=0.45 mu_bd=0.30  serp_0.4_0.6_3.0 ...  sim=0.824  real=1.460  err=43.5%
+  [ 59/198] floor_only   mu_fl=0.45 mu_bd=0.30  serp_0.6_0.4_3.0 ...  sim=1.196  real=0.650  err=84.0%
+  [ 60/198] floor_only   mu_fl=0.45 mu_bd=0.30  serp_0.6_0.6_3.0 ...  sim=1.086  real=1.600  err=32.1%
+  [ 61/198] floor_only   mu_fl=0.45 mu_bd=0.30  carp_0.4_2.0 ...  sim=0.748  real=0.620  err=20.6%
+  [ 62/198] floor_only   mu_fl=0.45 mu_bd=0.30  carp_0.4_2.5 ...  sim=1.124  real=0.720  err=56.1%
+  [ 63/198] floor_only   mu_fl=0.45 mu_bd=0.30  carp_0.4_3.0 ...  sim=0.352  real=0.270  err=30.2%
+  [ 64/198] floor_only   mu_fl=0.45 mu_bd=0.30  carp_0.6_2.0 ...  sim=0.782  real=0.470  err=66.5%
+  [ 65/198] floor_only   mu_fl=0.45 mu_bd=0.30  carp_0.6_2.5 ...  sim=1.007  real=1.420  err=29.1%
+  [ 66/198] floor_only   mu_fl=0.45 mu_bd=0.30  carp_0.6_3.0 ...  sim=0.718  real=0.970  err=26.0%
+  [ 67/198] isotropic    mu_fl=0.60 mu_bd=0.60  serp_0.4_0.4_2.5 ...  sim=0.830  real=0.930  err=10.8%
+  [ 68/198] isotropic    mu_fl=0.60 mu_bd=0.60  serp_0.4_0.4_3.0 ...  sim=0.569  real=0.700  err=18.7%
+  [ 69/198] isotropic    mu_fl=0.60 mu_bd=0.60  serp_0.4_0.6_3.0 ...  sim=0.850  real=1.460  err=41.8%
+  [ 70/198] isotropic    mu_fl=0.60 mu_bd=0.60  serp_0.6_0.4_3.0 ...  sim=1.174  real=0.650  err=80.6%
+  [ 71/198] isotropic    mu_fl=0.60 mu_bd=0.60  serp_0.6_0.6_3.0 ...  sim=1.054  real=1.600  err=34.2%
+  [ 72/198] isotropic    mu_fl=0.60 mu_bd=0.60  carp_0.4_2.0 ...  sim=0.695  real=0.620  err=12.2%
+  [ 73/198] isotropic    mu_fl=0.60 mu_bd=0.60  carp_0.4_2.5 ...  sim=1.138  real=0.720  err=58.1%
+  [ 74/198] isotropic    mu_fl=0.60 mu_bd=0.60  carp_0.4_3.0 ...  sim=0.319  real=0.270  err=18.2%
+  [ 75/198] isotropic    mu_fl=0.60 mu_bd=0.60  carp_0.6_2.0 ...  sim=0.708  real=0.470  err=50.6%
+  [ 76/198] isotropic    mu_fl=0.60 mu_bd=0.60  carp_0.6_2.5 ...  sim=1.049  real=1.420  err=26.1%
+  [ 77/198] isotropic    mu_fl=0.60 mu_bd=0.60  carp_0.6_3.0 ...  sim=0.727  real=0.970  err=25.1%
+  [ 78/198] floor_only   mu_fl=0.60 mu_bd=0.30  serp_0.4_0.4_2.5 ...  sim=0.860  real=0.930  err=7.5%
+  [ 79/198] floor_only   mu_fl=0.60 mu_bd=0.30  serp_0.4_0.4_3.0 ...  sim=0.565  real=0.700  err=19.3%
+  [ 80/198] floor_only   mu_fl=0.60 mu_bd=0.30  serp_0.4_0.6_3.0 ...  sim=0.849  real=1.460  err=41.8%
+  [ 81/198] floor_only   mu_fl=0.60 mu_bd=0.30  serp_0.6_0.4_3.0 ...  sim=1.156  real=0.650  err=77.9%
+  [ 82/198] floor_only   mu_fl=0.60 mu_bd=0.30  serp_0.6_0.6_3.0 ...  sim=1.066  real=1.600  err=33.4%
+  [ 83/198] floor_only   mu_fl=0.60 mu_bd=0.30  carp_0.4_2.0 ...  sim=0.707  real=0.620  err=14.0%
+  [ 84/198] floor_only   mu_fl=0.60 mu_bd=0.30  carp_0.4_2.5 ...  sim=1.114  real=0.720  err=54.7%
+  [ 85/198] floor_only   mu_fl=0.60 mu_bd=0.30  carp_0.4_3.0 ...  sim=0.322  real=0.270  err=19.1%
+  [ 86/198] floor_only   mu_fl=0.60 mu_bd=0.30  carp_0.6_2.0 ...  sim=0.731  real=0.470  err=55.6%
+  [ 87/198] floor_only   mu_fl=0.60 mu_bd=0.30  carp_0.6_2.5 ...  sim=1.069  real=1.420  err=24.7%
+  [ 88/198] floor_only   mu_fl=0.60 mu_bd=0.30  carp_0.6_3.0 ...  sim=0.691  real=0.970  err=28.7%
+  [ 89/198] isotropic    mu_fl=0.75 mu_bd=0.75  serp_0.4_0.4_2.5 ...  sim=0.881  real=0.930  err=5.2%
+  [ 90/198] isotropic    mu_fl=0.75 mu_bd=0.75  serp_0.4_0.4_3.0 ...  sim=0.581  real=0.700  err=17.0%
+  [ 91/198] isotropic    mu_fl=0.75 mu_bd=0.75  serp_0.4_0.6_3.0 ...  sim=0.854  real=1.460  err=41.5%
+  [ 92/198] isotropic    mu_fl=0.75 mu_bd=0.75  serp_0.6_0.4_3.0 ...  sim=1.195  real=0.650  err=83.8%
+  [ 93/198] isotropic    mu_fl=0.75 mu_bd=0.75  serp_0.6_0.6_3.0 ...  sim=1.091  real=1.600  err=31.8%
+  [ 94/198] isotropic    mu_fl=0.75 mu_bd=0.75  carp_0.4_2.0 ...  sim=0.667  real=0.620  err=7.5%
+  [ 95/198] isotropic    mu_fl=0.75 mu_bd=0.75  carp_0.4_2.5 ...  sim=1.103  real=0.720  err=53.2%
+  [ 96/198] isotropic    mu_fl=0.75 mu_bd=0.75  carp_0.4_3.0 ...  sim=0.299  real=0.270  err=10.7%
+  [ 97/198] isotropic    mu_fl=0.75 mu_bd=0.75  carp_0.6_2.0 ...  sim=0.672  real=0.470  err=43.0%
+  [ 98/198] isotropic    mu_fl=0.75 mu_bd=0.75  carp_0.6_2.5 ...  sim=1.073  real=1.420  err=24.5%
+  [ 99/198] isotropic    mu_fl=0.75 mu_bd=0.75  carp_0.6_3.0 ...  sim=0.784  real=0.970  err=19.2%
+  [100/198] floor_only   mu_fl=0.75 mu_bd=0.30  serp_0.4_0.4_2.5 ...  sim=0.907  real=0.930  err=2.5%
+  [101/198] floor_only   mu_fl=0.75 mu_bd=0.30  serp_0.4_0.4_3.0 ...  sim=0.556  real=0.700  err=20.6%
+  [102/198] floor_only   mu_fl=0.75 mu_bd=0.30  serp_0.4_0.6_3.0 ...  sim=0.847  real=1.460  err=42.0%
+  [103/198] floor_only   mu_fl=0.75 mu_bd=0.30  serp_0.6_0.4_3.0 ...  sim=1.165  real=0.650  err=79.2%
+  [104/198] floor_only   mu_fl=0.75 mu_bd=0.30  serp_0.6_0.6_3.0 ...  sim=1.121  real=1.600  err=29.9%
+  [105/198] floor_only   mu_fl=0.75 mu_bd=0.30  carp_0.4_2.0 ...  sim=0.694  real=0.620  err=12.0%
+  [106/198] floor_only   mu_fl=0.75 mu_bd=0.30  carp_0.4_2.5 ...  sim=1.077  real=0.720  err=49.6%
+  [107/198] floor_only   mu_fl=0.75 mu_bd=0.30  carp_0.4_3.0 ...  sim=0.296  real=0.270  err=9.8%
+  [108/198] floor_only   mu_fl=0.75 mu_bd=0.30  carp_0.6_2.0 ...  sim=0.707  real=0.470  err=50.5%
+  [109/198] floor_only   mu_fl=0.75 mu_bd=0.30  carp_0.6_2.5 ...  sim=1.116  real=1.420  err=21.4%
+  [110/198] floor_only   mu_fl=0.75 mu_bd=0.30  carp_0.6_3.0 ...  sim=0.709  real=0.970  err=26.9%
+  [111/198] isotropic    mu_fl=0.90 mu_bd=0.90  serp_0.4_0.4_2.5 ...  sim=0.941  real=0.930  err=1.2%
+  [112/198] isotropic    mu_fl=0.90 mu_bd=0.90  serp_0.4_0.4_3.0 ...  sim=0.572  real=0.700  err=18.3%
+  [113/198] isotropic    mu_fl=0.90 mu_bd=0.90  serp_0.4_0.6_3.0 ...  sim=0.834  real=1.460  err=42.9%
+  [114/198] isotropic    mu_fl=0.90 mu_bd=0.90  serp_0.6_0.4_3.0 ...  sim=1.254  real=0.650  err=92.9%
+  [115/198] isotropic    mu_fl=0.90 mu_bd=0.90  serp_0.6_0.6_3.0 ...  sim=1.168  real=1.600  err=27.0%
+  [116/198] isotropic    mu_fl=0.90 mu_bd=0.90  carp_0.4_2.0 ...  sim=0.661  real=0.620  err=6.6%
+  [117/198] isotropic    mu_fl=0.90 mu_bd=0.90  carp_0.4_2.5 ...  sim=1.091  real=0.720  err=51.6%
+  [118/198] isotropic    mu_fl=0.90 mu_bd=0.90  carp_0.4_3.0 ...  sim=0.281  real=0.270  err=4.2%
+  [119/198] isotropic    mu_fl=0.90 mu_bd=0.90  carp_0.6_2.0 ...  sim=0.665  real=0.470  err=41.6%
+  [120/198] isotropic    mu_fl=0.90 mu_bd=0.90  carp_0.6_2.5 ...  sim=1.104  real=1.420  err=22.3%
+  [121/198] isotropic    mu_fl=0.90 mu_bd=0.90  carp_0.6_3.0 ...  sim=0.841  real=0.970  err=13.3%
+  [122/198] floor_only   mu_fl=0.90 mu_bd=0.30  serp_0.4_0.4_2.5 ...  sim=0.970  real=0.930  err=4.3%
+  [123/198] floor_only   mu_fl=0.90 mu_bd=0.30  serp_0.4_0.4_3.0 ...  sim=0.547  real=0.700  err=21.8%
+  [124/198] floor_only   mu_fl=0.90 mu_bd=0.30  serp_0.4_0.6_3.0 ...  sim=0.866  real=1.460  err=40.7%
+  [125/198] floor_only   mu_fl=0.90 mu_bd=0.30  serp_0.6_0.4_3.0 ...  sim=1.208  real=0.650  err=85.8%
+  [126/198] floor_only   mu_fl=0.90 mu_bd=0.30  serp_0.6_0.6_3.0 ...  sim=1.207  real=1.600  err=24.6%
+  [127/198] floor_only   mu_fl=0.90 mu_bd=0.30  carp_0.4_2.0 ...  sim=0.676  real=0.620  err=9.1%
+  [128/198] floor_only   mu_fl=0.90 mu_bd=0.30  carp_0.4_2.5 ...  sim=1.078  real=0.720  err=49.7%
+  [129/198] floor_only   mu_fl=0.90 mu_bd=0.30  carp_0.4_3.0 ...  sim=0.277  real=0.270  err=2.7%
+  [130/198] floor_only   mu_fl=0.90 mu_bd=0.30  carp_0.6_2.0 ...  sim=0.689  real=0.470  err=46.7%
+  [131/198] floor_only   mu_fl=0.90 mu_bd=0.30  carp_0.6_2.5 ...  sim=1.144  real=1.420  err=19.5%
+  [132/198] floor_only   mu_fl=0.90 mu_bd=0.30  carp_0.6_3.0 ...  sim=0.714  real=0.970  err=26.4%
+  [133/198] isotropic    mu_fl=1.10 mu_bd=1.10  serp_0.4_0.4_2.5 ...  sim=1.007  real=0.930  err=8.3%
+  [134/198] isotropic    mu_fl=1.10 mu_bd=1.10  serp_0.4_0.4_3.0 ...  sim=0.538  real=0.700  err=23.1%
+  [135/198] isotropic    mu_fl=1.10 mu_bd=1.10  serp_0.4_0.6_3.0 ...  sim=0.842  real=1.460  err=42.3%
+  [136/198] isotropic    mu_fl=1.10 mu_bd=1.10  serp_0.6_0.4_3.0 ...  sim=1.319  real=0.650  err=102.9%
+  [137/198] isotropic    mu_fl=1.10 mu_bd=1.10  serp_0.6_0.6_3.0 ...  sim=1.274  real=1.600  err=20.4%
+  [138/198] isotropic    mu_fl=1.10 mu_bd=1.10  carp_0.4_2.0 ...  sim=0.653  real=0.620  err=5.4%
+  [139/198] isotropic    mu_fl=1.10 mu_bd=1.10  carp_0.4_2.5 ...  sim=1.109  real=0.720  err=54.0%
+  [140/198] isotropic    mu_fl=1.10 mu_bd=1.10  carp_0.4_3.0 ...  sim=0.262  real=0.270  err=3.1%
+  [141/198] isotropic    mu_fl=1.10 mu_bd=1.10  carp_0.6_2.0 ...  sim=0.659  real=0.470  err=40.3%
+  [142/198] isotropic    mu_fl=1.10 mu_bd=1.10  carp_0.6_2.5 ...  sim=1.144  real=1.420  err=19.5%
+  [143/198] isotropic    mu_fl=1.10 mu_bd=1.10  carp_0.6_3.0 ...  sim=0.866  real=0.970  err=10.7%
+  [144/198] floor_only   mu_fl=1.10 mu_bd=0.30  serp_0.4_0.4_2.5 ...  sim=0.996  real=0.930  err=7.1%
+  [145/198] floor_only   mu_fl=1.10 mu_bd=0.30  serp_0.4_0.4_3.0 ...  sim=0.550  real=0.700  err=21.4%
+  [146/198] floor_only   mu_fl=1.10 mu_bd=0.30  serp_0.4_0.6_3.0 ...  sim=0.864  real=1.460  err=40.8%
+  [147/198] floor_only   mu_fl=1.10 mu_bd=0.30  serp_0.6_0.4_3.0 ...  sim=1.241  real=0.650  err=90.9%
+  [148/198] floor_only   mu_fl=1.10 mu_bd=0.30  serp_0.6_0.6_3.0 ...  sim=1.295  real=1.600  err=19.1%
+  [149/198] floor_only   mu_fl=1.10 mu_bd=0.30  carp_0.4_2.0 ...  sim=0.652  real=0.620  err=5.2%
+  [150/198] floor_only   mu_fl=1.10 mu_bd=0.30  carp_0.4_2.5 ...  sim=1.088  real=0.720  err=51.1%
+  [151/198] floor_only   mu_fl=1.10 mu_bd=0.30  carp_0.4_3.0 ...  sim=0.264  real=0.270  err=2.2%
+  [152/198] floor_only   mu_fl=1.10 mu_bd=0.30  carp_0.6_2.0 ...  sim=0.674  real=0.470  err=43.4%
+  [153/198] floor_only   mu_fl=1.10 mu_bd=0.30  carp_0.6_2.5 ...  sim=1.155  real=1.420  err=18.7%
+  [154/198] floor_only   mu_fl=1.10 mu_bd=0.30  carp_0.6_3.0 ...  sim=0.694  real=0.970  err=28.4%
+  [155/198] isotropic    mu_fl=1.35 mu_bd=1.35  serp_0.4_0.4_2.5 ...  sim=1.060  real=0.930  err=14.0%
+  [156/198] isotropic    mu_fl=1.35 mu_bd=1.35  serp_0.4_0.4_3.0 ...  sim=0.511  real=0.700  err=27.1%
+  [157/198] isotropic    mu_fl=1.35 mu_bd=1.35  serp_0.4_0.6_3.0 ...  sim=0.896  real=1.460  err=38.6%
+  [158/198] isotropic    mu_fl=1.35 mu_bd=1.35  serp_0.6_0.4_3.0 ...  sim=1.322  real=0.650  err=103.4%
+  [159/198] isotropic    mu_fl=1.35 mu_bd=1.35  serp_0.6_0.6_3.0 ...  sim=1.374  real=1.600  err=14.1%
+  [160/198] isotropic    mu_fl=1.35 mu_bd=1.35  carp_0.4_2.0 ...  sim=0.628  real=0.620  err=1.2%
+  [161/198] isotropic    mu_fl=1.35 mu_bd=1.35  carp_0.4_2.5 ...  sim=1.156  real=0.720  err=60.5%
+  [162/198] isotropic    mu_fl=1.35 mu_bd=1.35  carp_0.4_3.0 ...  sim=0.232  real=0.270  err=14.2%
+  [163/198] isotropic    mu_fl=1.35 mu_bd=1.35  carp_0.6_2.0 ...  sim=0.640  real=0.470  err=36.1%
+  [164/198] isotropic    mu_fl=1.35 mu_bd=1.35  carp_0.6_2.5 ...  sim=1.181  real=1.420  err=16.8%
+  [165/198] isotropic    mu_fl=1.35 mu_bd=1.35  carp_0.6_3.0 ...  sim=0.800  real=0.970  err=17.5%
+  [166/198] floor_only   mu_fl=1.35 mu_bd=0.30  serp_0.4_0.4_2.5 ...  sim=0.988  real=0.930  err=6.3%
+  [167/198] floor_only   mu_fl=1.35 mu_bd=0.30  serp_0.4_0.4_3.0 ...  sim=0.542  real=0.700  err=22.6%
+  [168/198] floor_only   mu_fl=1.35 mu_bd=0.30  serp_0.4_0.6_3.0 ...  sim=0.849  real=1.460  err=41.8%
+  [169/198] floor_only   mu_fl=1.35 mu_bd=0.30  serp_0.6_0.4_3.0 ...  sim=1.213  real=0.650  err=86.6%
+  [170/198] floor_only   mu_fl=1.35 mu_bd=0.30  serp_0.6_0.6_3.0 ...  sim=1.283  real=1.600  err=19.8%
+  [171/198] floor_only   mu_fl=1.35 mu_bd=0.30  carp_0.4_2.0 ...  sim=0.633  real=0.620  err=2.1%
+  [172/198] floor_only   mu_fl=1.35 mu_bd=0.30  carp_0.4_2.5 ...  sim=1.064  real=0.720  err=47.8%
+  [173/198] floor_only   mu_fl=1.35 mu_bd=0.30  carp_0.4_3.0 ...  sim=0.255  real=0.270  err=5.6%
+  [174/198] floor_only   mu_fl=1.35 mu_bd=0.30  carp_0.6_2.0 ...  sim=0.655  real=0.470  err=39.3%
+  [175/198] floor_only   mu_fl=1.35 mu_bd=0.30  carp_0.6_2.5 ...  sim=1.155  real=1.420  err=18.7%
+  [176/198] floor_only   mu_fl=1.35 mu_bd=0.30  carp_0.6_3.0 ...  sim=0.665  real=0.970  err=31.4%
+  [177/198] isotropic    mu_fl=1.60 mu_bd=1.60  serp_0.4_0.4_2.5 ...  sim=1.058  real=0.930  err=13.7%
+  [178/198] isotropic    mu_fl=1.60 mu_bd=1.60  serp_0.4_0.4_3.0 ...  sim=0.526  real=0.700  err=24.9%
+  [179/198] isotropic    mu_fl=1.60 mu_bd=1.60  serp_0.4_0.6_3.0 ...  sim=0.911  real=1.460  err=37.6%
+  [180/198] isotropic    mu_fl=1.60 mu_bd=1.60  serp_0.6_0.4_3.0 ...  sim=1.303  real=0.650  err=100.4%
+  [181/198] isotropic    mu_fl=1.60 mu_bd=1.60  serp_0.6_0.6_3.0 ...  sim=1.367  real=1.600  err=14.6%
+  [182/198] isotropic    mu_fl=1.60 mu_bd=1.60  carp_0.4_2.0 ...  sim=0.595  real=0.620  err=4.0%
+  [183/198] isotropic    mu_fl=1.60 mu_bd=1.60  carp_0.4_2.5 ...  sim=1.149  real=0.720  err=59.6%
+  [184/198] isotropic    mu_fl=1.60 mu_bd=1.60  carp_0.4_3.0 ...  sim=0.244  real=0.270  err=9.8%
+  [185/198] isotropic    mu_fl=1.60 mu_bd=1.60  carp_0.6_2.0 ...  sim=0.610  real=0.470  err=29.8%
+  [186/198] isotropic    mu_fl=1.60 mu_bd=1.60  carp_0.6_2.5 ...  sim=1.189  real=1.420  err=16.3%
+  [187/198] isotropic    mu_fl=1.60 mu_bd=1.60  carp_0.6_3.0 ...  sim=0.715  real=0.970  err=26.3%
+  [188/198] floor_only   mu_fl=1.60 mu_bd=0.30  serp_0.4_0.4_2.5 ...  sim=0.982  real=0.930  err=5.5%
+  [189/198] floor_only   mu_fl=1.60 mu_bd=0.30  serp_0.4_0.4_3.0 ...  sim=0.521  real=0.700  err=25.6%
+  [190/198] floor_only   mu_fl=1.60 mu_bd=0.30  serp_0.4_0.6_3.0 ...  sim=0.819  real=1.460  err=43.9%
+  [191/198] floor_only   mu_fl=1.60 mu_bd=0.30  serp_0.6_0.4_3.0 ...  sim=1.167  real=0.650  err=79.5%
+  [192/198] floor_only   mu_fl=1.60 mu_bd=0.30  serp_0.6_0.6_3.0 ...  sim=1.233  real=1.600  err=22.9%
+  [193/198] floor_only   mu_fl=1.60 mu_bd=0.30  carp_0.4_2.0 ...  sim=0.625  real=0.620  err=0.8%
+  [194/198] floor_only   mu_fl=1.60 mu_bd=0.30  carp_0.4_2.5 ...  sim=1.034  real=0.720  err=43.7%
+  [195/198] floor_only   mu_fl=1.60 mu_bd=0.30  carp_0.4_3.0 ...  sim=0.246  real=0.270  err=8.9%
+  [196/198] floor_only   mu_fl=1.60 mu_bd=0.30  carp_0.6_2.0 ...  sim=0.648  real=0.470  err=37.9%
+  [197/198] floor_only   mu_fl=1.60 mu_bd=0.30  carp_0.6_2.5 ...  sim=1.155  real=1.420  err=18.7%
+  [198/198] floor_only   mu_fl=1.60 mu_bd=0.30  carp_0.6_3.0 ...  sim=0.634  real=0.970  err=34.7%
+
+======================================================================
+Sweep type     mu_floor  mu_body   MAPE all   MAPE S   MAPE C
+----------------------------------------------------------------------
+  isotropic         0.90    0.90     29.26%    36.47%    23.26%
+  floor_only        1.35    0.30     29.27%    35.43%    24.14%
+  floor_only        1.60    0.30     29.29%    35.51%    24.10%
+  floor_only        1.10    0.30     29.84%    35.86%    24.82%
+  isotropic         1.10    1.10     29.99%    39.39%    22.16%
+  floor_only        0.90    0.30     30.12%    35.45%    25.67%
+  isotropic         1.60    1.60     30.63%    38.24%    24.29%
+  isotropic         0.75    0.75     30.66%    35.87%    26.32%
+  isotropic         1.35    1.35     31.24%    39.45%    24.39%
+  floor_only        0.75    0.30     31.30%    34.83%    28.37%
+  isotropic         0.60    0.60     34.21%    37.21%    31.71%
+  floor_only        0.60    0.30     34.25%    35.97%    32.82%
+  floor_only        0.45    0.30     38.11%    38.15%    38.07%
+  isotropic         0.45    0.45     38.80%    38.47%    39.07%
+  isotropic         0.20    0.20     42.08%    40.82%    43.13%
+  floor_only        0.20    0.30     43.96%    42.42%    45.24%
+  floor_only        0.30    0.30     43.96%    42.42%    45.24%
+  isotropic         0.30    0.30     43.96%    42.42%    45.24%
+
+  Best: isotropic  mu_floor=0.90  mu_body=0.90  MAPE=29.26%
+
+All results saved to friction_sweep_results.csv
