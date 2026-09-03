@@ -14,13 +14,13 @@ from mjlab.rl import (
 def snakebot_locomotion_ppo_cfg() -> RslRlOnPolicyRunnerCfg:
     """Create RL runner configuration for Snakebot locomotion task."""
     return RslRlOnPolicyRunnerCfg(
-        # Actor: ~36 dim obs (added phase_clock) → larger network for better capacity
+        # Actor: larger history-augmented obs (~76 dim) → larger network for capacity
         actor=RslRlModelCfg(
             hidden_dims=(512, 256, 128),
             activation="elu",
             obs_normalization=True,
             stochastic=True,
-            init_noise_std=1.0,
+            init_noise_std=0.2,
             noise_std_type="log",
         ),
         # Critic: ~91 dim privileged obs → large network
@@ -29,17 +29,17 @@ def snakebot_locomotion_ppo_cfg() -> RslRlOnPolicyRunnerCfg:
             activation="elu",
             obs_normalization=True,
             stochastic=False,
-            init_noise_std=1.0,
+            init_noise_std=0.2,
         ),
         # PPO hyper-parameters — higher entropy for exploration
         algorithm=RslRlPpoAlgorithmCfg(
             value_loss_coef=1.0,
             use_clipped_value_loss=True,
             clip_param=0.2,
-            entropy_coef=0.02,
+            entropy_coef=0.005,
             num_learning_epochs=5,
             num_mini_batches=4,
-            learning_rate=3.0e-4,
+            learning_rate=1.0e-3,
             schedule="adaptive",
             gamma=0.99,
             lam=0.95,
@@ -50,6 +50,7 @@ def snakebot_locomotion_ppo_cfg() -> RslRlOnPolicyRunnerCfg:
         logger="wandb",
         wandb_project="mjlab",
         save_interval=100,
-        num_steps_per_env=24,           # 24 steps × 0.1 s = 2.4 s rollout
+        num_steps_per_env=48,
+        clip_actions=0.8,
         max_iterations=10_000,
     )

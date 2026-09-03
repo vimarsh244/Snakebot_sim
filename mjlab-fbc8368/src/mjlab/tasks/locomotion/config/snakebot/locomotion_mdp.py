@@ -41,6 +41,15 @@ _DEFAULT_MODULE_ASSET_CFG = SceneEntityCfg(
 # gait period in env steps (15 steps * 0.1s = 1.5s cycle at 10 Hz)
 GAIT_PERIOD_STEPS = 15
 
+# Grace period: ignore rewards for the first N env steps after each reset
+# so the weld constraints can converge and the snake can settle on the ground.
+SETTLE_GRACE_STEPS = 10
+
+
+def _grace_mask(env: ManagerBasedRlEnv) -> torch.Tensor:
+    """Return 1.0 for envs past the settle grace period, 0.0 otherwise."""
+    return (env.episode_length_buf >= SETTLE_GRACE_STEPS).float()
+
 
 # ---------------------------------------------------------------------------
 # Goal management helpers
@@ -88,13 +97,13 @@ def goal_vector_body_frame(
 ) -> torch.Tensor:
     """Goal direction in the snake's local frame, shape (B, 2).
 
-    Uses full quaternion rotation instead of yaw extraction because the
-    snake's initial pitch is ~90deg (body X points down), which puts the
-    standard yaw formula in gimbal lock.
+    Uses full quaternion rotation.
 
     The snake's forward axis is body -Z (maps to world +X initially) and
-    lateral axis is body -Y (maps to world +Y). We return (forward, lateral)
+    lateral axis is body -Y (maps to world Y). We return (forward, lateral)
     so that a positive first component means "goal is ahead."
+
+    CRITICAL: goal in world +X maps to body +Z, so forward = +goal_b[:, 2]
     """
     asset: Entity = env.scene[asset_cfg.name]
     goal_w_2d = _get_goal_pos(env) - _get_head_pos_xy(env)  # (B, 2)
@@ -111,8 +120,9 @@ def goal_vector_body_frame(
 
     goal_b = quat_apply_inverse(quat, goal_w_3d)  # (B, 3)
 
-    # body -Z = forward along snake axis, body -Y = lateral
-    forward = -goal_b[:, 2]
+    # body -Z = forward along snake axis (world +X), body -Y = lateral
+    # Goal ahead (world +X) -> body +Z, so forward = +goal_b[:, 2]
+    forward = goal_b[:, 2]
     lateral = -goal_b[:, 1]
     result = torch.stack([forward, lateral], dim=1)
     return torch.nan_to_num(result, nan=0.0, posinf=0.0, neginf=0.0)  # (B, 2)
@@ -142,6 +152,85 @@ def phase_clock(env: ManagerBasedRlEnv) -> torch.Tensor:
         2.0 * math.pi * env.episode_length_buf.float() / GAIT_PERIOD_STEPS
     )
     return torch.stack([torch.sin(phase), torch.cos(phase)], dim=1)
+
+
+def joint_pos_action_history(
+    env: ManagerBasedRlEnv,
+    asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
+) -> torch.Tensor:
+    """Three-frame history for actor input, shape (B, 60).
+
+    Returns [joint_pos_rel, action] for the current frame and previous 2 frames:
+    [t, t-1, t-2]. History shifting is guarded so repeated calls in the same
+    env step do not shift twice (important when both actor/critic request it).
+    """
+    asset: Entity = env.scene[asset_cfg.name]
+    default_joint_pos = asset.data.default_joint_pos
+    assert default_joint_pos is not None
+    jnt_ids = asset_cfg.joint_ids
+
+    joint_pos_rel = asset.data.joint_pos[:, jnt_ids] - default_joint_pos[:, jnt_ids]
+    joint_pos_rel = torch.nan_to_num(joint_pos_rel, nan=0.0, posinf=0.0, neginf=0.0)
+    action = torch.nan_to_num(
+        env.action_manager.action, nan=0.0, posinf=0.0, neginf=0.0
+    )
+
+    env_any = cast(Any, env)
+    num_envs = env.num_envs
+    pos_dim = int(joint_pos_rel.shape[1])
+    act_dim = int(action.shape[1])
+    hist_shape_pos = (num_envs, 3, pos_dim)
+    hist_shape_act = (num_envs, 3, act_dim)
+
+    if (
+        not hasattr(env_any, "_joint_pos_hist")
+        or env_any._joint_pos_hist.shape != hist_shape_pos
+    ):
+        env_any._joint_pos_hist = torch.zeros(
+            hist_shape_pos, device=env.device, dtype=joint_pos_rel.dtype
+        )
+    if (
+        not hasattr(env_any, "_action_hist")
+        or env_any._action_hist.shape != hist_shape_act
+    ):
+        env_any._action_hist = torch.zeros(
+            hist_shape_act, device=env.device, dtype=action.dtype
+        )
+    if not hasattr(env_any, "_joint_pos_action_hist_last_step"):
+        env_any._joint_pos_action_hist_last_step = -1
+
+    reset_mask = env.episode_length_buf == 0
+    if torch.any(reset_mask):
+        # clear stale history on env reset; current frame is written below.
+        env_any._joint_pos_hist[reset_mask] = 0.0
+        env_any._action_hist[reset_mask] = 0.0
+
+    step = int(env.common_step_counter)
+    if env_any._joint_pos_action_hist_last_step != step:
+        non_reset = ~reset_mask
+        if torch.any(non_reset):
+            env_any._joint_pos_hist[non_reset, 2] = env_any._joint_pos_hist[
+                non_reset, 1
+            ]
+            env_any._joint_pos_hist[non_reset, 1] = env_any._joint_pos_hist[
+                non_reset, 0
+            ]
+            env_any._action_hist[non_reset, 2] = env_any._action_hist[non_reset, 1]
+            env_any._action_hist[non_reset, 1] = env_any._action_hist[non_reset, 0]
+        env_any._joint_pos_action_hist_last_step = step
+
+    env_any._joint_pos_hist[:, 0] = joint_pos_rel
+    env_any._action_hist[:, 0] = action
+
+    history = torch.cat(
+        [
+            torch.cat([env_any._joint_pos_hist[:, 0], env_any._action_hist[:, 0]], dim=1),
+            torch.cat([env_any._joint_pos_hist[:, 1], env_any._action_hist[:, 1]], dim=1),
+            torch.cat([env_any._joint_pos_hist[:, 2], env_any._action_hist[:, 2]], dim=1),
+        ],
+        dim=1,
+    )
+    return torch.nan_to_num(history, nan=0.0, posinf=0.0, neginf=0.0)
 
 
 # ---------------------------------------------------------------------------
@@ -204,16 +293,17 @@ def progress_reward(env: ManagerBasedRlEnv) -> torch.Tensor:
     progress = (prev_dist - curr_dist).clamp(-1.0, 1.0)
     # update history here so reward is independent of event callback ordering
     env_any._loco_prev_dist = curr_dist.detach()
-    return progress
+    return progress * _grace_mask(env)
 
 
 def distance_penalty(env: ManagerBasedRlEnv) -> torch.Tensor:
-    """Negative distance to goal (snakebot-gym style).
+    """Dense proximity signal in [0, 1], higher when closer to the goal.
 
-    Provides a persistent pull toward the goal.
-    Clamped to prevent huge values at large distances.
+    This is kept under the existing name for backward compatibility with
+    task configs, but it is intentionally a positive reward shaping term.
     """
-    return -_distance_to_goal(env).clamp(0.0, 3.0)
+    dist = _distance_to_goal(env).clamp(0.0, 3.0)
+    return torch.exp(-2.0 * dist) * _grace_mask(env)
 
 
 def goal_reached_bonus(
@@ -255,13 +345,13 @@ def control_cost(
     asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
 ) -> torch.Tensor:
     """Squared sum of all actions (energy penalty)."""
-    return torch.sum(torch.square(env.action_manager.action), dim=1)
+    return torch.sum(torch.square(env.action_manager.action), dim=1) * _grace_mask(env)
 
 
 def action_smoothness_penalty(env: ManagerBasedRlEnv) -> torch.Tensor:
     """Squared difference between current and previous action (jerk penalty)."""
     delta = env.action_manager.action - env.action_manager.prev_action
-    return torch.sum(torch.square(delta), dim=1)
+    return torch.sum(torch.square(delta), dim=1) * _grace_mask(env)
 
 
 # ---------------------------------------------------------------------------
@@ -278,9 +368,12 @@ def goal_reached_termination(
 
 def root_too_high(
     env: ManagerBasedRlEnv,
-    max_height: float = 0.3,
+    max_height: float = 0.5,
     asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
 ) -> torch.Tensor:
-    """Terminate if the root body rises above max_height (physics blowup)."""
+    """Terminate if the root body rises above max_height (physics blowup).
+    Disabled during the settle grace period."""
     asset: Entity = env.scene[asset_cfg.name]
-    return asset.data.root_link_pos_w[:, 2] > max_height
+    above = asset.data.root_link_pos_w[:, 2] > max_height
+    settled = env.episode_length_buf >= SETTLE_GRACE_STEPS
+    return above & settled

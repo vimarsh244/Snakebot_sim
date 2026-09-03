@@ -1,0 +1,75 @@
+{
+  "checkpoint": "/home/vim/Desktop/Snakebot_sim/mjlab-fbc8368/logs/rsl_rl/snakebot_locomotion_v2/2026-03-10_19-34-58/model_1200.pt",
+  "seed": 20260903,
+  "control_dt_s": 0.05,
+  "stopping_radius_m": 0.13,
+  "max_steps": 1500,
+  "evaluation_steps_until_all_stopped": 172,
+  "capture_fps": 10,
+  "samples": [
+    {
+      "sample": "plus_x",
+      "goal_offset_m": [
+        0.6,
+        0.0
+      ],
+      "initial_distance_m": 0.6,
+      "stopping_radius_m": 0.13,
+      "minimum_distance_m": 0.129,
+      "stopping_distance_m": 0.129,
+      "reached": true,
+      "first_reach_step": 172,
+      "first_reach_time_s": 8.6,
+      "recorded_duration_s": 8.8,
+      "video": "plus_x.mp4"
+    },
+    {
+      "sample": "plus_y",
+      "goal_offset_m": [
+        0.0,
+        0.6
+      ],
+      "initial_distance_m": 0.6,
+      "stopping_radius_m": 0.13,
+      "minimum_distance_m": 0.0768,
+      "stopping_distance_m": 0.1273,
+      "reached": true,
+      "first_reach_step": 120,
+      "first_reach_time_s": 6.0,
+      "recorded_duration_s": 6.2,
+      "video": "plus_y.mp4"
+    },
+    {
+      "sample": "minus_x",
+      "goal_offset_m": [
+        -0.6,
+        0.0
+      ],
+      "initial_distance_m": 0.6,
+      "stopping_radius_m": 0.13,
+      "minimum_distance_m": 0.1211,
+      "stopping_distance_m": 0.1284,
+      "reached": true,
+      "first_reach_step": 136,
+      "first_reach_time_s": 6.8,
+      "recorded_duration_s": 7.0,
+      "video": "minus_x.mp4"
+    },
+    {
+      "sample": "minus_y",
+      "goal_offset_m": [
+        0.0,
+        -0.6
+      ],
+      "initial_distance_m": 0.6,
+      "stopping_radius_m": 0.13,
+      "minimum_distance_m": 0.12,
+      "stopping_distance_m": 0.13,
+      "reached": true,
+      "first_reach_step": 154,
+      "first_reach_time_s": 7.7,
+      "recorded_duration_s": 7.9,
+      "video": "minus_y.mp4"
+    }
+  ]
+}

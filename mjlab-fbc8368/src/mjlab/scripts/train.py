@@ -199,8 +199,10 @@ def run_train(task_id: str, cfg: TrainConfig, log_dir: Path) -> None:
     dump_yaml(log_dir / "params" / "env.yaml", env_cfg)
     dump_yaml(log_dir / "params" / "agent.yaml", agent_cfg)
 
+  init_at_random_ep_len = "Snakebot" not in task_id
   runner.learn(
-    num_learning_iterations=cfg.agent.max_iterations, init_at_random_ep_len=True
+    num_learning_iterations=cfg.agent.max_iterations,
+    init_at_random_ep_len=init_at_random_ep_len,
   )
 
   env.close()

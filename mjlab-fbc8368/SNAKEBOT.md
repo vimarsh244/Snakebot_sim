@@ -1,142 +1,326 @@
-# Snakebot (chain_5) in mjlab
+# Snakebot v2 goal-reaching in mjlab
 
-This document describes how to set up, train, and visualize the 5-module snakebot (closed-chain MJCF from `snake_description/chain_5.xml`) using mjlab.
+This is the authoritative guide for the current Snakebot policy in this repository.
 
-## Model
+> [!IMPORTANT]
+> Use `Mjlab-Locomotion-Flat-Snakebot-v2` for current training and playback.
+> The evaluated `model_1200.pt` belongs to the `snakebot_locomotion_v2`
+> experiment.
 
-- **Robot**: 5-module snake chain with closed kinematic loops (equality welds). Actuated joints: 10 (2 per module: `m*_Revolute-15`, `m*_Revolute-16`).
-- **MJCF**: `src/mjlab/asset_zoo/robots/snakebot/xmls/chain_5.xml` (copy of the original with Warp-compat edits: `noslip_iterations` removed, equality constraint `solref` relaxed to `0.002 1`).
-- **Meshes**: All STLs live under `snakebot/xmls/meshes/`.
+## Current task
 
-## Available Tasks
+- Task ID: `Mjlab-Locomotion-Flat-Snakebot-v2`
+- Experiment directory: `snakebot_locomotion_v2/`
+- Purpose: navigate to COM-relative XY goals
 
-### 1. `Mjlab-Velocity-Flat-Snakebot` — Velocity Tracking
+The v2 environment starts from `make_velocity_env_cfg()` only to reuse common
+scene defaults. It replaces the robot, commands, observations, rewards, events,
+and terminations with goal-reaching behavior. It does not load the velocity
+policy.
 
-Forward velocity tracking task. The robot learns to follow velocity commands.
+## Authoritative robot and scene
 
-**Actor** (~44 dim): Phase clock (2), actuated joint pos/vel (20), last action (10), velocity commands (3), root IMU (9)
-**Critic** (~99 dim): Actor obs + per-module pos/vel/ang-vel (45) + joint efforts (10)
+The v2 task is registered in
+`src/mjlab/tasks/locomotion/config/snakebot_v2/__init__.py` and constructed by
+`snakebot_locomotion_v2_flat_cfg()`.
 
-### 2. `Mjlab-Locomotion-Flat-Snakebot` — Goal-Reaching
+The scene is composed as follows:
 
-Navigate to a random XY goal 0.3–0.8 m away. Reward design informed by 5 research papers (COBRA thesis, snakebot-gym, Naish/EELS, serpentine locomotion RL, sensors-22-09867).
+1. Flat plane terrain, with no terrain generator or height scanner.
+2. One Snakebot entity created by `get_snakebot_robot_cfg()`.
+3. The robot loader reads:
+   `src/mjlab/asset_zoo/robots/snakebot/xmls/chain_5.xml`.
+4. Meshes are loaded from the adjacent `xmls/meshes/` directory.
 
-**Actor** (~36 dim, hardware-deployable):
-- Phase clock (2): sin/cos of normalised episode time for gait coordination
-- Goal vector in body frame (2): forward/lateral offset to goal via full quaternion rotation
-- Heading to goal (2): sin/cos of angle between heading and goal direction
-- Joint positions/velocities (20)
-- Previous actions (10)
-
-**Critic** (~91 dim, privileged):
-- All actor obs + per-module positions/velocities/angular-vel (45) + joint efforts (10)
-
-**Rewards**:
-| Term | Weight | Purpose |
-|---|---|---|
-| `progress_reward` | +15.0 | Δ distance to goal (KEY signal) |
-| `heading_alignment` | +3.0 | Face the goal (cos similarity) |
-| `goal_reached_bonus` | +200.0 | Sparse bonus on arrival (<25 cm) |
-| `distance_penalty` | +0.1 | Gentle pull toward goal |
-| `alive_bonus` | +0.05 | Small keep-alive baseline |
-| `control_cost` | -0.002 | Tiny energy term |
-| `action_smoothness` | -0.001 | Tiny smoothness term |
-| `dof_pos_limits` | -0.1 | Soft joint-limit guard |
-
-**Episode**: 30 s max (300 steps at 10 Hz). Terminates early on goal reach.
+The robot has five modules and ten position-controlled joints:
+`m[1-5]_Revolute-15` and `m[1-5]_Revolute-16`.
 
 ## Setup
 
-From the mjlab repo root:
+From outside the repository:
 
 ```bash
+git clone --recurse-submodules https://github.com/vimarsh244/Snakebot_sim.git
+cd Snakebot_sim/mjlab-fbc8368
+uv sync
+```
+
+For an existing checkout:
+
+```bash
+git submodule update --init --recursive
 cd mjlab-fbc8368
 uv sync
 ```
 
-Requires Python 3.10–3.13 and (for GPU training) NVIDIA GPU + CUDA.
+The project environment is `mjlab-fbc8368/.venv`. Prefer `uv run ...` so the
+correct interpreter and dependencies are selected automatically.
 
-## Training
+Requirements:
 
-### Velocity task
-```bash
-uv run train Mjlab-Velocity-Flat-Snakebot --env.scene.num-envs 2048
-```
+- Python 3.10–3.13.
+- NVIDIA GPU and CUDA for practical training.
+- Node 20.19+ for the mjswan frontend toolchain.
 
-### Locomotion task (goal-reaching)
-```bash
-uv run train Mjlab-Locomotion-Flat-Snakebot --env.scene.num-envs 2048
-```
-
-Tune parallelism:
-```bash
-uv run train Mjlab-Locomotion-Flat-Snakebot --env.scene.num-envs 1024
-uv run train Mjlab-Locomotion-Flat-Snakebot --env.scene.num-envs 4096 --gpu-ids 0 1
-```
-
-Training uses **Weights & Biases** by default. Log in once: `wandb login`.
-
-Runs appear under the `mjlab` project. Checkpoints and ONNX are saved under `logs/rsl_rl/<experiment_name>/<timestamp>/`.
-
-## Visualization
-
-### Zero / random agent (no policy)
+Confirm the registered tasks:
 
 ```bash
-uv run play Mjlab-Locomotion-Flat-Snakebot --agent zero
-uv run play Mjlab-Locomotion-Flat-Snakebot --agent random
+uv run list_envs --keyword Snakebot
 ```
 
-### Trained policy (from wandb)
+## Current v2 environment
+
+### Goal behavior
+
+- Goals are sampled relative to the full-robot center of mass, not the head.
+- Directions are balanced across all four XY quadrants.
+- Goal-distance curriculum: `0.50`–`3.00 m`.
+- Initial curriculum maximum: `0.65 m`.
+- Curriculum reaches the full range after `2,000,000` environment steps.
+- Goal completion/episode stopping radius: `0.13 m` from robot COM.
+- Training episode limit: `75 s`.
+- Control frequency: `20 Hz`.
+
+### Simulation
+
+| Setting | v2 value |
+| --- | ---: |
+| Physics timestep | `0.0025 s` |
+| Control decimation | `20` |
+| Control timestep | `0.05 s` |
+| Solver | Newton |
+| Integrator | implicitfast |
+| Solver iterations | `120` |
+| Line-search iterations | `40` |
+| `impratio` | `12.0` |
+| CCD iterations | `120` |
+| `njmax` | `12000` |
+| `nconmax` | `1200` |
+
+### Policy interface
+
+The actor consumes 126 values and produces ten joint-position actions.
+
+| Actor observation | Size |
+| --- | ---: |
+| Phase clock | 2 |
+| Goal vector in body frame | 2 |
+| Heading to goal | 2 |
+| Joint-position history, 3 frames | 30 |
+| Joint-velocity history, 3 frames | 30 |
+| Action history, 3 frames | 30 |
+| Five module linear velocities in root frame | 15 |
+| Five module angular velocities in root frame | 15 |
+| **Total** | **126** |
+
+The critic uses 182 values: the actor observations plus goal distance, module
+positions/velocities, and joint efforts. Actions use a `0.10 rad` scale and PPO
+clips them to `0.9`.
+
+### Main reward weights
+
+| Reward | Weight |
+| --- | ---: |
+| Progress toward goal | `33.0` |
+| Root velocity toward goal | `9.0` |
+| COM velocity toward goal | `4.0` |
+| Distance shaping | `4.5` |
+| Goal reached bonus | `66.0` |
+| Alive bonus | `0.3` |
+| Stagnation | `-0.5` |
+| Lateral slip | `-0.06` |
+| Vertical velocity | `-0.08` |
+| Yaw rate | `-0.06` |
+| Action smoothness | `-0.015` |
+| Control cost | `-0.003` |
+| Joint-position limits | `-0.002` |
+
+Training includes friction, inertia, joint, encoder, PD-gain, effort-limit, and
+gentle post-settle push randomization. Play mode disables observation corruption
+and those randomization events.
+
+## Train v2
+
+Run commands from `mjlab-fbc8368/`.
+
+Single GPU:
 
 ```bash
-uv run play Mjlab-Locomotion-Flat-Snakebot --wandb-run-path YOUR_ENTITY/mjlab/RUN_ID
+uv run train Mjlab-Locomotion-Flat-Snakebot-v2 \
+  --env.scene.num-envs 2048
 ```
 
-### Trained policy (local checkpoint)
+Choose a GPU or adjust parallelism:
 
 ```bash
-uv run play Mjlab-Locomotion-Flat-Snakebot --checkpoint-file path/to/model_XXXX.pt
+uv run train Mjlab-Locomotion-Flat-Snakebot-v2 \
+  --env.scene.num-envs 1024 \
+  --gpu-ids 1
+
+uv run train Mjlab-Locomotion-Flat-Snakebot-v2 \
+  --env.scene.num-envs 4096 \
+  --gpu-ids 0 1
 ```
 
-### Viewers
+Training logs go to:
 
-- **Native MuJoCo viewer** (default): `uv run play ...`
-- **Viser (web)**: `uv run play ... --viewer viser` — opens in browser (e.g. http://localhost:8012).
+```text
+logs/rsl_rl/snakebot_locomotion_v2/<timestamp>/
+```
 
-### Recording video
+Weights & Biases uses project `mjlab`. Authenticate once with `wandb login`.
+
+Resume the latest matching local v2 checkpoint:
 
 ```bash
-uv run play Mjlab-Locomotion-Flat-Snakebot --agent zero --video
+uv run train Mjlab-Locomotion-Flat-Snakebot-v2 --agent.resume
 ```
 
-## Wandb
+Resume a W&B checkpoint:
 
-- **Project**: `mjlab` (set in task RL config).
-- **Tags**: Add via `--agent.wandb-tags tag1 tag2`.
-- **Resume**: `uv run train Mjlab-Locomotion-Flat-Snakebot --agent.resume --wandb-run-path ENTITY/mjlab/RUN_ID`.
+```bash
+uv run train Mjlab-Locomotion-Flat-Snakebot-v2 \
+  --agent.resume \
+  --wandb-run-path ENTITY/mjlab/RUN_ID
+```
 
-## If MuJoCo Warp fails
+## Known working checkpoints
 
-The snake uses equality constraints (welds). If training fails on GPU (e.g. Warp constraint limits), you can:
+Two curated v2 checkpoints are committed:
 
-1. Reduce `--env.scene.num-envs` (e.g. 512).
-2. Try CPU-only: set `CUDA_VISIBLE_DEVICES=""` and run training (slower).
-3. Use the original `snake_description/chain_5.xml` (with `noslip_iterations`) in standard MuJoCo for visualization; the mjlab copy only removes `noslip_iterations` for Warp compatibility.
+- `checkpoints/snakebot_v2/model_800.pt`
+- `checkpoints/snakebot_v2/model_1200.pt` — used for the committed evaluation
 
-## File layout
+Both come from source run `2026-03-10_19-34-58`. TensorBoard recorded mean
+rewards of `328.034119` at iteration 800 and `312.155579` at
+iteration 1200.
 
-- `src/mjlab/asset_zoo/robots/snakebot/` — robot assets and config
-  - `xmls/chain_5.xml` — MJCF (Warp-compat, relaxed solref)
-  - `xmls/meshes/*.stl` — meshes
-  - `snakebot_constants.py` — `get_snakebot_robot_cfg()`, action scale
-- `src/mjlab/tasks/velocity/config/snakebot/` — velocity task
-  - `env_cfgs.py` — flat velocity env (10 Hz, asymmetric actor/critic)
-  - `snakebot_mdp.py` — velocity reward & observation functions
-  - `rl_cfg.py` — PPO + wandb configs
-  - `__init__.py` — registers `Mjlab-Velocity-Flat-Snakebot`
-- `src/mjlab/tasks/locomotion/config/snakebot/` — locomotion task (NEW)
-  - `env_cfg.py` — goal-reaching env (10 Hz, goal sampling, distance rewards)
-  - `locomotion_mdp.py` — goal-reaching rewards & observations
-  - `rl_cfg.py` — PPO config for goal-reaching
-  - `__init__.py` — registers `Mjlab-Locomotion-Flat-Snakebot`
+The source run's associated ONNX export is:
+
+```text
+logs/rsl_rl/snakebot_locomotion_v2/2026-03-10_19-34-58/2026-03-10_19-34-58.onnx
+```
+
+Evidence that it is v2:
+
+- Captured agent config says `experiment_name: snakebot_locomotion_v2`.
+- ONNX input is `obs[1,126]`; output is `actions[1,10]`.
+- ONNX observation names match the v2 phase, goal, history, and module-velocity terms.
+- The checkpoint safely loads with `iter=1200`.
+- Ten committed goal rollouts reached their targets.
+
+The run continued through iteration 1292 and was then manually interrupted.
+Iteration 1200 is the last saved checkpoint. It was trained with a `0.10 m`
+reach threshold; current code uses `0.13 m`, which does not change the
+observation or action architecture. The checkpoint was re-evaluated successfully
+with the current stopping radius.
+
+Training-generated checkpoints, ONNX files, W&B state, and logs remain
+Git-ignored by default. The two curated `.pt` copies above are committed and
+available in a fresh clone. The evaluation report and videos are committed at
+`docs/evaluations/snakebot_v2_model_1200/`.
+
+## Play the v2 checkpoint
+
+Native viewer:
+
+```bash
+uv run play Mjlab-Locomotion-Flat-Snakebot-v2 \
+  --checkpoint-file checkpoints/snakebot_v2/model_1200.pt
+```
+
+Viser web viewer:
+
+```bash
+uv run play Mjlab-Locomotion-Flat-Snakebot-v2 \
+  --viewer viser \
+  --checkpoint-file checkpoints/snakebot_v2/model_1200.pt
+```
+
+The goal is displayed as a red debug sphere.
+
+Record a trained rollout:
+
+```bash
+MUJOCO_GL=egl uv run play Mjlab-Locomotion-Flat-Snakebot-v2 \
+  --checkpoint-file checkpoints/snakebot_v2/model_1200.pt \
+  --video \
+  --video-length 400
+```
+
+Videos are written beneath the selected run in `videos/play/`. Close the viewer
+after the requested recording finishes.
+
+## mjswan browser viewer
+
+Initialize the pinned fork first:
+
+```bash
+git submodule update --init --recursive
+```
+
+mjswan consumes ONNX, so a committed `.pt` checkpoint alone is not enough.
+Use the source-run checkpoint and its neighboring local ONNX explicitly, or
+export/copy an ONNX file next to a checkpoint:
+
+```bash
+uv run play Mjlab-Locomotion-Flat-Snakebot-v2 \
+  --viewer mjswan \
+  --checkpoint-file logs/rsl_rl/snakebot_locomotion_v2/2026-03-10_19-34-58/model_1200.pt
+```
+
+Or launch directly from ONNX:
+
+```bash
+uv run snakebot_mjswan \
+  --onnx-file logs/rsl_rl/snakebot_locomotion_v2/2026-03-10_19-34-58/2026-03-10_19-34-58.onnx
+```
+
+Running `--viewer mjswan` without a checkpoint auto-selects the best local v2
+ONNX using TensorBoard mean reward. It cannot auto-select anything in a fresh
+clone until local v2 ONNX exports are present.
+
+## Evaluation
+
+The committed model-1200 evaluation contains four 0.60 m cardinal goals and six
+random far goals from 1.57 m to 2.81 m. All ten reached the `0.13 m` stopping
+radius within 24.5 seconds.
+
+See:
+
+- [Evaluation report](docs/evaluations/snakebot_v2_model_1200/README.md)
+- [Embedded rollout gallery](README.md#snakebot-v2-goal-reaching)
+
+## File map
+
+```text
+src/mjlab/asset_zoo/robots/snakebot/
+├── snakebot_constants.py
+└── xmls/
+    ├── chain_5.xml
+    └── meshes/
+
+src/mjlab/tasks/locomotion/config/snakebot_v2/
+    ├── __init__.py
+    ├── env_cfg.py
+    ├── goal_pose_command.py
+    ├── rl_cfg.py
+    └── snake_locomotion_mdp.py
+
+checkpoints/snakebot_v2/                  # committed model 800 and model 1200
+third_party/mjswan/                       # pinned browser-viewer fork
+docs/evaluations/snakebot_v2_model_1200/  # committed results and recordings
+```
+
+## Troubleshooting
+
+- If MuJoCo Warp runs out of constraint capacity, reduce
+  `--env.scene.num-envs`.
+- For headless video rendering, set `MUJOCO_GL=egl`.
+- If mjswan dependencies or sources are missing, run
+  `git submodule update --init --recursive`.
+- If playback reports an observation-size mismatch, confirm the task ID is
+  exactly `Mjlab-Locomotion-Flat-Snakebot-v2` and the checkpoint comes from
+  `snakebot_locomotion_v2/`.
+- If no local checkpoint is available, use a W&B run path or copy the ignored
+  run directory into `logs/rsl_rl/snakebot_locomotion_v2/`.

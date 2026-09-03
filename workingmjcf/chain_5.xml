@@ -1,14 +1,13 @@
 <mujoco model="snakebot_chain_5">
     <compiler angle="radian" eulerseq="XYZ" />
 
-    
+
     <option timestep="0.0005" iterations="500" solver="Newton" impratio="10" tolerance="1e-14" />
 
     <default>
-        <!-- Mechanism / linkage joints: low viscous damping, light armature. -->
-        <joint damping="0.02" armature="0.005" />
-        
-        <geom contype="2" conaffinity="1" condim="6" friction="0.4 1.05 0.002" />
+        <joint damping="0.5" armature="0.01" />
+
+        <geom contype="2" conaffinity="1" condim="6" friction="0.3 1.05 0.001" />
     </default>
 
     <asset>
@@ -26,11 +25,11 @@
         <mesh name="battery_middle_module_v2" file="meshes/battery_middle_module_v2.stl" scale="0.001 0.001 0.001" />
     </asset>
     <worldbody>
-        
+
         <geom name="ground" type="plane" size="5 5 0.1" pos="0 0 0" euler="0 0 0" contype="1" conaffinity="2" condim="6" friction="0.3 1.05 0.001" rgba="0.0 0.0 0.0 0" />
-              
+
         <frame pos="0 0 0.08" euler="0 1.5707963267948966 0">
-            
+
 <body name="m1_bottom-base-plate-v1" pos="0.0 0.033146846605945184 0.0145310940675635" euler="-3.141592653589787 -0.0 0.0">
     <freejoint name="m1_bottom_plate_free" />
     <site name="imu" pos="0 0 0" group="5" />
@@ -103,7 +102,7 @@
         <inertial mass="0.027" pos="0.033 -0.083 0.059" diaginertia="3.096e-05 2.754e-05 5.508e-05" />
     </body>
 </body>
-            
+
 <body name="m2_bottom-base-plate-v1" pos="0.0 0.033146846605945184 0.1504310940675635" euler="-3.141592653589787 -0.0 0.0">
     <freejoint name="m2_bottom_plate_free" />
     <geom name="m2_bottom-base-plate-v1_geom" type="mesh" mesh="bottom-base-plate-v1" pos="0 0 0" euler="0 0 0" />
@@ -175,7 +174,7 @@
         <inertial mass="0.027" pos="0.033 -0.083 0.059" diaginertia="3.096e-05 2.754e-05 5.508e-05" />
     </body>
 </body>
-            
+
 <body name="m3_bottom-base-plate-v1" pos="0.0 0.033146846605945184 0.28633109406756346" euler="-3.141592653589787 -0.0 0.0">
     <freejoint name="m3_bottom_plate_free" />
     <geom name="m3_bottom-base-plate-v1_geom" type="mesh" mesh="bottom-base-plate-v1" pos="0 0 0" euler="0 0 0" />
@@ -247,7 +246,7 @@
         <inertial mass="0.027" pos="0.033 -0.083 0.059" diaginertia="3.096e-05 2.754e-05 5.508e-05" />
     </body>
 </body>
-            
+
 <body name="m4_bottom-base-plate-v1" pos="0.0 0.033146846605945184 0.42223109406756343" euler="-3.141592653589787 -0.0 0.0">
     <freejoint name="m4_bottom_plate_free" />
     <geom name="m4_bottom-base-plate-v1_geom" type="mesh" mesh="bottom-base-plate-v1" pos="0 0 0" euler="0 0 0" />
@@ -319,7 +318,7 @@
         <inertial mass="0.027" pos="0.033 -0.083 0.059" diaginertia="3.096e-05 2.754e-05 5.508e-05" />
     </body>
 </body>
-            
+
 <body name="m5_bottom-base-plate-v1" pos="0.0 0.033146846605945184 0.5581310940675634" euler="-3.141592653589787 -0.0 0.0">
     <freejoint name="m5_bottom_plate_free" />
     <geom name="m5_bottom-base-plate-v1_geom" type="mesh" mesh="bottom-base-plate-v1" pos="0 0 0" euler="0 0 0" />
@@ -415,21 +414,16 @@
         <weld name="chain_link_4" body1="battery_4" body2="m5_bottom-base-plate-v1" solref="0.001 1" solimp="0.9999 0.99999 0.00001" />
     </equality>
     <actuator>
-        <!-- DS3235 servo: 35 kg·cm (3.43 N·m) stall @ 6.8V, 0.11s/60° no-load.
-             kp=20: saturates at ~10° error → stiff position tracking.
-             kv=0.5: ~0.5× critical damping → fast response, minimal overshoot.
-             forcerange=±3.43 N·m: matches DS3235 stall torque.
-             ctrlrange=±30° (0.5236 rad): physical travel limits. -->
-        <position name="module_1_servo_bottom" joint="m1_Revolute-15" kp="12.0" kv="0.35" ctrlrange="-0.5236 0.5236" forcerange="-2.2 2.2" />
-        <position name="module_1_servo_top" joint="m1_Revolute-16" kp="12.0" kv="0.35" ctrlrange="-0.5236 0.5236" forcerange="-2.2 2.2" />
-        <position name="module_2_servo_bottom" joint="m2_Revolute-15" kp="12.0" kv="0.35" ctrlrange="-0.5236 0.5236" forcerange="-2.2 2.2" />
-        <position name="module_2_servo_top" joint="m2_Revolute-16" kp="12.0" kv="0.35" ctrlrange="-0.5236 0.5236" forcerange="-2.2 2.2" />
-        <position name="module_3_servo_bottom" joint="m3_Revolute-15" kp="12.0" kv="0.35" ctrlrange="-0.5236 0.5236" forcerange="-2.2 2.2" />
-        <position name="module_3_servo_top" joint="m3_Revolute-16" kp="12.0" kv="0.35" ctrlrange="-0.5236 0.5236" forcerange="-2.2 2.2" />
-        <position name="module_4_servo_bottom" joint="m4_Revolute-15" kp="12.0" kv="0.35" ctrlrange="-0.5236 0.5236" forcerange="-2.2 2.2" />
-        <position name="module_4_servo_top" joint="m4_Revolute-16" kp="12.0" kv="0.35" ctrlrange="-0.5236 0.5236" forcerange="-2.2 2.2" />
-        <position name="module_5_servo_bottom" joint="m5_Revolute-15" kp="12.0" kv="0.35" ctrlrange="-0.5236 0.5236" forcerange="-2.2 2.2" />
-        <position name="module_5_servo_top" joint="m5_Revolute-16" kp="12.0" kv="0.35" ctrlrange="-0.5236 0.5236" forcerange="-2.2 2.2" />
+        <position name="module_1_servo_bottom" joint="m1_Revolute-15" kp="4.0" kv="0.12" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_1_servo_top" joint="m1_Revolute-16" kp="4.0" kv="0.12" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_2_servo_bottom" joint="m2_Revolute-15" kp="4.0" kv="0.12" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_2_servo_top" joint="m2_Revolute-16" kp="4.0" kv="0.12" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_3_servo_bottom" joint="m3_Revolute-15" kp="4.0" kv="0.12" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_3_servo_top" joint="m3_Revolute-16" kp="4.0" kv="0.12" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_4_servo_bottom" joint="m4_Revolute-15" kp="4.0" kv="0.12" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_4_servo_top" joint="m4_Revolute-16" kp="4.0" kv="0.12" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_5_servo_bottom" joint="m5_Revolute-15" kp="4.0" kv="0.12" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
+        <position name="module_5_servo_top" joint="m5_Revolute-16" kp="4.0" kv="0.12" ctrlrange="-0.5236 0.5236" forcerange="-3.432 3.432" />
     </actuator>
     <sensor>
         <gyro name="imu_ang_vel" site="imu" />

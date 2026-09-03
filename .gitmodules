@@ -1,0 +1,4 @@
+[submodule "mjlab-fbc8368/third_party/mjswan"]
+	path = mjlab-fbc8368/third_party/mjswan
+	url = https://github.com/vimarsh244/mjswan.git
+	branch = snakebot-v2-integration

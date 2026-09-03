@@ -1,0 +1,108 @@
+{
+  "checkpoint": "/home/vim/Desktop/Snakebot_sim/mjlab-fbc8368/logs/rsl_rl/snakebot_locomotion_v2/2026-03-10_19-34-58/model_1200.pt",
+  "seed": 20260904,
+  "sampling": "uniform XY rejection sample with 1.5 <= radius <= 3.0 m",
+  "control_dt_s": 0.05,
+  "stopping_radius_m": 0.13,
+  "max_steps": 1500,
+  "evaluation_steps": 490,
+  "capture_fps": 5,
+  "samples": [
+    {
+      "sample": "far_random_01",
+      "goal_offset_m": [
+        1.9575,
+        2.015
+      ],
+      "initial_distance_m": 2.8093,
+      "stopping_radius_m": 0.13,
+      "minimum_distance_m": 0.1298,
+      "stopping_distance_m": 0.1298,
+      "reached": true,
+      "first_reach_step": 490,
+      "first_reach_time_s": 24.5,
+      "recorded_duration_s": 25.0,
+      "video": "far_random_01.mp4"
+    },
+    {
+      "sample": "far_random_02",
+      "goal_offset_m": [
+        -1.5627,
+        2.1605
+      ],
+      "initial_distance_m": 2.6664,
+      "stopping_radius_m": 0.13,
+      "minimum_distance_m": 0.1123,
+      "stopping_distance_m": 0.1273,
+      "reached": true,
+      "first_reach_step": 424,
+      "first_reach_time_s": 21.2,
+      "recorded_duration_s": 21.6,
+      "video": "far_random_02.mp4"
+    },
+    {
+      "sample": "far_random_03",
+      "goal_offset_m": [
+        -2.2455,
+        0.5576
+      ],
+      "initial_distance_m": 2.3137,
+      "stopping_radius_m": 0.13,
+      "minimum_distance_m": 0.1125,
+      "stopping_distance_m": 0.129,
+      "reached": true,
+      "first_reach_step": 392,
+      "first_reach_time_s": 19.6,
+      "recorded_duration_s": 20.0,
+      "video": "far_random_03.mp4"
+    },
+    {
+      "sample": "far_random_04",
+      "goal_offset_m": [
+        2.4249,
+        0.0018
+      ],
+      "initial_distance_m": 2.4249,
+      "stopping_radius_m": 0.13,
+      "minimum_distance_m": 0.1229,
+      "stopping_distance_m": 0.1294,
+      "reached": true,
+      "first_reach_step": 461,
+      "first_reach_time_s": 23.05,
+      "recorded_duration_s": 23.4,
+      "video": "far_random_04.mp4"
+    },
+    {
+      "sample": "far_random_05",
+      "goal_offset_m": [
+        0.5132,
+        -1.9618
+      ],
+      "initial_distance_m": 2.0279,
+      "stopping_radius_m": 0.13,
+      "minimum_distance_m": 0.1176,
+      "stopping_distance_m": 0.1279,
+      "reached": true,
+      "first_reach_step": 382,
+      "first_reach_time_s": 19.1,
+      "recorded_duration_s": 19.6,
+      "video": "far_random_05.mp4"
+    },
+    {
+      "sample": "far_random_06",
+      "goal_offset_m": [
+        -1.3978,
+        0.7095
+      ],
+      "initial_distance_m": 1.5675,
+      "stopping_radius_m": 0.13,
+      "minimum_distance_m": 0.1174,
+      "stopping_distance_m": 0.1297,
+      "reached": true,
+      "first_reach_step": 287,
+      "first_reach_time_s": 14.35,
+      "recorded_duration_s": 14.8,
+      "video": "far_random_06.mp4"
+    }
+  ]
+}

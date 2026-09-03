@@ -33,7 +33,11 @@ class PlayConfig:
   video_height: int | None = None
   video_width: int | None = None
   camera: int | str | None = None
-  viewer: Literal["auto", "native", "viser"] = "auto"
+  viewer: Literal["auto", "native", "viser", "mjswan"] = "auto"
+  mjswan_output_dir: str = "logs/mjswan/snakebot_v2"
+  mjswan_host: str = "0.0.0.0"
+  mjswan_port: int = 8013
+  mjswan_open_browser: bool = True
   no_terminations: bool = False
   """Disable all termination conditions (useful for viewing motions with dummy agents)."""
 
@@ -51,6 +55,17 @@ def run_play(task_id: str, cfg: PlayConfig):
 
   DUMMY_MODE = cfg.agent in {"zero", "random"}
   TRAINED_MODE = not DUMMY_MODE
+
+  # Handle "auto" viewer selection.
+  if cfg.viewer == "auto":
+    has_display = bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
+    resolved_viewer = "native" if has_display else "viser"
+    del has_display
+  else:
+    resolved_viewer = cfg.viewer
+
+  if resolved_viewer == "mjswan" and DUMMY_MODE:
+    raise ValueError("mjswan viewer requires a trained policy (`--agent trained`).")
 
   # Disable terminations if requested (useful for viewing motions).
   if cfg.no_terminations:
@@ -116,29 +131,77 @@ def run_play(task_id: str, cfg: PlayConfig):
 
   log_dir: Path | None = None
   resume_path: Path | None = None
+  mjswan_onnx_path: Path | None = None
   if TRAINED_MODE:
     log_root_path = (Path("logs") / "rsl_rl" / agent_cfg.experiment_name).resolve()
-    if cfg.checkpoint_file is not None:
-      resume_path = Path(cfg.checkpoint_file)
-      if not resume_path.exists():
-        raise FileNotFoundError(f"Checkpoint file not found: {resume_path}")
-      print(f"[INFO]: Loading checkpoint: {resume_path.name}")
-    else:
-      if cfg.wandb_run_path is None:
-        raise ValueError(
-          "`wandb_run_path` is required when `checkpoint_file` is not provided."
-        )
-      resume_path, was_cached = get_wandb_checkpoint_path(
-        log_root_path, Path(cfg.wandb_run_path)
-      )
-      # Extract run_id and checkpoint name from path for display.
-      run_id = resume_path.parent.name
-      checkpoint_name = resume_path.name
-      cached_str = "cached" if was_cached else "downloaded"
+    if (
+      resolved_viewer == "mjswan"
+      and cfg.checkpoint_file is None
+      and cfg.wandb_run_path is None
+    ):
+      from mjlab.scripts.mjswan_bridge import select_best_snakebot_v2_run
+
+      best_run = select_best_snakebot_v2_run(log_root_path)
+      mjswan_onnx_path = best_run.onnx_path
+      log_dir = best_run.run_dir
+      reward_text = f"{best_run.reward:.6f}" if best_run.reward is not None else "N/A"
       print(
-        f"[INFO]: Loading checkpoint: {checkpoint_name} (run: {run_id}, {cached_str})"
+        "[INFO]: Auto-selected best local snakebot v2 ONNX: "
+        f"{mjswan_onnx_path.name} (reward={reward_text}, step={best_run.step})"
       )
-    log_dir = resume_path.parent
+    else:
+      if cfg.checkpoint_file is not None:
+        resume_path = Path(cfg.checkpoint_file)
+        if not resume_path.exists():
+          raise FileNotFoundError(f"Checkpoint file not found: {resume_path}")
+        print(f"[INFO]: Loading checkpoint: {resume_path.name}")
+      else:
+        if cfg.wandb_run_path is None:
+          raise ValueError(
+            "`wandb_run_path` is required when `checkpoint_file` is not provided."
+          )
+        resume_path, was_cached = get_wandb_checkpoint_path(
+          log_root_path, Path(cfg.wandb_run_path)
+        )
+        # Extract run_id and checkpoint name from path for display.
+        run_id = resume_path.parent.name
+        checkpoint_name = resume_path.name
+        cached_str = "cached" if was_cached else "downloaded"
+        print(
+          f"[INFO]: Loading checkpoint: {checkpoint_name} (run: {run_id}, {cached_str})"
+        )
+      log_dir = resume_path.parent
+
+    if resolved_viewer == "mjswan":
+      from mjlab.scripts.mjswan_bridge import (
+        launch_snakebot_v2_mjswan,
+        resolve_onnx_for_checkpoint,
+      )
+
+      if task_id != "Mjlab-Locomotion-Flat-Snakebot-v2":
+        raise ValueError(
+          "mjswan viewer is currently supported only for "
+          "`Mjlab-Locomotion-Flat-Snakebot-v2`."
+        )
+
+      if mjswan_onnx_path is None and resume_path is not None:
+        mjswan_onnx_path = resolve_onnx_for_checkpoint(resume_path)
+        if mjswan_onnx_path is None:
+          print(
+            "[WARN]: No ONNX found near the provided checkpoint. Falling back to best local snakebot v2 ONNX."
+          )
+        else:
+          print(f"[INFO]: Resolved ONNX for checkpoint: {mjswan_onnx_path.name}")
+
+      launch_snakebot_v2_mjswan(
+        task_id=task_id,
+        onnx_path=mjswan_onnx_path,
+        output_dir=Path(cfg.mjswan_output_dir),
+        host=cfg.mjswan_host,
+        port=cfg.mjswan_port,
+        open_browser=cfg.mjswan_open_browser,
+      )
+      return
 
   if cfg.num_envs is not None:
     env_cfg.scene.num_envs = cfg.num_envs
@@ -191,14 +254,6 @@ def run_play(task_id: str, cfg: PlayConfig):
       str(resume_path), load_cfg={"actor": True}, strict=True, map_location=device
     )
     policy = runner.get_inference_policy(device=device)
-
-  # Handle "auto" viewer selection.
-  if cfg.viewer == "auto":
-    has_display = bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
-    resolved_viewer = "native" if has_display else "viser"
-    del has_display
-  else:
-    resolved_viewer = cfg.viewer
 
   if resolved_viewer == "native":
     NativeMujocoViewer(env, policy).run()

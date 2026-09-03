@@ -12,10 +12,10 @@ Design philosophy:
 import math
 
 from mjlab.asset_zoo.robots import (
-    SNAKEBOT_ACTION_SCALE,
     get_snakebot_robot_cfg,
 )
 from mjlab.envs import ManagerBasedRlEnvCfg
+from mjlab.envs import mdp as envs_mdp
 from mjlab.envs.mdp.actions import JointPositionActionCfg
 from mjlab.envs.mdp.observations import (
     builtin_sensor,
@@ -33,6 +33,7 @@ from mjlab.managers.termination_manager import TerminationTermCfg
 from mjlab.tasks.velocity.mdp import (
     UniformVelocityCommandCfg,
 )
+from mjlab.sim import MujocoCfg
 from mjlab.tasks.velocity.velocity_env_cfg import make_velocity_env_cfg
 from mjlab.utils.noise import UniformNoiseCfg as Unoise
 
@@ -48,19 +49,19 @@ _ACTUATED_JOINTS = (".*Revolute-15", ".*Revolute-16")
 def snakebot_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     """Create Snakebot flat terrain velocity configuration.
 
-    Reward design — forward velocity dominates, penalties minimal:
-    ┌──────────────────────────┬────────┬─────────────────────────────────────┐
-    │ Term                     │ Weight │ Purpose                             │
-    ├──────────────────────────┼────────┼─────────────────────────────────────┤
-    │ forward_velocity_track   │ +12.0  │ Track commanded forward speed        │
-    │ alive_bonus              │  +0.05 │ Small keep-alive baseline           │
-    │ lateral_velocity_penalty │ -0.01  │ Discourage crab-walk                │
-    │ yaw_rate_penalty         │ -0.01  │ Keep heading stable                 │
-    │ control_cost             │ -0.004 │ Avoid high-effort thrashing         │
-    │ action_smoothness        │ -0.002 │ Reduce jitter                       │
-    │ vertical_velocity        │ -0.08  │ Discourage launching/bouncing       │
-    │ dof_pos_limits           │  -0.1  │ Soft joint-limit guard              │
-    └──────────────────────────┴────────┴─────────────────────────────────────┘
+    Reward design — literature-grounded for serpentine locomotion:
+    ┌──────────────────────────┬────────┬──────────────────────────────────────────┐
+    │ Term                     │ Weight │ Purpose                                  │
+    ├──────────────────────────┼────────┼──────────────────────────────────────────┤
+    │ forward_velocity         │  +2.0  │ World +X CoM velocity (primary drive)    │
+    │ alive_bonus              │  +0.2  │ Keep-alive baseline                      │
+    │ lateral_velocity         │  -0.3  │ Penalise Y drift (Bing 2020, COBRA)      │
+    │ vertical_velocity        │  -0.3  │ Penalise vertical bounce (Qiu 2021)      │
+    │ yaw_rate                 │  -0.2  │ Penalise spin-in-place (Shi 2020)        │
+    │ action_smoothness        │  -0.05 │ Smooth gait → hardware transfer          │
+    │ control_cost             │  -0.02 │ Energy efficiency (Singh 2022)           │
+    │ dof_pos_limits           │  -0.5  │ Soft joint-limit guard                   │
+    └──────────────────────────┴────────┴──────────────────────────────────────────┘
     """
     cfg = make_velocity_env_cfg()
 
@@ -78,9 +79,25 @@ def snakebot_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         s for s in (cfg.scene.sensors or ()) if s.name != "terrain_scan"
     )
 
-    # ── 10 Hz control frequency ───────────────────────────────────────────────
-    cfg.decimation = 20   # 0.005 s × 20 = 0.10 s / step
-    cfg.episode_length_s = 30.0
+    # ── Solver: override base factory defaults for closed-chain weld constraints ──
+    # The base factory uses iterations=10 which cannot reliably resolve the
+    # snakebot's equality-weld constraints. impratio=10 matches chain_5.xml and
+    # prevents constraint drift under friction.  50 Newton iterations is enough
+    # for weld convergence at this timestep.
+    cfg.sim.mujoco = MujocoCfg(
+        timestep=0.0025,
+        iterations=100,
+        ls_iterations=30,
+        impratio=10.0,
+        solver="newton",
+        integrator="implicitfast",
+        ccd_iterations=100,
+    )
+
+    # ── 20 Hz control frequency ───────────────────────────────────────────────
+    # 0.0025 s × 20 = 0.05 s / step
+    cfg.decimation = 20
+    cfg.episode_length_s = 20.0
 
     # ── Observations (fully replaced) ─────────────────────────────────────────
     _module_body_cfg = SceneEntityCfg("robot", body_names=(_MODULE_BODIES,))
@@ -93,32 +110,32 @@ def snakebot_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         "joint_pos": ObservationTermCfg(
             func=joint_pos_rel,
             params={"asset_cfg": _actuated_joint_cfg},
-            noise=Unoise(n_min=-0.06, n_max=0.06),
+            noise=Unoise(n_min=-0.03, n_max=0.03),
         ),
         "joint_vel": ObservationTermCfg(
             func=joint_vel_rel,
             params={"asset_cfg": _actuated_joint_cfg},
-            noise=Unoise(n_min=-4.0, n_max=4.0),
+            noise=Unoise(n_min=-1.0, n_max=1.0),
         ),
         "actions": ObservationTermCfg(func=last_action),
         "command": ObservationTermCfg(
             func=generated_commands,
             params={"command_name": "twist"},
-            noise=Unoise(n_min=-0.08, n_max=0.08),
+            noise=Unoise(n_min=-0.03, n_max=0.03),
         ),
         "base_lin_vel": ObservationTermCfg(
             func=builtin_sensor,
             params={"sensor_name": "robot/imu_lin_vel"},
-            noise=Unoise(n_min=-1.5, n_max=1.5),
+            noise=Unoise(n_min=-0.8, n_max=0.8),
         ),
         "base_ang_vel": ObservationTermCfg(
             func=builtin_sensor,
             params={"sensor_name": "robot/imu_ang_vel"},
-            noise=Unoise(n_min=-0.6, n_max=0.6),
+            noise=Unoise(n_min=-0.3, n_max=0.3),
         ),
         "projected_gravity": ObservationTermCfg(
             func=projected_gravity,
-            noise=Unoise(n_min=-0.12, n_max=0.12),
+            noise=Unoise(n_min=-0.05, n_max=0.05),
         ),
     }
 
@@ -163,70 +180,77 @@ def snakebot_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     # ── Actions ───────────────────────────────────────────────────────────────
     joint_pos_action = cfg.actions["joint_pos"]
     assert isinstance(joint_pos_action, JointPositionActionCfg)
-    joint_pos_action.scale = SNAKEBOT_ACTION_SCALE
+    joint_pos_action.scale = {
+        ".*Revolute-15": 0.08,
+        ".*Revolute-16": 0.08,
+    }
 
     # ── Commands: forward-only ────────────────────────────────────────────────
     twist_cmd = cfg.commands["twist"]
     assert isinstance(twist_cmd, UniformVelocityCommandCfg)
-    twist_cmd.ranges.lin_vel_x   = (0.05, 0.20)
+    twist_cmd.heading_command    = False   # snake goes straight, no heading control
+    twist_cmd.ranges.lin_vel_x   = (0.005, 0.03)
     twist_cmd.ranges.lin_vel_y   = (0.00, 0.00)
     twist_cmd.ranges.ang_vel_z   = (0.00, 0.00)
-    twist_cmd.ranges.heading     = (-math.pi, math.pi)
+    twist_cmd.ranges.heading     = None
     twist_cmd.rel_standing_envs  = 0.05
+    twist_cmd.viz.world_frame_viz = False
 
     # ── Events / Domain randomisation ────────────────────────────────────────
-    cfg.events["base_com"].params["asset_cfg"].body_names = (SNAKE_ROOT_BODY,)
-    cfg.events["base_com"].params["ranges"] = {
-        0: (-0.03, 0.03),
-        1: (-0.03, 0.03),
-        2: (-0.02, 0.02),
-    }
+    # --- Base resets (inherited from velocity factory, adjusted for snake) ---
+    cfg.events.pop("base_com", None)
     cfg.events.pop("encoder_bias", None)
-    cfg.events["push_robot"].params["velocity_range"] = {
-        "x": (-0.15, 0.15),
-        "y": (-0.15, 0.15),
-        "z": (-0.1, 0.1),
-        "roll":  (-0.15, 0.15),
-        "pitch": (-0.15, 0.15),
-        "yaw":   (-0.1, 0.1),
-    }
+    cfg.events.pop("push_robot", None)
     cfg.events.pop("foot_friction", None)
+    # Use full-scene default reset for this closed-chain model.
+    # It restores all free-joint and hinge states coherently before each episode.
+    cfg.events["reset_base"].func = envs_mdp.reset_scene_to_default
+    cfg.events["reset_base"].params = {}
+    cfg.events.pop("reset_robot_joints", None)
 
-    # ── Rewards — forward velocity dominates, penalties near-zero ─────────────
+    # ── Rewards — literature-grounded for snake locomotion ──────────────────────
+    # Primary: forward world-X velocity (Bing 2020, Shi 2020, Qiu 2021)
+    # Penalties: lateral drift, vertical bounce, yaw spin, action jerk, energy
+    # (Singh 2022, Bing 2020, Liu 2023 — all highlight these four penalty terms)
     cfg.rewards = {
-        "forward_velocity_track": RewardTermCfg(
-            func=snakebot_mdp.track_forward_velocity_command,
-            params={"command_name": "twist", "std": 0.08},
-            weight=12.0,
+        # === Primary forward drive ===
+        "forward_velocity": RewardTermCfg(
+            func=snakebot_mdp.forward_velocity_reward,
+            params={"max_vel": 0.05},
+            weight=6.0,
         ),
-        "alive_bonus": RewardTermCfg(
-            func=snakebot_mdp.alive_bonus,
-            weight=0.05,
-        ),
-        "lateral_velocity_penalty": RewardTermCfg(
+        "alive_bonus": RewardTermCfg(func=snakebot_mdp.alive_bonus, weight=0.3),
+        # === Penalties to shape a clean serpentine gait ===
+        # Penalise world-Y drift so the snake travels along its body axis
+        "lateral_velocity": RewardTermCfg(
             func=snakebot_mdp.lateral_velocity_penalty,
-            weight=-0.01,
+            weight=-0.03,
         ),
-        "yaw_rate_penalty": RewardTermCfg(
+        # Penalise vertical CoM motion — snake should stay flat on ground
+        "vertical_velocity": RewardTermCfg(
+            func=snakebot_mdp.vertical_velocity_penalty,
+            weight=-0.03,
+        ),
+        # Penalise spinning in place instead of translating
+        "yaw_rate": RewardTermCfg(
             func=snakebot_mdp.yaw_rate_penalty,
             weight=-0.01,
         ),
-        "control_cost": RewardTermCfg(
-            func=snakebot_mdp.control_cost,
-            weight=-0.004,
-        ),
+        # Penalise high-frequency joint oscillations (smooth gait transfers to HW)
         "action_smoothness": RewardTermCfg(
             func=snakebot_mdp.action_smoothness_penalty,
+            weight=-0.005,
+        ),
+        # Penalise large torques as energy proxy (Bing 2020 energy efficiency)
+        "control_cost": RewardTermCfg(
+            func=snakebot_mdp.control_cost,
             weight=-0.002,
         ),
-        "vertical_velocity": RewardTermCfg(
-            func=snakebot_mdp.vertical_velocity_penalty,
-            weight=-0.08,
-        ),
+        # Soft penalty for hitting actuated joint limits only (not all 60 mechanism joints)
         "dof_pos_limits": RewardTermCfg(
             func=joint_pos_limits,
             params={"asset_cfg": _actuated_joint_cfg},
-            weight=-0.1,
+            weight=0.0,
         ),
     }
 
@@ -235,10 +259,9 @@ def snakebot_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     # bad_orientation uses projected_gravity_b[:, 2] which is ~0 for a snake
     # lying flat, so the check always gives ~90deg — remove it.
     cfg.terminations.pop("fell_over", None)
-    # terminate if the snake gets launched into the air (physics blowup)
     cfg.terminations["too_high"] = TerminationTermCfg(
         func=snakebot_mdp.root_too_high,
-        params={"max_height": 0.3},
+        params={"max_height": 2.5},
     )
 
     # ── Curriculum: start slow, add lateral/yaw penalties later ──────────────
@@ -260,7 +283,7 @@ def snakebot_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         cfg.curriculum = {}
         twist_cmd = cfg.commands["twist"]
         assert isinstance(twist_cmd, UniformVelocityCommandCfg)
-        twist_cmd.ranges.lin_vel_x = (0.15, 0.30)
+        twist_cmd.ranges.lin_vel_x = (0.01, 0.04)
         twist_cmd.ranges.lin_vel_y = (0.00, 0.00)
         twist_cmd.ranges.ang_vel_z = (0.00, 0.00)
 

@@ -24,7 +24,7 @@ def snakebot_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
             activation="elu",
             obs_normalization=True,   # normalise ~44-dim actor obs
             stochastic=True,
-            init_noise_std=1.0,
+            init_noise_std=0.2,
             noise_std_type="log",
         ),
         # ------------------------------------------------------------------
@@ -35,7 +35,7 @@ def snakebot_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
             activation="elu",
             obs_normalization=True,   # normalise ~99-dim critic obs
             stochastic=False,
-            init_noise_std=1.0,
+            init_noise_std=0.2,
         ),
         # ------------------------------------------------------------------
         # PPO hyper-parameters tuned for 10 Hz snake locomotion
@@ -44,10 +44,10 @@ def snakebot_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
             value_loss_coef=1.0,
             use_clipped_value_loss=True,
             clip_param=0.2,
-            entropy_coef=0.01,
+            entropy_coef=0.005,
             num_learning_epochs=5,
             num_mini_batches=4,
-            learning_rate=3.0e-4,    # slightly lower for larger critic
+            learning_rate=3.0e-4,
             schedule="adaptive",
             gamma=0.99,
             lam=0.95,
@@ -58,6 +58,7 @@ def snakebot_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
         logger="wandb",
         wandb_project="mjlab",
         save_interval=100,
-        num_steps_per_env=24,        # 24 steps × 0.1 s = 2.4 s rollout at 10 Hz
+        num_steps_per_env=48,
+        clip_actions=0.8,
         max_iterations=10_000,
     )
