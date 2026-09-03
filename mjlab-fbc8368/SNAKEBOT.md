@@ -89,10 +89,16 @@ From the mjlab repo root:
 
 ```bash
 cd mjlab-fbc8368
+git submodule update --init --recursive
 uv sync
 ```
 
 Requires Python 3.10–3.13 and (for GPU training) NVIDIA GPU + CUDA.
+
+The browser viewer uses the pinned `third_party/mjswan` submodule from the
+[`vimarsh244/mjswan`](https://github.com/vimarsh244/mjswan) fork. For a fresh
+checkout, either clone this repository with `--recurse-submodules` or run the
+submodule command above before using the mjswan viewer.
 
 ## Training
 
@@ -105,6 +111,18 @@ uv run train Mjlab-Velocity-Flat-Snakebot --env.scene.num-envs 2048
 ```bash
 uv run train Mjlab-Locomotion-Flat-Snakebot --env.scene.num-envs 2048
 ```
+
+### Locomotion v2 task (goal-reaching + side-goal preference)
+```bash
+uv run train Mjlab-Locomotion-Flat-Snakebot-v2 --env.scene.num-envs 2048
+```
+
+Current v2 defaults:
+- Goal distance curriculum expanded to farther targets (`0.50` to `3.00` m).
+- Episode timeout increased to `75` s to improve goal completion on farther targets.
+- Goal-reaching terms are weighted slightly higher (`progress`, `velocity_to_goal`, `distance_shaping`, `goal_reached_bonus`).
+- Heading-alignment reward is removed in v2, with added COM-to-goal velocity reward to favor direct lateral travel (sidewinding-friendly).
+- In `--viewer viser`, the goal is shown as a red debug dot (enable debug visualization in the viewer controls).
 
 Tune parallelism:
 ```bash
@@ -141,6 +159,14 @@ uv run play Mjlab-Locomotion-Flat-Snakebot --checkpoint-file path/to/model_XXXX.
 
 - **Native MuJoCo viewer** (default): `uv run play ...`
 - **Viser (web)**: `uv run play ... --viewer viser` — opens in browser (e.g. http://localhost:8012).
+- **mjswan (web)**: `uv run play Mjlab-Locomotion-Flat-Snakebot-v2 --viewer mjswan`
+
+The mjswan viewer auto-selects the best local Snakebot v2 ONNX export. To select
+one explicitly, run:
+
+```bash
+uv run snakebot_mjswan --onnx-file logs/rsl_rl/snakebot_locomotion_v2/RUN/RUN.onnx
+```
 
 ### Recording video
 

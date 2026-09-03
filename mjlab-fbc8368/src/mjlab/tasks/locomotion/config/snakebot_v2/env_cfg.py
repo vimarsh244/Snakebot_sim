@@ -30,37 +30,54 @@ from mjlab.tasks.velocity.velocity_env_cfg import make_velocity_env_cfg
 from mjlab.utils.noise import UniformNoiseCfg as Unoise
 
 from . import snake_locomotion_mdp
-
+from .goal_pose_command import GoalPoseDebugCommandCfg
 
 SNAKE_ROOT_BODY = "m1_bottom-base-plate-v1"
 _MODULE_BODIES = "m[1-5]_bottom-base-plate-v1"
 _ACTUATED_JOINTS = (".*Revolute-15", ".*Revolute-16")
 
-GOAL_RADIUS_MIN = 0.25
-GOAL_RADIUS_MAX = 1.00
-GOAL_REACH_THRESHOLD = 0.16
+GOAL_RADIUS_MIN = 0.50
+GOAL_RADIUS_MAX = 3.00
+GOAL_REACH_THRESHOLD = 0.1
 GOAL_CURRICULUM_STEPS = 2_000_000
 
 
+def _robot_com_xy(robot) -> torch.Tensor:
+  """Compute full-robot center-of-mass XY position for each environment."""
+  body_com_xy = robot.data.body_com_pos_w[:, :, :2]
+  body_mass = robot.data.model.body_mass[:, robot.indexing.body_ids]
+  body_mass = torch.nan_to_num(body_mass, nan=0.0, posinf=0.0, neginf=0.0).clamp(
+    min=0.0
+  )
+  total_mass = body_mass.sum(dim=1, keepdim=True).clamp(min=1e-8)
+  com_xy = (body_com_xy * body_mass.unsqueeze(-1)).sum(dim=1) / total_mass
+  return torch.nan_to_num(com_xy, nan=0.0, posinf=0.0, neginf=0.0)
+
+
 def _sample_goals(env, env_ids, **kwargs):
-  """Sample random XY goals with a simple distance curriculum."""
+  """Sample COM-anchored XY goals with equal directional probability."""
   if env_ids is None:
     env_ids = torch.arange(env.num_envs, device=env.device, dtype=torch.long)
 
   robot = env.scene["robot"]
-  root_xy = robot.data.root_link_pos_w[env_ids, :2]
+  com_xy = _robot_com_xy(robot)[env_ids]
   n = len(env_ids)
 
   # Curriculum: start easier (shorter goals), then expand outwards.
   progress = min(float(env.common_step_counter) / GOAL_CURRICULUM_STEPS, 1.0)
-  radius_max = 0.55 + progress * (GOAL_RADIUS_MAX - 0.55)
+  radius_max = 0.65 + progress * (GOAL_RADIUS_MAX - 0.65)
 
   radius = GOAL_RADIUS_MIN + torch.rand(n, device=env.device) * (
     radius_max - GOAL_RADIUS_MIN
   )
-  angle = (torch.rand(n, device=env.device) * 2.0 - 1.0) * math.pi
 
-  goal_xy = root_xy.clone()
+  # Sample directions with equal probabilities across the full XY plane.
+  # This explicitly balances +X/-X and both sides (quadrants).
+  quadrant = torch.randint(0, 4, (n,), device=env.device)
+  local_angle = torch.rand(n, device=env.device) * (math.pi / 2.0)
+  angle = local_angle + quadrant * (math.pi / 2.0)
+
+  goal_xy = com_xy.clone()
   goal_xy[:, 0] += radius * torch.cos(angle)
   goal_xy[:, 1] += radius * torch.sin(angle)
 
@@ -69,7 +86,7 @@ def _sample_goals(env, env_ids, **kwargs):
     env._loco_prev_dist = torch.ones(env.num_envs, device=env.device) * radius_max
 
   env._loco_goal_pos[env_ids] = goal_xy
-  env._loco_prev_dist[env_ids] = torch.norm(goal_xy - root_xy, dim=1)
+  env._loco_prev_dist[env_ids] = torch.norm(goal_xy - com_xy, dim=1)
 
 
 def _gentle_push_after_settle(
@@ -104,7 +121,9 @@ def snakebot_locomotion_v2_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
   assert cfg.scene.terrain is not None
   cfg.scene.terrain.terrain_type = "plane"
   cfg.scene.terrain.terrain_generator = None
-  cfg.scene.sensors = tuple(s for s in (cfg.scene.sensors or ()) if s.name != "terrain_scan")
+  cfg.scene.sensors = tuple(
+    s for s in (cfg.scene.sensors or ()) if s.name != "terrain_scan"
+  )
 
   # Closed-chain stability.
   cfg.sim.njmax = 12000
@@ -121,7 +140,7 @@ def snakebot_locomotion_v2_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
 
   # 20 Hz control.
   cfg.decimation = 20
-  cfg.episode_length_s = 45.0
+  cfg.episode_length_s = 75.0
 
   _module_body_cfg = SceneEntityCfg("robot", body_names=(_MODULE_BODIES,))
   _actuated_joint_cfg = SceneEntityCfg("robot", joint_names=_ACTUATED_JOINTS)
@@ -223,8 +242,17 @@ def snakebot_locomotion_v2_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     ".*Revolute-16": 0.10,
   }
 
-  # Goal task: no velocity command generator.
-  cfg.commands = {}
+  # Goal task: keep command manager only for goal marker debug visualization.
+  cfg.commands = {
+    "goal_pose_debug": GoalPoseDebugCommandCfg(
+      resampling_time_range=(1.0e6, 1.0e6),
+      debug_vis=True,
+      entity_name="robot",
+      radius=0.04,
+      z_offset=0.025,
+      color=(1.0, 0.2, 0.2, 0.95),
+    )
+  }
 
   # Stable reset.
   cfg.events["reset_base"].func = envs_mdp.reset_scene_to_default
@@ -334,24 +362,26 @@ def snakebot_locomotion_v2_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
   cfg.rewards = {
     "progress": RewardTermCfg(
       func=snake_locomotion_mdp.progress_reward,
-      weight=30.0,
+      weight=33.0,
     ),
     "velocity_to_goal": RewardTermCfg(
       func=snake_locomotion_mdp.velocity_towards_goal_reward,
-      weight=8.0,
+      weight=9.0,
+    ),
+    # COM-directional reward is heading-agnostic and encourages direct
+    # sideward travel (sidewinding) when goals are lateral.
+    "com_velocity_to_goal": RewardTermCfg(
+      func=snake_locomotion_mdp.com_velocity_towards_goal_reward,
+      weight=4.0,
     ),
     "distance_shaping": RewardTermCfg(
       func=snake_locomotion_mdp.distance_shaping_reward,
-      weight=4.0,
-    ),
-    "heading_alignment": RewardTermCfg(
-      func=snake_locomotion_mdp.heading_alignment_reward,
-      weight=1.5,
+      weight=4.5,
     ),
     "goal_reached_bonus": RewardTermCfg(
       func=snake_locomotion_mdp.goal_reached_bonus,
       params={"threshold": GOAL_REACH_THRESHOLD},
-      weight=60.0,
+      weight=66.0,
     ),
     "alive_bonus": RewardTermCfg(
       func=snake_locomotion_mdp.alive_bonus,
@@ -359,7 +389,7 @@ def snakebot_locomotion_v2_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     ),
     "stagnation": RewardTermCfg(
       func=snake_locomotion_mdp.stagnation_penalty,
-      weight=-0.8,
+      weight=-0.5,
     ),
     "lateral_slip": RewardTermCfg(
       func=snake_locomotion_mdp.lateral_slip_penalty,
@@ -405,7 +435,7 @@ def snakebot_locomotion_v2_flat_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
   )
   cfg.terminations["too_far"] = TerminationTermCfg(
     func=snake_locomotion_mdp.too_far_from_goal,
-    params={"max_dist": 1.8},
+    params={"max_dist": GOAL_RADIUS_MAX + 0.8},
   )
   cfg.terminations["unstable_motion"] = TerminationTermCfg(
     func=snake_locomotion_mdp.unstable_motion_termination,
