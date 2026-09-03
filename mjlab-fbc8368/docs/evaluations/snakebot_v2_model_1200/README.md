@@ -46,11 +46,14 @@ Cardinal goals:
 
 Far random goals:
 
-- [Far random 01](./far_random_01.mp4)
-- [Far random 02](./far_random_02.mp4)
-- [Far random 03](./far_random_03.mp4)
-- [Far random 04](./far_random_04.mp4)
-- [Far random 05](./far_random_05.mp4)
-- [Far random 06](./far_random_06.mp4)
+| 2.81 m goal | 2.67 m goal |
+| --- | --- |
+| [![Far random goal 01 rollout](./far_random_01.gif)](./far_random_01.mp4) | [![Far random goal 02 rollout](./far_random_02.gif)](./far_random_02.mp4) |
+| 2.31 m goal | 2.42 m goal |
+| [![Far random goal 03 rollout](./far_random_03.gif)](./far_random_03.mp4) | [![Far random goal 04 rollout](./far_random_04.gif)](./far_random_04.mp4) |
+| 2.03 m goal | 1.57 m goal |
+| [![Far random goal 05 rollout](./far_random_05.gif)](./far_random_05.mp4) | [![Far random goal 06 rollout](./far_random_06.gif)](./far_random_06.mp4) |
+
+Click an animated preview to open its full H.264 recording.
 
 Machine-readable results are available in [summary.json](./summary.json) and [far_summary.json](./far_summary.json).

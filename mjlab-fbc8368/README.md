@@ -12,6 +12,24 @@ mjlab combines [Isaac Lab](https://github.com/isaac-sim/IsaacLab)'s manager-base
 The framework provides composable building blocks for environment design,
 with minimal dependencies and direct access to native MuJoCo data structures.
 
+## Snakebot v2 goal-reaching
+
+The Snakebot v2 policy reaches COM-relative XY goals and stops within a 0.13 m
+goal radius. In deterministic evaluation, model 1200 reached all ten sampled
+goals; the six far random goals below span 1.57–2.81 m. Click a preview for the
+full H.264 recording.
+
+| 2.81 m goal | 2.67 m goal |
+| --- | --- |
+| [![Far random goal 01 rollout](docs/evaluations/snakebot_v2_model_1200/far_random_01.gif)](docs/evaluations/snakebot_v2_model_1200/far_random_01.mp4) | [![Far random goal 02 rollout](docs/evaluations/snakebot_v2_model_1200/far_random_02.gif)](docs/evaluations/snakebot_v2_model_1200/far_random_02.mp4) |
+| 2.31 m goal | 2.42 m goal |
+| [![Far random goal 03 rollout](docs/evaluations/snakebot_v2_model_1200/far_random_03.gif)](docs/evaluations/snakebot_v2_model_1200/far_random_03.mp4) | [![Far random goal 04 rollout](docs/evaluations/snakebot_v2_model_1200/far_random_04.gif)](docs/evaluations/snakebot_v2_model_1200/far_random_04.mp4) |
+| 2.03 m goal | 1.57 m goal |
+| [![Far random goal 05 rollout](docs/evaluations/snakebot_v2_model_1200/far_random_05.gif)](docs/evaluations/snakebot_v2_model_1200/far_random_05.mp4) | [![Far random goal 06 rollout](docs/evaluations/snakebot_v2_model_1200/far_random_06.gif)](docs/evaluations/snakebot_v2_model_1200/far_random_06.mp4) |
+
+See the [full evaluation report](docs/evaluations/snakebot_v2_model_1200/README.md)
+and [Snakebot setup and training guide](SNAKEBOT.md).
+
 ## Getting Started
 
 mjlab requires an NVIDIA GPU for training. macOS is supported for evaluation only.
