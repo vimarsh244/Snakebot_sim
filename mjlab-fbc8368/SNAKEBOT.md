@@ -119,6 +119,7 @@ uv run train Mjlab-Locomotion-Flat-Snakebot-v2 --env.scene.num-envs 2048
 
 Current v2 defaults:
 - Goal distance curriculum expanded to farther targets (`0.50` to `3.00` m).
+- Goal completion stops the episode when the robot COM is within `0.13` m.
 - Episode timeout increased to `75` s to improve goal completion on farther targets.
 - Goal-reaching terms are weighted slightly higher (`progress`, `velocity_to_goal`, `distance_shaping`, `goal_reached_bonus`).
 - Heading-alignment reward is removed in v2, with added COM-to-goal velocity reward to favor direct lateral travel (sidewinding-friendly).
