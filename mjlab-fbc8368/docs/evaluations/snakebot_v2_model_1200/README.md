@@ -1,6 +1,6 @@
 # Snakebot v2 model 1200 goal evaluation
 
-Checkpoint: `logs/rsl_rl/snakebot_locomotion_v2/2026-03-10_19-34-58/model_1200.pt`
+Checkpoint: `checkpoints/snakebot_v2/model_1200.pt`
 
 ## Protocol
 

@@ -184,15 +184,18 @@ uv run train Mjlab-Locomotion-Flat-Snakebot-v2 \
   --wandb-run-path ENTITY/mjlab/RUN_ID
 ```
 
-## Known working model: model 1200
+## Known working checkpoints
 
-The checkpoint used for the committed evaluations is:
+Two curated v2 checkpoints are committed:
 
-```text
-logs/rsl_rl/snakebot_locomotion_v2/2026-03-10_19-34-58/model_1200.pt
-```
+- `checkpoints/snakebot_v2/model_800.pt`
+- `checkpoints/snakebot_v2/model_1200.pt` — used for the committed evaluation
 
-Its associated ONNX export is:
+Both come from source run `2026-03-10_19-34-58`. TensorBoard recorded mean
+rewards of `328.034119` at iteration 800 and `312.155579` at
+iteration 1200.
+
+The source run's associated ONNX export is:
 
 ```text
 logs/rsl_rl/snakebot_locomotion_v2/2026-03-10_19-34-58/2026-03-10_19-34-58.onnx
@@ -212,9 +215,9 @@ reach threshold; current code uses `0.13 m`, which does not change the
 observation or action architecture. The checkpoint was re-evaluated successfully
 with the current stopping radius.
 
-Checkpoints, ONNX files, W&B state, and logs are intentionally Git-ignored. A
-fresh clone must download or copy the checkpoint/ONNX before using the commands
-below. The evaluation report and videos are committed at
+Training-generated checkpoints, ONNX files, W&B state, and logs remain
+Git-ignored by default. The two curated `.pt` copies above are committed and
+available in a fresh clone. The evaluation report and videos are committed at
 `docs/evaluations/snakebot_v2_model_1200/`.
 
 ## Play the v2 checkpoint
@@ -223,7 +226,7 @@ Native viewer:
 
 ```bash
 uv run play Mjlab-Locomotion-Flat-Snakebot-v2 \
-  --checkpoint-file logs/rsl_rl/snakebot_locomotion_v2/2026-03-10_19-34-58/model_1200.pt
+  --checkpoint-file checkpoints/snakebot_v2/model_1200.pt
 ```
 
 Viser web viewer:
@@ -231,7 +234,7 @@ Viser web viewer:
 ```bash
 uv run play Mjlab-Locomotion-Flat-Snakebot-v2 \
   --viewer viser \
-  --checkpoint-file logs/rsl_rl/snakebot_locomotion_v2/2026-03-10_19-34-58/model_1200.pt
+  --checkpoint-file checkpoints/snakebot_v2/model_1200.pt
 ```
 
 The goal is displayed as a red debug sphere.
@@ -240,7 +243,7 @@ Record a trained rollout:
 
 ```bash
 MUJOCO_GL=egl uv run play Mjlab-Locomotion-Flat-Snakebot-v2 \
-  --checkpoint-file logs/rsl_rl/snakebot_locomotion_v2/2026-03-10_19-34-58/model_1200.pt \
+  --checkpoint-file checkpoints/snakebot_v2/model_1200.pt \
   --video \
   --video-length 400
 ```
@@ -256,7 +259,9 @@ Initialize the pinned fork first:
 git submodule update --init --recursive
 ```
 
-Use the checkpoint and neighboring ONNX explicitly:
+mjswan consumes ONNX, so a committed `.pt` checkpoint alone is not enough.
+Use the source-run checkpoint and its neighboring local ONNX explicitly, or
+export/copy an ONNX file next to a checkpoint:
 
 ```bash
 uv run play Mjlab-Locomotion-Flat-Snakebot-v2 \
@@ -302,6 +307,7 @@ src/mjlab/tasks/locomotion/config/snakebot_v2/
     ├── rl_cfg.py
     └── snake_locomotion_mdp.py
 
+checkpoints/snakebot_v2/                  # committed model 800 and model 1200
 third_party/mjswan/                       # pinned browser-viewer fork
 docs/evaluations/snakebot_v2_model_1200/  # committed results and recordings
 ```

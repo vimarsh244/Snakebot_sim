@@ -19,6 +19,9 @@ goal radius. In deterministic evaluation, model 1200 reached all ten sampled
 goals; the six far random goals below span 1.57–2.81 m. Click a preview for the
 full H.264 recording.
 
+Curated [model 800 and model 1200 checkpoints](checkpoints/snakebot_v2/) are
+committed as regular Git files and do not require Git LFS.
+
 | 2.81 m goal | 2.67 m goal |
 | --- | --- |
 | [![Far random goal 01 rollout](docs/evaluations/snakebot_v2_model_1200/far_random_01.gif)](docs/evaluations/snakebot_v2_model_1200/far_random_01.mp4) | [![Far random goal 02 rollout](docs/evaluations/snakebot_v2_model_1200/far_random_02.gif)](docs/evaluations/snakebot_v2_model_1200/far_random_02.mp4) |
